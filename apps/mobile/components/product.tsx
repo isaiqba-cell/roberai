@@ -1,0 +1,193 @@
+import { Link } from "expo-router";
+import { Image } from "expo-image";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Heart } from "lucide-react-native";
+import { FlashList } from "@shopify/flash-list";
+import { Price, IconButton } from "./primitives";
+import { FitConfidenceBadge, FitScorePill } from "./fit";
+import { useThemeTokens } from "../theme/useThemeTokens";
+
+export type ProductCardModel = {
+  id: string;
+  brand: string;
+  title: string;
+  priceCents: number;
+  compareAtCents?: number;
+  imageUrl: string;
+  fitConfidence?: number;
+  recommendedSize?: string;
+  explanation?: string;
+};
+
+export function ProductCard({ product, elevated }: { product: ProductCardModel; elevated?: boolean }) {
+  const theme = useThemeTokens();
+  return (
+    <Link href={`/product/${product.id}`} asChild>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${product.brand} ${product.title}, ${product.fitConfidence ?? "unknown"} percent fit`}
+        style={({ pressed }) => [
+          styles.card,
+          {
+            backgroundColor: theme.surface,
+            borderColor: elevated ? theme.accent : theme.border,
+            opacity: pressed ? 0.88 : 1,
+            shadowOpacity: elevated ? 0.18 : 0.06
+          }
+        ]}
+      >
+        <View style={styles.imageWrap}>
+          <Image
+            source={{ uri: product.imageUrl }}
+            style={styles.image}
+            contentFit="cover"
+            transition={180}
+            placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
+            accessibilityLabel={`${product.title} product image`}
+          />
+          <View style={styles.heartWrap}>
+            <IconButton accessibilityLabel={`Save ${product.title}`} style={styles.heartButton}>
+              <Heart size={18} color={theme.text} />
+            </IconButton>
+          </View>
+        </View>
+        <View style={styles.body}>
+          <Text style={[styles.brand, { color: theme.textMuted }]}>{product.brand}</Text>
+          <Text numberOfLines={2} style={[styles.title, { color: theme.text }]}>
+            {product.title}
+          </Text>
+          <Price
+            cents={product.priceCents}
+            {...(product.compareAtCents ? { compareAtCents: product.compareAtCents } : {})}
+          />
+          {product.fitConfidence ? <FitConfidenceBadge confidence={product.fitConfidence} /> : null}
+        </View>
+      </Pressable>
+    </Link>
+  );
+}
+
+export function ProductGrid({ products }: { products: ProductCardModel[] }) {
+  return (
+    <FlashList
+      data={products}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => <ProductCard product={item} />}
+      numColumns={2}
+      contentContainerStyle={styles.gridContent}
+    />
+  );
+}
+
+export function ProductRail({ products }: { products: ProductCardModel[] }) {
+  return (
+    <FlashList
+      data={products}
+      horizontal
+      keyExtractor={(item) => item.id}
+      renderItem={({ item, index }) => (
+        <View style={{ width: 214, marginRight: index === products.length - 1 ? 0 : 14 }}>
+          <ProductCard product={item} elevated={index === 0} />
+        </View>
+      )}
+      showsHorizontalScrollIndicator={false}
+    />
+  );
+}
+
+export function CompareBrandCard({
+  product,
+  best
+}: {
+  product: ProductCardModel;
+  best?: boolean;
+}) {
+  const theme = useThemeTokens();
+  return (
+    <View style={[styles.compareCard, { backgroundColor: theme.surface, borderColor: best ? theme.accent : theme.border }]}>
+      {best ? <Text style={[styles.bestKicker, { color: theme.accent }]}>Best Fit for You</Text> : null}
+      <ProductCard product={product} {...(best ? { elevated: true } : {})} />
+      <View style={styles.compareFooter}>
+        {product.fitConfidence ? <FitScorePill confidence={product.fitConfidence} /> : null}
+        <Text style={[styles.compareExplanation, { color: theme.textMuted }]} numberOfLines={2}>
+          {product.explanation ?? "Normalized size chart is ready for comparison."}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+export function BestFitCompareCard({ product }: { product: ProductCardModel }) {
+  return <CompareBrandCard product={product} best />;
+}
+
+const styles = StyleSheet.create({
+  card: {
+    borderWidth: 1,
+    borderRadius: 12,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 2
+  },
+  imageWrap: {
+    aspectRatio: 0.82,
+    position: "relative",
+    backgroundColor: "#F4EEE9"
+  },
+  image: {
+    height: "100%",
+    width: "100%"
+  },
+  heartWrap: {
+    position: "absolute",
+    top: 10,
+    right: 10
+  },
+  heartButton: {
+    minHeight: 38,
+    minWidth: 38
+  },
+  body: {
+    padding: 12,
+    gap: 8
+  },
+  brand: {
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 0.7,
+    textTransform: "uppercase"
+  },
+  title: {
+    minHeight: 40,
+    fontSize: 15,
+    fontWeight: "800",
+    lineHeight: 20
+  },
+  gridContent: {
+    paddingBottom: 120,
+    gap: 14
+  },
+  compareCard: {
+    width: 244,
+    borderRadius: 18,
+    borderWidth: 1,
+    padding: 10,
+    gap: 10
+  },
+  bestKicker: {
+    fontFamily: "Courier",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase"
+  },
+  compareFooter: {
+    gap: 8
+  },
+  compareExplanation: {
+    fontSize: 12,
+    lineHeight: 17
+  }
+});

@@ -11,3 +11,13 @@
 Deferred:
 
 - Production credentials, live Supabase project linking, real Stripe capture, and app-store submission.
+
+### Phase 1 - Design System And Navigation Shell
+
+- Added theme-aware Rober tokens, light/dark mode, tab navigation, product cards, core commerce controls, fit-specific components, state components, and a component playground.
+- Floating pill tabs and accessibility labels are in place for core icon controls.
+- Category tiles use Rober's editorial palette instead of the screenshot blue/teal direction.
+
+Deferred:
+
+- Full catalog-backed product rails and checkout state are added in later phases.
