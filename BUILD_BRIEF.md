@@ -51,3 +51,13 @@ Deferred:
 Deferred:
 
 - Fit-score caching in Supabase is represented by schema/function work in later phases; local demo computes on demand.
+
+### Phase 5 - PDP, Wishlist, Cart, Checkout, And Orders
+
+- Added PDP with full-bleed product imagery, recommended size, confidence, explanations, dimension breakdown, size chips with fit scores, material/cut notes, save/share controls, alternatives, and sticky add-to-bag CTA.
+- Added wishlist/cart state, line items, quantity steppers, remove controls, promo/address rows, server-shaped totals calculation, checkout fallback, order confirmation, order history, and post-delivery fit feedback.
+- Added checkout totals unit tests and mock Stripe PaymentSheet-compatible service.
+
+Deferred:
+
+- Real Stripe keys, webhooks, and production payment capture remain ask-before actions.

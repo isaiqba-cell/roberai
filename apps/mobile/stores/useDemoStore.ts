@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { BodyProfile, FitPreference } from "@rober/fit-engine";
+import { calculateCartTotals, CartTotals } from "@rober/api-client";
 
 export type StyleProfile = {
   styleTags: string[];
@@ -35,12 +36,46 @@ type DemoUserState = {
   bodyProfile: BodyProfile;
   styleProfile: StyleProfile;
   knownGoodItems: KnownGoodItem[];
+  savedProductIds: string[];
+  cartItems: DemoCartItem[];
+  orders: DemoOrder[];
   setGuestMode: (guestMode: boolean) => void;
   updateBodyProfile: (profile: Partial<BodyProfile>) => void;
   updateFitPreference: (fitPreference: FitPreference) => void;
   updateStyleProfile: (profile: Partial<StyleProfile>) => void;
   addKnownGoodItem: (item: KnownGoodItem) => void;
+  toggleSavedProduct: (productId: string) => void;
+  addToCart: (item: Omit<DemoCartItem, "quantity">) => void;
+  updateCartQuantity: (variantId: string, quantity: number) => void;
+  removeCartItem: (variantId: string) => void;
+  createOrderFromCart: () => DemoOrder;
+  submitFitFeedback: (orderItemId: string, feedback: FitFeedback) => void;
   completeOnboarding: () => void;
+};
+
+export type FitFeedback = "too_small" | "true_to_size" | "too_large";
+
+export type DemoCartItem = {
+  productId: string;
+  variantId: string;
+  sizeLabel: string;
+  color: string;
+  unitPriceCents: number;
+  fitConfidenceWhenAdded: number;
+  quantity: number;
+};
+
+export type DemoOrderItem = DemoCartItem & {
+  id: string;
+  fitFeedback?: FitFeedback;
+};
+
+export type DemoOrder = {
+  id: string;
+  status: "paid" | "shipped" | "delivered";
+  createdAt: string;
+  items: DemoOrderItem[];
+  totals: CartTotals;
 };
 
 export const demoBodyProfile: BodyProfile = {
@@ -102,6 +137,29 @@ export const useDemoStore = create<DemoUserState>((set) => ({
   bodyProfile: demoBodyProfile,
   styleProfile: demoStyleProfile,
   knownGoodItems: demoKnownGoodItems,
+  savedProductIds: ["fieldstone-overshirt-clay", "northgate-straight-jeans-light-blue", "alder-knit-sweater-cream"],
+  cartItems: [],
+  orders: [
+    {
+      id: "order-demo-1007",
+      status: "delivered",
+      createdAt: "2026-06-24T14:22:00.000Z",
+      items: [
+        {
+          id: "order-demo-1007-item-1",
+          productId: "fieldstone-overshirt-clay",
+          variantId: "fieldstone-overshirt-clay-m",
+          sizeLabel: "M",
+          color: "clay",
+          unitPriceCents: 7800,
+          fitConfidenceWhenAdded: 91,
+          quantity: 1,
+          fitFeedback: "true_to_size"
+        }
+      ],
+      totals: calculateCartTotals([{ productId: "fieldstone-overshirt-clay", variantId: "fieldstone-overshirt-clay-m", unitPriceCents: 7800, quantity: 1 }], "ROBERFIT")
+    }
+  ],
   setGuestMode: (guestMode) => set({ guestMode }),
   updateBodyProfile: (profile) =>
     set((state) => ({
@@ -127,6 +185,80 @@ export const useDemoStore = create<DemoUserState>((set) => ({
   addKnownGoodItem: (item) =>
     set((state) => ({
       knownGoodItems: [item, ...state.knownGoodItems]
+    })),
+  toggleSavedProduct: (productId) =>
+    set((state) => ({
+      savedProductIds: state.savedProductIds.includes(productId)
+        ? state.savedProductIds.filter((id) => id !== productId)
+        : [productId, ...state.savedProductIds]
+    })),
+  addToCart: (item) =>
+    set((state) => {
+      const existing = state.cartItems.find((cartItem) => cartItem.variantId === item.variantId);
+      if (existing) {
+        return {
+          cartItems: state.cartItems.map((cartItem) =>
+            cartItem.variantId === item.variantId ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
+          )
+        };
+      }
+      return {
+        cartItems: [{ ...item, quantity: 1 }, ...state.cartItems]
+      };
+    }),
+  updateCartQuantity: (variantId, quantity) =>
+    set((state) => ({
+      cartItems: state.cartItems
+        .map((item) => (item.variantId === variantId ? { ...item, quantity: Math.max(0, quantity) } : item))
+        .filter((item) => item.quantity > 0)
+    })),
+  removeCartItem: (variantId) =>
+    set((state) => ({
+      cartItems: state.cartItems.filter((item) => item.variantId !== variantId)
+    })),
+  createOrderFromCart: () => {
+    let createdOrder: DemoOrder | undefined;
+    set((state) => {
+      const items = state.cartItems.length
+        ? state.cartItems
+        : [
+            {
+              productId: "fieldstone-overshirt-clay",
+              variantId: "fieldstone-overshirt-clay-m",
+              sizeLabel: "M",
+              color: "clay",
+              unitPriceCents: 7800,
+              fitConfidenceWhenAdded: 91,
+              quantity: 1
+            }
+          ];
+      const orderItems = items.map((item, index) => ({
+        ...item,
+        id: `order-${Date.now()}-item-${index + 1}`
+      }));
+      createdOrder = {
+        id: `order-${Date.now()}`,
+        status: "paid",
+        createdAt: new Date().toISOString(),
+        items: orderItems,
+        totals: calculateCartTotals(items, "ROBERFIT")
+      };
+      return {
+        orders: [createdOrder, ...state.orders],
+        cartItems: []
+      };
+    });
+    if (!createdOrder) {
+      throw new Error("Unable to create demo order");
+    }
+    return createdOrder;
+  },
+  submitFitFeedback: (orderItemId, feedback) =>
+    set((state) => ({
+      orders: state.orders.map((order) => ({
+        ...order,
+        items: order.items.map((item) => (item.id === orderItemId ? { ...item, fitFeedback: feedback } : item))
+      }))
     })),
   completeOnboarding: () => set({ onboardingCompleted: true })
 }));
