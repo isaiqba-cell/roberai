@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { StyleSheet, Text, TextInput, View } from "react-native";
+import { RefreshControl, StyleSheet, Text, TextInput, View } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { ProductCategory, ProductFilters } from "@rober/api-client";
 import { CategoryTile, Chip, EmptyState, SectionHeader } from "../../components/primitives";
 import { ProductCard } from "../../components/product";
+import { useDemoRefresh } from "../../hooks/useDemoRefresh";
 import { demoBrands, searchCatalog, toProductCard } from "../../lib/catalog";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
@@ -14,6 +15,7 @@ export default function DiscoverScreen() {
   const [fit, setFit] = useState<ProductFilters["fit"]>();
   const [brand, setBrand] = useState<string | undefined>();
   const [under100, setUnder100] = useState(true);
+  const { refreshing, onRefresh } = useDemoRefresh();
   const products = useMemo(
     () =>
       searchCatalog({
@@ -33,6 +35,7 @@ export default function DiscoverScreen() {
         data={products}
         keyExtractor={(item) => item.id}
         numColumns={2}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.accent} />}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View style={styles.header}>

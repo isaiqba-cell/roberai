@@ -83,3 +83,13 @@ Deferred:
 Deferred:
 
 - Live Supabase service-role writes and real OpenAI normalization remain credential-gated.
+
+### Phase 8 - Motion, Accessibility, Offline/Refresh, And Mobile Polish
+
+- Added Moti hero motion, pull-to-refresh, haptic add-to-cart feedback, notification permission/token helpers, notification deep-link mapping, mock payload helper, and biometric sensitive-access helper.
+- Profile now exposes notification and biometric demo controls.
+- Existing components maintain large tap targets, accessibility labels for icon buttons, dark-mode tokens, skeleton/empty/offline states, and FlashList catalog surfaces.
+
+Deferred:
+
+- Real push delivery and native biometric enforcement require device/project configuration and production policy decisions.

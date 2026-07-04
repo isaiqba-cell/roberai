@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
+import * as Haptics from "expo-haptics";
 import { ArrowLeft, Heart, Share2 } from "lucide-react-native";
 import { computeFitScore } from "@rober/fit-engine";
 import { AppButton, IconButton, Price, RatingBadge, SectionHeader, StickyCTA } from "../../components/primitives";
@@ -125,6 +126,7 @@ export default function ProductDetailScreen() {
         price={`${fit.confidence}% fit in ${selectedVariant?.sizeLabel ?? fit.recommendedSize}`}
         label="Add to Bag"
         onPress={() => {
+          Haptics.selectionAsync().catch(() => undefined);
           addToCart({
             productId: product.id,
             variantId: selectedVariant?.id ?? product.variants[0]?.id ?? `${product.id}-os`,
