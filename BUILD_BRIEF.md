@@ -31,3 +31,13 @@ Deferred:
 Deferred:
 
 - Supabase Auth persistence is mocked in demo mode until real project credentials are configured.
+
+### Phase 3 - Seeded Catalog, Browse, Search, And Filters
+
+- Added 8 fictional brands and 96 generated products with variants, price diversity, category coverage, product media URLs, materials, colors, fit tags, inventory, and deliberately inconsistent size charts.
+- Added search/filter utilities, seed script, `supabase/seed/demo-catalog.json`, catalog-backed Home rails, Discover search/filter grid, and Wishlist preview.
+- Product lists use FlashList and fictional brand data only.
+
+Deferred:
+
+- Natural-language parsing is still deterministic/basic here; grounded AI parsing is added in the stylist/recommendation phase.

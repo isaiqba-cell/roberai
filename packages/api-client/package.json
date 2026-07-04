@@ -8,6 +8,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
+  "dependencies": {
+    "@rober/fit-engine": "0.1.0"
+  },
   "scripts": {
     "lint": "tsc --noEmit",
     "typecheck": "tsc --noEmit"

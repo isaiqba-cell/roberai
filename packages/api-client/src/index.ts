@@ -9,3 +9,5 @@ export interface ApiClientConfig {
 export function getApiMode(config: ApiClientConfig): ApiMode {
   return config.supabaseUrl && config.supabaseAnonKey ? "supabase" : "demo";
 }
+
+export * from "./catalog";

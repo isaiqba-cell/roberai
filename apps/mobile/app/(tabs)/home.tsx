@@ -3,6 +3,8 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Sparkles } from "lucide-react-native";
 import { AppButton, BrandPill, SectionHeader, ThemeToggle } from "../../components/primitives";
 import { FitConfidenceRing } from "../../components/fit";
+import { ProductRail } from "../../components/product";
+import { closetInspiredProducts, demoBrands, featuredProducts, newArrivalProducts, toProductCard } from "../../lib/catalog";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
 export default function HomeScreen() {
@@ -46,10 +48,19 @@ export default function HomeScreen() {
 
       <SectionHeader kicker="Brand rail" title="Popular in your fit" />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
-        {["Fieldstone", "Northgate", "Wescott", "Alder", "Marlowe", "Finch"].map((brand, index) => (
-          <BrandPill key={brand} label={brand} selected={index === 0} />
+        {demoBrands.slice(0, 6).map((brand, index) => (
+          <BrandPill key={brand.slug} label={brand.name.split(" ")[0] ?? brand.name} selected={index === 0} />
         ))}
       </ScrollView>
+
+      <SectionHeader kicker="For you" title="Best Fit for You" />
+      <ProductRail products={featuredProducts.slice(0, 8).map((product, index) => toProductCard(product, 92 - index * 3))} />
+
+      <SectionHeader kicker="New" title="New arrivals" />
+      <ProductRail products={newArrivalProducts.slice(0, 8).map((product, index) => toProductCard(product, 86 - index * 2))} />
+
+      <SectionHeader kicker="Closet signal" title="Because your overshirt fits well" />
+      <ProductRail products={closetInspiredProducts.slice(0, 8).map((product, index) => toProductCard(product, 89 - index))} />
 
       <View style={{ height: 120 }} />
     </ScrollView>
