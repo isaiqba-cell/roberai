@@ -21,3 +21,13 @@ Deferred:
 Deferred:
 
 - Full catalog-backed product rails and checkout state are added in later phases.
+
+### Phase 2 - Auth, Onboarding, Body Profile, And Style Quiz
+
+- Added sign-in UI with email OTP, Apple/Google buttons, and guest browsing.
+- Added body profile wizard using React Hook Form and Zod, manual measurements, fit preference capture, guided-measurement placeholder, and garment-reference alternate path.
+- Added style quiz, price sensitivity, known-good items, privacy copy, profile summary, and onboarding finish route.
+
+Deferred:
+
+- Supabase Auth persistence is mocked in demo mode until real project credentials are configured.
