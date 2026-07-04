@@ -1,0 +1,189 @@
+import { useState } from "react";
+import { Link } from "expo-router";
+import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { ArrowLeft, Send, Sparkles } from "lucide-react-native";
+import { AppButton, Chip, IconButton, SectionHeader } from "../components/primitives";
+import { FitExplanationCard } from "../components/fit";
+import { ProductRail } from "../components/product";
+import { getGroundedStylistResponse, StylistResponse } from "../lib/stylist";
+import { useDemoStore } from "../stores/useDemoStore";
+import { useThemeTokens } from "../theme/useThemeTokens";
+
+type ChatTurn = {
+  id: string;
+  role: "user" | "assistant";
+  text: string;
+  response?: StylistResponse;
+};
+
+export default function StylistScreen() {
+  const theme = useThemeTokens();
+  const [draft, setDraft] = useState("business casual shirts for summer");
+  const body = useDemoStore((state) => state.bodyProfile);
+  const style = useDemoStore((state) => state.styleProfile);
+  const favoriteItems = useDemoStore((state) => state.knownGoodItems);
+  const wishlistIds = useDemoStore((state) => state.savedProductIds);
+  const [turns, setTurns] = useState<ChatTurn[]>([
+    {
+      id: "intro",
+      role: "assistant",
+      text: "Ask for a style, budget, material, or fit. I only recommend products in the seeded Rober catalog and every suggestion includes a computed fit lookup."
+    }
+  ]);
+
+  const submit = () => {
+    const query = draft.trim();
+    if (!query) {
+      return;
+    }
+    const response = getGroundedStylistResponse({ query, body, style, favoriteItems, wishlistIds });
+    setTurns((current) => [
+      ...current,
+      { id: `user-${Date.now()}`, role: "user", text: query },
+      { id: `assistant-${Date.now()}`, role: "assistant", text: response.text, response }
+    ]);
+    setDraft("");
+  };
+
+  return (
+    <View style={[styles.screen, { backgroundColor: theme.bgCanvas }]}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.topbar}>
+          <Link href="/(tabs)/home" asChild>
+            <IconButton accessibilityLabel="Back to home">
+              <ArrowLeft size={20} color={theme.text} />
+            </IconButton>
+          </Link>
+          <Text style={[styles.logo, { color: theme.text }]}>Rober Stylist</Text>
+        </View>
+        <View style={[styles.hero, { backgroundColor: theme.bgWarm, borderColor: theme.border }]}>
+          <Sparkles size={24} color={theme.accent} />
+          <Text style={[styles.title, { color: theme.text }]}>Grounded recommendations, not fashion fan fiction.</Text>
+          <Text style={[styles.copy, { color: theme.textMuted }]}>
+            The stylist calls search and fit-score tools over the real demo catalog. If profile data is missing, confidence drops.
+          </Text>
+        </View>
+
+        <SectionHeader kicker="Chat" title="Ask Rober" />
+        {turns.map((turn) => (
+          <View
+            key={turn.id}
+            style={[
+              styles.bubble,
+              {
+                backgroundColor: turn.role === "user" ? theme.ink : theme.surface,
+                borderColor: theme.border,
+                alignSelf: turn.role === "user" ? "flex-end" : "stretch"
+              }
+            ]}
+          >
+            <Text style={[styles.bubbleText, { color: turn.role === "user" ? "#FFFFFF" : theme.text }]}>{turn.text}</Text>
+            {turn.response?.parsedChips.length ? (
+              <View style={styles.chips}>
+                {turn.response.parsedChips.map((chip) => (
+                  <Chip key={chip} label={chip} selected />
+                ))}
+              </View>
+            ) : null}
+            {turn.response?.products.length ? (
+              <>
+                <ProductRail products={turn.response.products.map((product) => product.card)} />
+                <FitExplanationCard lines={turn.response.products[0]?.explanation ?? []} />
+                <Link href="/compare" asChild>
+                  <AppButton variant="secondary">Compare these</AppButton>
+                </Link>
+              </>
+            ) : null}
+          </View>
+        ))}
+      </ScrollView>
+
+      <View style={[styles.composer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <TextInput
+          accessibilityLabel="Message stylist"
+          value={draft}
+          onChangeText={setDraft}
+          placeholder="black boots that fit wide feet"
+          placeholderTextColor={theme.textMuted}
+          style={[styles.input, { color: theme.text }]}
+          onSubmitEditing={submit}
+        />
+        <IconButton accessibilityLabel="Send stylist message" onPress={submit}>
+          <Send size={18} color={theme.text} />
+        </IconButton>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1
+  },
+  content: {
+    padding: 20,
+    paddingTop: 60,
+    paddingBottom: 120,
+    gap: 18
+  },
+  topbar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12
+  },
+  logo: {
+    fontSize: 19,
+    fontWeight: "900"
+  },
+  hero: {
+    borderWidth: 1,
+    borderRadius: 28,
+    padding: 20,
+    gap: 10
+  },
+  title: {
+    fontSize: 30,
+    fontWeight: "900",
+    lineHeight: 33
+  },
+  copy: {
+    fontSize: 14,
+    lineHeight: 21
+  },
+  bubble: {
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 16,
+    gap: 12,
+    maxWidth: "100%"
+  },
+  bubbleText: {
+    fontSize: 14,
+    lineHeight: 21,
+    fontWeight: "700"
+  },
+  chips: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8
+  },
+  composer: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    bottom: 18,
+    borderWidth: 1,
+    borderRadius: 999,
+    padding: 8,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8
+  },
+  input: {
+    flex: 1,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    fontSize: 15,
+    fontWeight: "800"
+  }
+});

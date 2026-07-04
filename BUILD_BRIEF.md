@@ -61,3 +61,14 @@ Deferred:
 Deferred:
 
 - Real Stripe keys, webhooks, and production payment capture remain ask-before actions.
+
+### Phase 6 - Grounded AI Stylist And Recommendations
+
+- Added deterministic stylist fallback that parses natural-language shopping intent, calls catalog search and fit scoring, and only recommends seeded catalog products.
+- Added chat UI with parsed chips, grounded product carousel, fit explanation, and Compare handoff.
+- Added hybrid recommendation ranking that blends fit, style, availability, merchant chart quality, recency/trending, and confidence.
+- Home "Best Fit for You" now uses ranked fit/style recommendations.
+
+Deferred:
+
+- OpenAI structured tool calling is represented by the same provider shape and remains optional until API keys are supplied.

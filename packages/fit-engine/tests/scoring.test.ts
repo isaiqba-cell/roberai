@@ -6,7 +6,8 @@ import {
   computeFitScore,
   generateFitExplanation,
   parseNaturalLanguageSearch,
-  pickBestSizeLabel
+  pickBestSizeLabel,
+  computeRecommendationScore
 } from "../src";
 
 const body: BodyProfile = {
@@ -102,5 +103,29 @@ describe("fallback parser", () => {
     expect(parsed.priceMax).toBe(150);
     expect(parsed.fitIntent).toBe("regular");
     expect(parsed.referenceItemHint).toBe("favorite garment");
+  });
+});
+
+describe("recommendation scoring", () => {
+  it("weights fit and style into the final score", () => {
+    const strong = computeRecommendationScore({
+      filterMatch: 90,
+      fitScore: 92,
+      styleScore: 88,
+      sizeAvailabilityScore: 100,
+      merchantQualityScore: 90,
+      recencyOrTrendingScore: 70,
+      confidenceScore: 92
+    });
+    const weakFit = computeRecommendationScore({
+      filterMatch: 90,
+      fitScore: 48,
+      styleScore: 88,
+      sizeAvailabilityScore: 100,
+      merchantQualityScore: 90,
+      recencyOrTrendingScore: 70,
+      confidenceScore: 52
+    });
+    expect(strong).toBeGreaterThan(weakFit);
   });
 });

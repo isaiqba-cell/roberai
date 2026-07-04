@@ -5,10 +5,16 @@ import { AppButton, BrandPill, SectionHeader, ThemeToggle } from "../../componen
 import { FitConfidenceRing } from "../../components/fit";
 import { ProductRail } from "../../components/product";
 import { closetInspiredProducts, demoBrands, featuredProducts, newArrivalProducts, toProductCard } from "../../lib/catalog";
+import { rankHomeFeed } from "../../lib/recommendations";
+import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
 export default function HomeScreen() {
   const theme = useThemeTokens();
+  const bodyProfile = useDemoStore((state) => state.bodyProfile);
+  const styleProfile = useDemoStore((state) => state.styleProfile);
+  const favorite = useDemoStore((state) => state.knownGoodItems[0]);
+  const rankedFeed = rankHomeFeed(bodyProfile, styleProfile, favorite).slice(0, 8);
   return (
     <ScrollView style={[styles.screen, { backgroundColor: theme.bgCanvas }]} contentContainerStyle={styles.content}>
       <View style={styles.topbar}>
@@ -54,7 +60,7 @@ export default function HomeScreen() {
       </ScrollView>
 
       <SectionHeader kicker="For you" title="Best Fit for You" />
-      <ProductRail products={featuredProducts.slice(0, 8).map((product, index) => toProductCard(product, 92 - index * 3))} />
+      <ProductRail products={rankedFeed.map((entry) => entry.card)} />
 
       <SectionHeader kicker="New" title="New arrivals" />
       <ProductRail products={newArrivalProducts.slice(0, 8).map((product, index) => toProductCard(product, 86 - index * 2))} />
