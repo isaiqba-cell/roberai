@@ -1,7 +1,6 @@
 import { Link } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Sparkles } from "lucide-react-native";
-import { MotiView } from "moti";
 import { AppButton, BrandPill, SectionHeader, ThemeToggle } from "../../components/primitives";
 import { FitConfidenceRing } from "../../components/fit";
 import { ProductRail } from "../../components/product";
@@ -26,12 +25,7 @@ export default function HomeScreen() {
         <ThemeToggle />
       </View>
 
-      <MotiView
-        from={{ opacity: 0, translateY: 12 }}
-        animate={{ opacity: 1, translateY: 0 }}
-        transition={{ type: "timing", duration: 360 }}
-        style={[styles.hero, { backgroundColor: theme.bgWarm, borderColor: theme.border }]}
-      >
+      <View style={[styles.hero, { backgroundColor: theme.bgWarm, borderColor: theme.border }]}>
         <Text style={[styles.heroKicker, { color: theme.accent }]}>FIT INTELLIGENCE</Text>
         <Text style={[styles.heroTitle, { color: theme.text }]}>Search once. See what fits across brands.</Text>
         <Text style={[styles.heroCopy, { color: theme.textMuted }]}>
@@ -45,7 +39,7 @@ export default function HomeScreen() {
             <AppButton variant="secondary">Ask Stylist</AppButton>
           </Link>
         </View>
-      </MotiView>
+      </View>
 
       <SectionHeader kicker="Profile signal" title="Fit profile" />
       <View style={[styles.fitSummary, { backgroundColor: theme.surface, borderColor: theme.border }]}>

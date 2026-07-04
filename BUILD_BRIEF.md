@@ -86,7 +86,7 @@ Deferred:
 
 ### Phase 8 - Motion, Accessibility, Offline/Refresh, And Mobile Polish
 
-- Added Moti hero motion, pull-to-refresh, haptic add-to-cart feedback, notification permission/token helpers, notification deep-link mapping, mock payload helper, and biometric sensitive-access helper.
+- Added pull-to-refresh, haptic add-to-cart feedback, notification permission/token helpers, notification deep-link mapping, mock payload helper, and biometric sensitive-access helper.
 - Profile now exposes notification and biometric demo controls.
 - Existing components maintain large tap targets, accessibility labels for icon buttons, dark-mode tokens, skeleton/empty/offline states, and FlashList catalog surfaces.
 
