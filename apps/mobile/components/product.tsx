@@ -109,6 +109,9 @@ export function CompareBrandCard({
       <ProductCard product={product} {...(best ? { elevated: true } : {})} />
       <View style={styles.compareFooter}>
         {product.fitConfidence ? <FitScorePill confidence={product.fitConfidence} /> : null}
+        {product.recommendedSize ? (
+          <Text style={[styles.recommendedSize, { color: theme.text }]}>Recommended size {product.recommendedSize}</Text>
+        ) : null}
         <Text style={[styles.compareExplanation, { color: theme.textMuted }]} numberOfLines={2}>
           {product.explanation ?? "Normalized size chart is ready for comparison."}
         </Text>
@@ -185,6 +188,10 @@ const styles = StyleSheet.create({
   },
   compareFooter: {
     gap: 8
+  },
+  recommendedSize: {
+    fontSize: 13,
+    fontWeight: "900"
   },
   compareExplanation: {
     fontSize: 12,

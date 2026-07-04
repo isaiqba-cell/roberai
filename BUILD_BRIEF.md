@@ -41,3 +41,13 @@ Deferred:
 Deferred:
 
 - Natural-language parsing is still deterministic/basic here; grounded AI parsing is added in the stylist/recommendation phase.
+
+### Phase 4 - Fit Engine And Best-Fit Compare
+
+- Added pure TypeScript fit scoring with dimension closeness, weighted averages, stretch tolerance, data-quality penalties, fit-preference adjustment, direction, descriptors, explanations, and best-size selection.
+- Added unit tests for exact match, too small, too large, stretch tolerance, missing data, preference adjustment, best-size selection, explanations, and fallback parsing.
+- Added Compare / Best Fit Finder with natural-language chips, cross-brand computed fit results, highlighted best-fit card, accessible skinnier/baggier controls, recommended size, dimension breakdown, and alternatives.
+
+Deferred:
+
+- Fit-score caching in Supabase is represented by schema/function work in later phases; local demo computes on demand.
