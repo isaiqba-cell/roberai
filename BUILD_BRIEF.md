@@ -72,3 +72,14 @@ Deferred:
 Deferred:
 
 - OpenAI structured tool calling is represented by the same provider shape and remains optional until API keys are supplied.
+
+### Phase 7 - Admin Ingestion And Size-Chart Review
+
+- Added Supabase migration with pgvector, core identity/body/catalog/commerce/chat/recommendation/analytics tables, RLS enabled, owner policies, and public catalog-read policies.
+- Added edge-function stubs for fit-score, parse-search, search, compare, stylist-chat, normalize-size-chart, create-payment-intent, stripe-webhook, and Shopify ingestion.
+- Added manual seed, CSV, Shopify, and mock Shopify provider interfaces with deterministic fallback size-chart normalization and tests.
+- Added admin route for raw chart paste, normalized review, approve/reset workflow, import jobs, and recommendation score inspection.
+
+Deferred:
+
+- Live Supabase service-role writes and real OpenAI normalization remain credential-gated.
