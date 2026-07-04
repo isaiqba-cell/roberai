@@ -93,3 +93,14 @@ Deferred:
 Deferred:
 
 - Real push delivery and native biometric enforcement require device/project configuration and production policy decisions.
+
+### Phase 9 - Analytics, Investor Dashboard, Tests, CI, And Web Export
+
+- Added environment, Supabase, analytics, and Sentry wrappers with body-measurement sanitization.
+- Added investor demo dashboard with clearly labeled synthetic metrics, impact cards, feedback distribution, and local state snapshot.
+- Added Maestro critical path config, expanded README with setup, migration, seed, Stripe test mode, demo script, architecture, mocked-vs-wired notes, and roadmap.
+- Verified lint, typecheck, unit tests, seed generation, and Expo web export.
+
+Deferred:
+
+- Maestro was configured but not executed because no simulator/device target is running in this environment.

@@ -7,8 +7,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ThemeProvider, useThemePreference } from "../theme/ThemeProvider";
+import { initializeSentry } from "../lib/sentry";
 
 const queryClient = new QueryClient();
+initializeSentry();
 
 function RootNavigator() {
   const { colorScheme } = useThemePreference();
@@ -16,20 +18,7 @@ function RootNavigator() {
   return (
     <>
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)" />
-        <Stack.Screen name="(onboarding)" />
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="product/[id]" />
-        <Stack.Screen name="compare" />
-        <Stack.Screen name="stylist" />
-        <Stack.Screen name="checkout" />
-        <Stack.Screen name="orders" />
-        <Stack.Screen name="admin" />
-        <Stack.Screen name="investor-demo" />
-        <Stack.Screen name="components-playground" />
-      </Stack>
+      <Stack screenOptions={{ headerShown: false }} />
     </>
   );
 }

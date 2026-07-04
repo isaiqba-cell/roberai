@@ -1,0 +1,11 @@
+appId: com.rober.ai
+---
+- launchApp
+- tapOn: "Start demo"
+- tapOn: "Browse as guest"
+- tapOn: "Find Best Fit"
+- tapOn: "Open product detail"
+- tapOn: "Add to Bag"
+- tapOn: "Continue to checkout"
+- tapOn: "Pay"
+- assertVisible: "Order confirmed"

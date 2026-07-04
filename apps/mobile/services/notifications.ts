@@ -1,5 +1,3 @@
-import * as Notifications from "expo-notifications";
-
 export type RoberNotificationPayload = {
   type: "product" | "order" | "compare" | "profile";
   productId?: string;
@@ -8,6 +6,7 @@ export type RoberNotificationPayload = {
 };
 
 export async function requestNotificationPermission() {
+  const Notifications = await import("expo-notifications");
   const current = await Notifications.getPermissionsAsync();
   if (current.granted) {
     return current;
@@ -16,6 +15,7 @@ export async function requestNotificationPermission() {
 }
 
 export async function registerPushToken() {
+  const Notifications = await import("expo-notifications");
   const permission = await requestNotificationPermission();
   if (!permission.granted) {
     return undefined;
