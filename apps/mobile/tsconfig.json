@@ -1,0 +1,31 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "allowJs": true,
+    "types": [
+      "react",
+      "jest"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "app",
+    "components",
+    "features",
+    "hooks",
+    "lib",
+    "services",
+    "stores",
+    "theme",
+    "tests",
+    "*.ts",
+    "*.tsx",
+    "nativewind-env.d.ts"
+  ]
+}

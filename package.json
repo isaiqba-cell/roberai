@@ -1,0 +1,36 @@
+{
+  "name": "rober",
+  "private": true,
+  "version": "0.1.0",
+  "description": "ROBER AI investor-demo MVP monorepo.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm --workspace @rober/mobile run dev",
+    "ios": "npm --workspace @rober/mobile run ios",
+    "android": "npm --workspace @rober/mobile run android",
+    "web": "npm --workspace @rober/mobile run web",
+    "export:web": "npm --workspace @rober/mobile run export:web",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "test:e2e": "maestro test apps/mobile/maestro/onboarding-to-checkout.yaml",
+    "seed": "tsx scripts/seed/generate-demo-catalog.ts",
+    "supabase:migrate": "echo \"Run: supabase db reset --local or supabase migration up --linked after configuring Supabase CLI\""
+  },
+  "devDependencies": {
+    "@types/jest": "30.0.0",
+    "@types/node": "26.1.0",
+    "eslint": "10.6.0",
+    "jest": "30.4.2",
+    "prettier": "3.9.4",
+    "ts-jest": "29.4.11",
+    "tsx": "4.23.0",
+    "typescript": "6.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
