@@ -104,3 +104,83 @@ Deferred:
 Deferred:
 
 - Maestro was configured but not executed because no simulator/device target is running in this environment.
+
+## Restructure: Garment-to-Garment Fit Matching
+
+The primary product mechanic changed from body-profile-first fit scoring to
+reference-garment-first matching: a user's known-good pair becomes a fit
+anchor, compared directly against other brands' garment construction specs.
+Existing design system, navigation shell, catalog schema, checkout, admin
+tooling, and the body-based fit engine were reused, not rebuilt.
+
+### Phase R1 - Schema And Reference-Item Restructure
+
+- Added a migration adding thigh/rise/leg-opening/hem/knee columns to
+  `product_measurements`, structured `brand_slug`/`model_name`/`canonical_spec`/
+  `resolved_from_catalog` columns to `favorite_reference_items`, a new
+  `garment_reference_catalog` table for brand+model+size resolution, and a
+  `match_path` column on `fit_scores`/`recommendation_events`.
+- Added a `GarmentSpec` type in `packages/fit-engine` and a
+  `resolveGarmentReference()` brand+model+size resolver in
+  `packages/api-client/src/jeans.ts`, deriving numeric construction specs from
+  each jeans style's existing qualitative taxonomy. Falls back to a
+  self-reported spec (console-logged as an admin-ingestion gap) when a
+  specific brand/model/size isn't indexed.
+- `garmentSpec` now attached to every seeded catalog variant; added two chino
+  products for category coverage beyond jeans.
+
+Deferred:
+
+- Live Supabase migration run (no local Postgres in this environment).
+- A dedicated admin-ingestion queue UI for resolution gaps (currently
+  console-logged only).
+
+### Phase R2 - Garment-To-Garment Match Engine
+
+- Added `matchGarments()` in `packages/fit-engine`, reusing the existing
+  `closeness()` dimension-tolerance primitive so body-based and garment-based
+  scoring share the same math. Thigh/inseam weighted highest, waist/rise next,
+  leg opening/hem after, with a cut-adjacency term and stretch tolerance keyed
+  to the *minimum* of both garments' stretch percentages.
+- Six unit tests cover identical-spec, thigh-mismatch-dominance, stretch-tolerance
+  widening, the stretch-anchor-vs-rigid-candidate asymmetry, missing-dimension
+  fallback, and cut-adjacent scoring. The body-based `computeFitScore` is
+  untouched and remains the fallback path.
+
+### Phase R3 - Onboarding And Compare/Fit Passport Rewire
+
+- Favorite-jeans onboarding is the primary path (unchanged structurally) and
+  now collects a model/style name and category, resolving through
+  `resolveGarmentReference()` instead of the old waist/hip/inseam-only
+  estimate. Body-measurement wizard stays as the secondary/fallback path.
+- Compare screen defaults to garment-to-garment matches against the seeded
+  catalog once a reference item exists; the skinnier/baggier slider now
+  re-ranks candidates by silhouette-cut proximity (with a confidence floor)
+  instead of remapping a body fit preference. Added a first-class price sort
+  control and generalized "Closest Match/Lower Price/More Stretch/Boot-Friendly"
+  into reusable "Best overall match/Best value/Most similar stretch/Silhouette
+  variant" categories computed by `matchGarments`.
+- Home Fit Passport now computes its four category rows from
+  `matchGarments()` over the live catalog and the active reference item's
+  canonical spec, replacing the hardcoded taxonomy-based selection.
+- Verified live in-browser: onboarding resolves Levi's 501 32x32 to a
+  structured spec with thigh/rise data, Compare and Fit Passport both render
+  dimension-level explanations, and price sort/silhouette re-ranking behave
+  correctly.
+
+### Phase R4 - Seed Data And Dashboard Reframe
+
+- Added per-brand construction-profile deltas (thigh/rise/leg-opening) across
+  all 8 jeans brands so catalog variants carry realistic, deliberately varied
+  construction specs, not just waist/hip.
+- Investor dashboard reframed around dimension-level match accuracy and
+  anchor-based-matching adoption (still clearly labeled synthetic/demo data),
+  with copy emphasizing the two-sided value prop (consumer time-to-fit and
+  retail return-cost reduction).
+
+Deferred:
+
+- Real Shopify/brand size-chart scraping remains out of scope; reference
+  garments are user-input only, matched against fictional seeded brands.
+- Live returns data and a trained ML fit model remain out of scope per the
+  original MVP constraints.

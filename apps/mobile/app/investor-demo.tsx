@@ -6,10 +6,10 @@ import { useDemoStore } from "../stores/useDemoStore";
 import { useThemeTokens } from "../theme/useThemeTokens";
 
 const metrics = [
-  { label: "Estimated returns avoided", value: "38", detail: "Illustrative orders saved" },
-  { label: "Average fit confidence", value: "86%", detail: "Across demo recommendations" },
-  { label: "Onboarding completion", value: "74%", detail: "Synthetic funnel" },
-  { label: "Body-profile completion", value: "68%", detail: "Synthetic funnel" },
+  { label: "Illustrative returns avoided", value: "38", detail: "Via anchor-based matching" },
+  { label: "Avg. dimension-level match accuracy", value: "86%", detail: "Vs. anchor garment construction" },
+  { label: "Anchor-based match adoption", value: "82%", detail: "Sessions using garment_to_garment" },
+  { label: "Reference-item onboarding completion", value: "74%", detail: "Synthetic funnel" },
   { label: "Compare usage", value: "61%", detail: "Sessions opening Best Fit" },
   { label: "Best-fit-card taps", value: "43%", detail: "Compare sessions" },
   { label: "Cart conversion with fit", value: "31%", detail: "Synthetic cohort" },
@@ -39,9 +39,9 @@ export default function InvestorDemoScreen() {
       <View style={styles.heroRow}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.kicker, { color: theme.accent }]}>INVESTOR DASHBOARD</Text>
-          <Text style={[styles.title, { color: theme.text }]}>Rober proves fit confidence before checkout.</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Rober matches garment construction, not guesses from a body.</Text>
           <Text style={[styles.copy, { color: theme.textMuted }]}>
-            The demo tracks onboarding, compare usage, fit-informed checkout, and post-delivery feedback without logging raw body measurements.
+            Anchor-based matching addresses the root cause of size mismatch, garment construction, cutting consumer time-to-perfect-fit and reducing reverse-logistics/return costs for retail brand partners. The demo tracks onboarding, compare usage, fit-informed checkout, and post-delivery feedback without logging raw body measurements.
           </Text>
         </View>
         <FitConfidenceRing confidence={86} size={92} />
