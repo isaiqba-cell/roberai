@@ -89,7 +89,7 @@ describe("fit scoring", () => {
   it("generates grounded explanations", () => {
     const lines = generateFitExplanation(body, goodTop, { chest: 98, shoulder: 91 }, { itemName: "chore overshirt", category: "tops", sizeLabel: "M" }, "M");
     expect(lines.join(" ")).toContain("Recommended in M");
-    expect(lines.join(" ")).toContain("favorite chore overshirt");
+    expect(lines.join(" ")).toContain("saved chore overshirt");
   });
 });
 

@@ -2,8 +2,11 @@ import {
   filterProducts,
   generateDemoCatalog,
   getDemoBrands,
+  findJeansFitMatches,
+  resolveFavoriteJeans,
+  defaultFavoriteJeansInput,
   ProductFilters,
-  ProductRecord
+  ProductRecord,
 } from "@rober/api-client";
 import { ProductCardModel } from "../components/product";
 
@@ -18,22 +21,52 @@ export function getCatalogProduct(id: string) {
   return demoCatalog.find((product) => product.id === id);
 }
 
-export function toProductCard(product: ProductRecord, fitConfidence?: number): ProductCardModel {
+export function toProductCard(
+  product: ProductRecord,
+  fitConfidence?: number,
+): ProductCardModel {
+  const recommendedSize =
+    product.variants.find((variant) => variant.stock > 0)?.sizeLabel ??
+    product.variants[0]?.sizeLabel ??
+    "29x32";
   return {
     id: product.id,
     brand: product.brand.name,
     title: product.title,
     priceCents: product.priceCents,
-    ...(product.compareAtPriceCents ? { compareAtCents: product.compareAtPriceCents } : {}),
+    ...(product.compareAtPriceCents
+      ? { compareAtCents: product.compareAtPriceCents }
+      : {}),
     imageUrl: product.heroImageUrl,
     ...(fitConfidence ? { fitConfidence } : {}),
-    recommendedSize: "M",
-    explanation: `${product.brand.name} ${product.subcategory} normalized from ${product.brand.sizeChartConfidence} chart.`
+    recommendedSize,
+    explanation: `${product.brand.name} ${product.subcategory} normalized from ${product.brand.sizeChartConfidence} chart.`,
   };
 }
 
-export const featuredProducts = demoCatalog.slice(0, 12);
-export const newArrivalProducts = demoCatalog.slice(18, 30);
-export const closetInspiredProducts = demoCatalog.filter((product) =>
-  product.styleTags.some((tag) => ["utility", "denim", "business casual"].includes(tag))
+export const jeansProducts = demoCatalog.filter(
+  (product) => product.subcategory === "jeans",
 );
+export const featuredProducts = [
+  ...jeansProducts,
+].slice(0, 12);
+export const newArrivalProducts = [
+  ...jeansProducts.slice(1),
+].slice(0, 12);
+export const closetInspiredProducts = demoCatalog.filter((product) =>
+  product.styleTags.some((tag) =>
+    [
+      "denim",
+      "straight",
+      "relaxed",
+      "curvy",
+      "utility",
+      "business casual",
+    ].includes(tag),
+  ),
+);
+
+export const demoFavoriteJeans = resolveFavoriteJeans(
+  defaultFavoriteJeansInput,
+);
+export const demoJeansMatches = findJeansFitMatches(defaultFavoriteJeansInput);

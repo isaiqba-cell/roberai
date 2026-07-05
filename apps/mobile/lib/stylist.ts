@@ -39,16 +39,16 @@ export function getGroundedStylistResponse({
       : undefined
   ).slice(0, 4);
   const chips = [
-    parsed.category ? `category: ${parsed.category}` : undefined,
-    ...parsed.colors.map((color) => `color: ${color}`),
-    ...parsed.materials.map((material) => `material: ${material}`),
-    parsed.fitIntent ? `fit: ${parsed.fitIntent}` : undefined,
-    parsed.priceMax ? `under $${parsed.priceMax}` : undefined
+    parsed.category ? formatChipLabel(parsed.category) : undefined,
+    ...parsed.colors.map(formatChipLabel),
+    ...parsed.materials.map(formatChipLabel),
+    parsed.fitIntent ? `${formatChipLabel(parsed.fitIntent)} fit` : undefined,
+    parsed.priceMax ? `Under $${parsed.priceMax}` : undefined
   ].filter((chip): chip is string => Boolean(chip));
 
   if (!products.length) {
     return {
-      text: `I could not find a grounded catalog match for "${query}". Try overshirt, jeans, blazer, knit, boots, or a lower number of constraints.`,
+      text: `I could not find a grounded catalog match for "${query}". Try straight jeans, curvy jeans, relaxed denim, rigid denim, or a lower number of constraints.`,
       products: [],
       parsedChips: chips
     };
@@ -63,4 +63,11 @@ export function getGroundedStylistResponse({
     products,
     parsedChips: chips
   };
+}
+
+function formatChipLabel(value: string) {
+  return value
+    .split(" ")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }

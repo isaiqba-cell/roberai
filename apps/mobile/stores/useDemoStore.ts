@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { BodyProfile, FitPreference } from "@rober/fit-engine";
-import { calculateCartTotals, CartTotals } from "@rober/api-client";
+import {
+  calculateCartTotals,
+  CartTotals,
+  defaultFavoriteJeansInput,
+  resolveFavoriteJeans,
+} from "@rober/api-client";
 
 export type StyleProfile = {
   styleTags: string[];
@@ -78,57 +83,65 @@ export type DemoOrder = {
   totals: CartTotals;
 };
 
+const demoFavoriteJeans = resolveFavoriteJeans(defaultFavoriteJeansInput);
+
 export const demoBodyProfile: BodyProfile = {
   heightCm: 178,
   weightKg: 77,
   chestCm: 101,
-  waistCm: 84,
-  hipCm: 98,
-  inseamCm: 81,
+  waistCm: demoFavoriteJeans.waistCm,
+  hipCm: demoFavoriteJeans.hipCm,
+  inseamCm: demoFavoriteJeans.inseamCm,
   shoulderCm: 46,
   shoeSizeUs: 10.5,
-  fitPreference: "relaxed"
+  fitPreference: "regular",
 };
 
 export const demoStyleProfile: StyleProfile = {
-  styleTags: ["utility", "minimal", "business casual", "weekend"],
+  styleTags: ["denim", "straight", "everyday", "heritage"],
   dislikedTags: ["loud logos"],
-  colorPreferences: ["clay", "olive", "black", "cream", "light blue"],
-  materialPreferences: ["cotton", "denim", "linen", "wool"],
-  occasionPreferences: ["summer office", "weekend errands", "travel"],
-  favoriteBrands: ["Fieldstone Supply Co.", "Northgate Denim", "Alder & Thread"],
+  colorPreferences: ["light blue", "dark wash", "washed black", "medium wash"],
+  materialPreferences: ["denim", "cotton", "stretch denim"],
+  occasionPreferences: ["everyday", "weekend errands", "travel"],
+  favoriteBrands: [
+    "Marlow Denim",
+    "Loom & Line",
+    "Range Standard",
+    "Harbor Denim",
+  ],
   priceMin: 40,
   priceMax: 160,
-  budgetLabel: "Quality under $160"
+  budgetLabel: "Jeans under $160",
 };
 
 export const demoKnownGoodItems: KnownGoodItem[] = [
   {
-    id: "known-overshirt",
-    brand: "Fieldstone Supply Co.",
-    category: "tops",
-    itemName: "Chore overshirt",
-    sizeLabel: "M",
-    fitNotes: "Room through chest, clean shoulder, easy over a tee.",
+    id: "known-favorite-jeans",
+    brand: demoFavoriteJeans.brandName,
+    category: "bottoms",
+    itemName: "Favorite straight jeans",
+    sizeLabel: `${demoFavoriteJeans.sizeLabel}x${Math.round(demoFavoriteJeans.inseamCm / 2.54)}`,
+    fitNotes:
+      "Waist sits clean, no hip pulling, and the inseam breaks once at the shoe.",
     measurements: {
-      chestCm: 106,
-      waistCm: 103,
-      shoulderCm: 47
-    }
+      waistCm: demoFavoriteJeans.waistCm,
+      hipCm: demoFavoriteJeans.hipCm,
+      inseamCm: demoFavoriteJeans.inseamCm,
+    },
   },
   {
     id: "known-regular-jeans",
-    brand: "Northgate Denim",
+    brand: "Loom & Line",
     category: "bottoms",
     itemName: "Regular straight jeans",
-    sizeLabel: "32",
+    sizeLabel: "32x32",
     fitNotes: "True waist, enough thigh room, breaks once at shoe.",
     measurements: {
       waistCm: 86,
       hipCm: 101,
-      inseamCm: 81
-    }
-  }
+      inseamCm: 81,
+    },
+  },
 ];
 
 export const useDemoStore = create<DemoUserState>((set) => ({
@@ -137,7 +150,11 @@ export const useDemoStore = create<DemoUserState>((set) => ({
   bodyProfile: demoBodyProfile,
   styleProfile: demoStyleProfile,
   knownGoodItems: demoKnownGoodItems,
-  savedProductIds: ["fieldstone-overshirt-clay", "northgate-straight-jeans-light-blue", "alder-knit-sweater-cream"],
+  savedProductIds: [
+    "madewell-perfect-vintage-straight",
+    "lee-rider-loose-straight",
+    "ae-curvy-straight",
+  ],
   cartItems: [],
   orders: [
     {
@@ -147,74 +164,95 @@ export const useDemoStore = create<DemoUserState>((set) => ({
       items: [
         {
           id: "order-demo-1007-item-1",
-          productId: "fieldstone-overshirt-clay",
-          variantId: "fieldstone-overshirt-clay-m",
-          sizeLabel: "M",
-          color: "clay",
-          unitPriceCents: 7800,
+          productId: "madewell-perfect-vintage-straight",
+          variantId: "madewell-perfect-vintage-straight-29-32",
+          sizeLabel: "29x32",
+          color: "light blue",
+          unitPriceCents: 13800,
           fitConfidenceWhenAdded: 91,
           quantity: 1,
-          fitFeedback: "true_to_size"
-        }
+          fitFeedback: "true_to_size",
+        },
       ],
-      totals: calculateCartTotals([{ productId: "fieldstone-overshirt-clay", variantId: "fieldstone-overshirt-clay-m", unitPriceCents: 7800, quantity: 1 }], "ROBERFIT")
-    }
+      totals: calculateCartTotals(
+        [
+          {
+            productId: "madewell-perfect-vintage-straight",
+            variantId: "madewell-perfect-vintage-straight-29-32",
+            unitPriceCents: 13800,
+            quantity: 1,
+          },
+        ],
+        "ROBERFIT",
+      ),
+    },
   ],
   setGuestMode: (guestMode) => set({ guestMode }),
   updateBodyProfile: (profile) =>
     set((state) => ({
       bodyProfile: {
         ...state.bodyProfile,
-        ...profile
-      }
+        ...profile,
+      },
     })),
   updateFitPreference: (fitPreference) =>
     set((state) => ({
       bodyProfile: {
         ...state.bodyProfile,
-        fitPreference
-      }
+        fitPreference,
+      },
     })),
   updateStyleProfile: (profile) =>
     set((state) => ({
       styleProfile: {
         ...state.styleProfile,
-        ...profile
-      }
+        ...profile,
+      },
     })),
   addKnownGoodItem: (item) =>
     set((state) => ({
-      knownGoodItems: [item, ...state.knownGoodItems]
+      knownGoodItems: [
+        item,
+        ...state.knownGoodItems.filter((knownItem) => knownItem.id !== item.id),
+      ],
     })),
   toggleSavedProduct: (productId) =>
     set((state) => ({
       savedProductIds: state.savedProductIds.includes(productId)
         ? state.savedProductIds.filter((id) => id !== productId)
-        : [productId, ...state.savedProductIds]
+        : [productId, ...state.savedProductIds],
     })),
   addToCart: (item) =>
     set((state) => {
-      const existing = state.cartItems.find((cartItem) => cartItem.variantId === item.variantId);
+      const existing = state.cartItems.find(
+        (cartItem) => cartItem.variantId === item.variantId,
+      );
       if (existing) {
         return {
           cartItems: state.cartItems.map((cartItem) =>
-            cartItem.variantId === item.variantId ? { ...cartItem, quantity: cartItem.quantity + 1 } : cartItem
-          )
+            cartItem.variantId === item.variantId
+              ? { ...cartItem, quantity: cartItem.quantity + 1 }
+              : cartItem,
+          ),
         };
       }
       return {
-        cartItems: [{ ...item, quantity: 1 }, ...state.cartItems]
+        cartItems: [{ ...item, quantity: 1 }, ...state.cartItems],
       };
     }),
   updateCartQuantity: (variantId, quantity) =>
     set((state) => ({
       cartItems: state.cartItems
-        .map((item) => (item.variantId === variantId ? { ...item, quantity: Math.max(0, quantity) } : item))
-        .filter((item) => item.quantity > 0)
+        .map((item) =>
+          item.variantId === variantId
+            ? { ...item, quantity: Math.max(0, quantity) }
+            : item,
+        )
+        .filter((item) => item.quantity > 0),
     })),
   removeCartItem: (variantId) =>
     set((state) => ({
-      cartItems: state.cartItems.filter((item) => item.variantId !== variantId)
+      cartItems: state.cartItems.filter((item) => item.variantId !== variantId),
     })),
   createOrderFromCart: () => {
     let createdOrder: DemoOrder | undefined;
@@ -223,29 +261,29 @@ export const useDemoStore = create<DemoUserState>((set) => ({
         ? state.cartItems
         : [
             {
-              productId: "fieldstone-overshirt-clay",
-              variantId: "fieldstone-overshirt-clay-m",
-              sizeLabel: "M",
-              color: "clay",
-              unitPriceCents: 7800,
+              productId: "madewell-perfect-vintage-straight",
+              variantId: "madewell-perfect-vintage-straight-29-32",
+              sizeLabel: "29x32",
+              color: "light blue",
+              unitPriceCents: 13800,
               fitConfidenceWhenAdded: 91,
-              quantity: 1
-            }
+              quantity: 1,
+            },
           ];
       const orderItems = items.map((item, index) => ({
         ...item,
-        id: `order-${Date.now()}-item-${index + 1}`
+        id: `order-${Date.now()}-item-${index + 1}`,
       }));
       createdOrder = {
         id: `order-${Date.now()}`,
         status: "paid",
         createdAt: new Date().toISOString(),
         items: orderItems,
-        totals: calculateCartTotals(items, "ROBERFIT")
+        totals: calculateCartTotals(items, "ROBERFIT"),
       };
       return {
         orders: [createdOrder, ...state.orders],
-        cartItems: []
+        cartItems: [],
       };
     });
     if (!createdOrder) {
@@ -257,8 +295,10 @@ export const useDemoStore = create<DemoUserState>((set) => ({
     set((state) => ({
       orders: state.orders.map((order) => ({
         ...order,
-        items: order.items.map((item) => (item.id === orderItemId ? { ...item, fitFeedback: feedback } : item))
-      }))
+        items: order.items.map((item) =>
+          item.id === orderItemId ? { ...item, fitFeedback: feedback } : item,
+        ),
+      })),
     })),
-  completeOnboarding: () => set({ onboardingCompleted: true })
+  completeOnboarding: () => set({ onboardingCompleted: true }),
 }));

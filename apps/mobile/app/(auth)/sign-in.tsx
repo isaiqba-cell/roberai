@@ -12,7 +12,7 @@ export default function SignInScreen() {
 
   return (
     <ScrollView style={[styles.screen, { backgroundColor: theme.bgCanvas }]} contentContainerStyle={styles.content}>
-      <Text style={[styles.logo, { color: theme.text }]}>ROBER AI</Text>
+      <Text style={[styles.logo, { color: theme.text }]}>Rober</Text>
       <Text style={[styles.title, { color: theme.text }]}>Sign in to keep fit memory across brands.</Text>
       <View style={[styles.field, { borderColor: theme.border, backgroundColor: theme.surface }]}>
         <Mail size={18} color={theme.textMuted} />

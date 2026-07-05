@@ -18,7 +18,7 @@ export default function ProfileScreen() {
         <Text style={[styles.copy, { color: theme.textMuted }]}>
           Height 178 cm, chest 101 cm, waist 84 cm, hip 98 cm, shoulder 46 cm. Measurements stay out of analytics.
         </Text>
-        <SimilarToFavoriteItemChip label="Fieldstone chore overshirt" />
+        <SimilarToFavoriteItemChip label="Favorite straight jeans" />
       </View>
       <Link href="/(onboarding)/body-profile" asChild>
         <AppButton variant="secondary">Edit body profile</AppButton>

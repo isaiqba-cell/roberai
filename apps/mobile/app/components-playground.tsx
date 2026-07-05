@@ -33,15 +33,15 @@ import { useThemeTokens } from "../theme/useThemeTokens";
 import { Heart } from "lucide-react-native";
 
 const product = {
-  id: "fieldstone-overshirt-clay",
-  brand: "Fieldstone Supply Co.",
-  title: "Washed Cotton Utility Overshirt",
-  priceCents: 7800,
-  compareAtCents: 9800,
-  imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
+  id: "madewell-perfect-vintage-straight",
+  brand: "Marlow Denim",
+  title: "Perfect Vintage Straight Jean",
+  priceCents: 13800,
+  compareAtCents: 16200,
+  imageUrl: "/images/jeans/apc-elisabeth.webp",
   fitConfidence: 91,
-  recommendedSize: "M",
-  explanation: "Chest and shoulder range align with your known-good overshirt."
+  recommendedSize: "29x32",
+  explanation: "Waist, hip, and inseam align with your favorite jeans."
 };
 
 export default function ComponentsPlayground() {
@@ -59,7 +59,7 @@ export default function ComponentsPlayground() {
       <View style={styles.row}>
         <Chip label="Slim" selected />
         <Chip label="Regular" />
-        <BrandPill label="Fieldstone" selected />
+        <BrandPill label="Marlow Denim" selected />
       </View>
       <View style={styles.categoryRow}>
         <CategoryTile title="Men" subtitle="Outerwear" tone="men" />
@@ -72,16 +72,16 @@ export default function ComponentsPlayground() {
       <PromoCodeRow />
       <AddressCard />
       <SectionHeader kicker="Fit UI" title="Fit intelligence" />
-      <RecommendedSizeCard sizeLabel="M" confidence={91} />
+      <RecommendedSizeCard sizeLabel="29x32" confidence={91} />
       <FitConfidenceBadge confidence={91} />
       <FitScorePill confidence={73} />
-      <SizeChipWithFitScore size="M" confidence={91} selected />
+      <SizeChipWithFitScore size="29x32" confidence={91} selected />
       <FitExplanationCard
         lines={[
-          "Recommended in M",
-          "Chest range matches your profile",
+          "Recommended in 29x32",
+          "Waist range matches your profile",
           "Relaxed cut matches your preference",
-          "Similar to your favorite overshirt"
+          "Similar to your saved straight jeans"
         ]}
       />
       <FitDimensionBreakdown scores={{ chest: 94, shoulder: 88, waist: 80 }} />

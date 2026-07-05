@@ -39,7 +39,7 @@ export default function InvestorDemoScreen() {
       <View style={styles.heroRow}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.kicker, { color: theme.accent }]}>INVESTOR DASHBOARD</Text>
-          <Text style={[styles.title, { color: theme.text }]}>ROBER AI proves fit confidence before checkout.</Text>
+          <Text style={[styles.title, { color: theme.text }]}>Rober proves fit confidence before checkout.</Text>
           <Text style={[styles.copy, { color: theme.textMuted }]}>
             The demo tracks onboarding, compare usage, fit-informed checkout, and post-delivery feedback without logging raw body measurements.
           </Text>

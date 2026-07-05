@@ -1,8 +1,8 @@
-# ROBER AI
+# Rober
 
-ROBER AI is an investor-demo MVP for "One Stop, Perfect Fit": a mobile-first, cross-brand fashion shopping app that normalizes size charts against a shopper's body profile, fit preferences, and known-good garments.
+Rober is an investor-demo MVP for "One Stop, Perfect Fit": a mobile-first, cross-brand jeans shopping app that normalizes size charts against a shopper's body profile, fit preferences, and known-good denim.
 
-This repo is structured as a production-minded Expo monorepo with a pure TypeScript fit engine, seeded fictional catalog, Supabase schema and edge-function stubs, mockable AI/search/checkout providers, and a polished mobile/web demo path.
+This repo is structured as a production-minded Expo monorepo with a pure TypeScript fit engine, seeded fictional jeans catalog, Supabase schema and edge-function stubs, mockable AI/search/checkout providers, and a polished iPhone-style mobile/web demo path.
 
 ## Quick Start
 
@@ -32,6 +32,7 @@ npm run lint         # Workspace lint/type guard
 npm run typecheck    # Strict TypeScript
 npm run test         # Unit tests
 npm run seed         # Generate demo catalog artifact
+npm run seed:jeans   # Generate jeans size-chart database artifact
 ```
 
 Supabase migrations live in `supabase/migrations`. Configure the Supabase CLI, then run the command printed by `npm run supabase:migrate`.
@@ -41,7 +42,7 @@ Supabase migrations live in `supabase/migrations`. Configure the Supabase CLI, t
 - Main app: `/`
 - Compare / Best Fit Finder: `/compare`
 - AI Stylist: `/stylist`
-- Product detail: `/product/fieldstone-overshirt-clay`
+- Product detail: `/product/madewell-perfect-vintage-straight`
 - Checkout: `/checkout`
 - Orders: `/orders`
 - Investor dashboard: `/investor-demo`
@@ -50,16 +51,16 @@ Supabase migrations live in `supabase/migrations`. Configure the Supabase CLI, t
 
 ## Five-Minute Demo Script
 
-1. Open `/` and start the demo from the ROBER AI welcome screen.
-2. Browse as guest or run the body/style onboarding flow.
-3. Open Home and point out the fit profile summary and ranked "Best Fit for You" rail.
-4. Open `/compare`, search "olive cotton overshirt under $100 relaxed", and show the highlighted best-fit card, recommended size, confidence, slider controls, and alternatives.
-5. Open the PDP, show dimension reasoning, size chips with per-size fit scores, and add to bag.
-6. Complete checkout with the mock Stripe test-mode fallback.
-7. Open Orders and submit "Did it fit?" feedback.
-8. Open Stylist and ask for "business casual shirts for summer"; recommendations are grounded in catalog and fit-score lookups.
-9. Open `/investor-demo` and call out that all impact metrics are synthetic demo data.
-10. Open `/admin` to show the size-chart normalization review path.
+1. Open `/` and start from the Rober welcome screen.
+2. Choose "I have a favorite pair of jeans" and enter a brand, size, and fit note.
+3. Review the estimated waist, hip, and inseam profile, then build recommendations.
+4. Open Home and point out the favorite-jeans baseline, indexed brands, and ranked jeans across price points.
+5. Open `/compare`, search "straight denim jeans under $150", and show the highlighted best-fit card, recommended size, confidence, slider controls, and alternatives.
+6. Open the PDP, show distinct gallery images, dimension reasoning, size chips with per-size fit scores, and add to bag.
+7. Complete checkout with the mock Stripe test-mode fallback.
+8. Open Orders and submit "Did it fit?" feedback.
+9. Open Stylist and ask for "curvy jeans under $100"; recommendations are grounded in catalog and fit-score lookups.
+10. Open `/investor-demo` and call out that all impact metrics are synthetic demo data.
 
 ## External Services
 
@@ -93,9 +94,10 @@ Edge function stubs live in `supabase/functions/*` and are designed to be replac
 
 ```bash
 npm run seed
+npm run seed:jeans
 ```
 
-This writes `supabase/seed/demo-catalog.json` with 96 products across 8 fictional brands. The catalog intentionally varies size charts across brands.
+`npm run seed:jeans` writes `supabase/seed/jeans-size-chart-database.json` with normalized jeans size-chart rows and cross-brand recommendations. The in-app catalog uses fictional display brands such as Marlow Denim, Loom & Line, Range Standard, Harbor Denim, and Alder Curve. Source size charts are used as benchmark inputs only; the demo does not claim retailer partnerships. Product imagery is supplied denim packshot placeholder imagery stored under `apps/mobile/public/images/jeans`.
 
 ## Stripe Test Mode
 
@@ -139,7 +141,7 @@ Unit tests cover exact matches, too-small/too-large garments, stretch tolerance,
 - Add Stripe test PaymentSheet and signed webhooks.
 - Add authenticated admin role checks and service-role catalog writes.
 - Add production push notification delivery and feature flags.
-- Replace placeholder product imagery with owned/generated catalog imagery.
+- Replace supplied placeholder product imagery with owned or fully licensed catalog imagery before production.
 
 ## Synthetic Metrics
 

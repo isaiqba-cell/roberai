@@ -13,3 +13,4 @@ export function getApiMode(config: ApiClientConfig): ApiMode {
 export * from "./catalog";
 export * from "./checkout";
 export * from "./ingestion";
+export * from "./jeans";

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "expo-router";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ArrowLeft, Send, Sparkles } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { AppButton, Chip, IconButton, SectionHeader } from "../components/primitives";
 import { FitExplanationCard } from "../components/fit";
 import { ProductRail } from "../components/product";
@@ -18,7 +19,8 @@ type ChatTurn = {
 
 export default function StylistScreen() {
   const theme = useThemeTokens();
-  const [draft, setDraft] = useState("business casual shirts for summer");
+  const insets = useSafeAreaInsets();
+  const [draft, setDraft] = useState("straight denim jeans under $150");
   const body = useDemoStore((state) => state.bodyProfile);
   const style = useDemoStore((state) => state.styleProfile);
   const favoriteItems = useDemoStore((state) => state.knownGoodItems);
@@ -47,7 +49,12 @@ export default function StylistScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.bgCanvas }]}>
-      <ScrollView contentContainerStyle={styles.content}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + 30, paddingBottom: insets.bottom + 128 },
+        ]}
+      >
         <View style={styles.topbar}>
           <Link href="/(tabs)/home" asChild>
             <IconButton accessibilityLabel="Back to home">
@@ -60,7 +67,7 @@ export default function StylistScreen() {
           <Sparkles size={24} color={theme.accent} />
           <Text style={[styles.title, { color: theme.text }]}>Grounded recommendations, not fashion fan fiction.</Text>
           <Text style={[styles.copy, { color: theme.textMuted }]}>
-            The stylist calls search and fit-score tools over the real demo catalog. If profile data is missing, confidence drops.
+            The stylist calls search and fit-score tools over the jeans catalog. If profile data is missing, confidence drops.
           </Text>
         </View>
 
@@ -98,12 +105,21 @@ export default function StylistScreen() {
         ))}
       </ScrollView>
 
-      <View style={[styles.composer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <View
+        style={[
+          styles.composer,
+          {
+            backgroundColor: theme.surface,
+            borderColor: theme.border,
+            paddingBottom: insets.bottom + 8,
+          },
+        ]}
+      >
         <TextInput
           accessibilityLabel="Message stylist"
           value={draft}
           onChangeText={setDraft}
-          placeholder="black boots that fit wide feet"
+          placeholder="curvy jeans under $100"
           placeholderTextColor={theme.textMuted}
           style={[styles.input, { color: theme.text }]}
           onSubmitEditing={submit}
@@ -122,8 +138,6 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
-    paddingTop: 60,
-    paddingBottom: 120,
     gap: 18
   },
   topbar: {
@@ -171,7 +185,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 16,
     right: 16,
-    bottom: 18,
+    bottom: 12,
     borderWidth: 1,
     borderRadius: 999,
     padding: 8,

@@ -160,7 +160,10 @@ export function generateFitExplanation(
     lines.push("Rigid fabric keeps tolerance tighter");
   }
   if (favoriteReferenceItem) {
-    lines.push(`Similar fit profile to your favorite ${favoriteReferenceItem.itemName}`);
+    const savedItemName = favoriteReferenceItem.itemName
+      .replace(/^(favorite|saved)\s+/i, "")
+      .trim();
+    lines.push(`Similar fit profile to your saved ${savedItemName}`);
   }
   if (!lines.length) {
     lines.push("Complete more measurements to improve confidence");

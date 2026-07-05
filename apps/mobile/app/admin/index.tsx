@@ -71,7 +71,7 @@ export default function AdminScreen() {
 
       <SectionHeader kicker="Inspect" title="Recommendation score" />
       <View style={[styles.inspector, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-        <Text style={[styles.size, { color: theme.text }]}>Fieldstone overshirt / Variant M</Text>
+        <Text style={[styles.size, { color: theme.text }]}>Marlow Denim straight jean / Variant 29x32</Text>
         <View style={styles.row}>
           <FitScorePill confidence={91} />
           <Chip label="style 88" selected />

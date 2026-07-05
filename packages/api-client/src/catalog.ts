@@ -1,4 +1,5 @@
 import { CanonicalGarmentSpec, GarmentCut } from "@rober/fit-engine";
+import { generateJeansCatalogProducts, jeansBrands } from "./jeans";
 
 export type BrandRecord = {
   id: string;
@@ -8,7 +9,8 @@ export type BrandRecord = {
   sizeChartConfidence: "verified" | "ai_normalized" | "unverified";
 };
 
-export type ProductCategory = "tops" | "bottoms" | "outerwear" | "dresses" | "shoes" | "accessories";
+export type ProductCategory =
+  "tops" | "bottoms" | "outerwear" | "dresses" | "shoes" | "accessories";
 
 export type ProductVariantRecord = {
   id: string;
@@ -37,10 +39,15 @@ export type ProductRecord = {
   compareAtPriceCents?: number;
   currency: "USD";
   heroImageUrl: string;
+  galleryImageUrls?: string[];
   rating: number;
   reviewCount: number;
   variants: ProductVariantRecord[];
   createdAt: string;
+  sizeChartSourceUrl?: string;
+  sizeChartSourceName?: string;
+  sourceDataQuality?:
+    "scraped_official" | "fit_model_normalized" | "seeded_synthetic";
 };
 
 export type ProductFilters = {
@@ -56,6 +63,28 @@ export type ProductFilters = {
   priceMax?: number;
   sizeAvailabilityRequired?: boolean;
 };
+
+const queryStopWords = new Set([
+  "and",
+  "are",
+  "between",
+  "every",
+  "favorite",
+  "fit",
+  "fits",
+  "for",
+  "from",
+  "jean",
+  "jeans",
+  "like",
+  "matching",
+  "pair",
+  "that",
+  "the",
+  "under",
+  "with",
+  "your",
+]);
 
 type ProductArchetype = {
   slug: string;
@@ -78,57 +107,57 @@ const brands: BrandRecord[] = [
     name: "Fieldstone Supply Co.",
     slug: "fieldstone",
     positioning: "Warm utility basics with verified charts.",
-    sizeChartConfidence: "verified"
+    sizeChartConfidence: "verified",
   },
   {
     id: "brand-northgate",
     name: "Northgate Denim",
     slug: "northgate",
     positioning: "Rigid denim and clean western shirting.",
-    sizeChartConfidence: "verified"
+    sizeChartConfidence: "verified",
   },
   {
     id: "brand-wescott",
     name: "Wescott & Vale",
     slug: "wescott",
     positioning: "Soft office tailoring with generous shoulders.",
-    sizeChartConfidence: "ai_normalized"
+    sizeChartConfidence: "ai_normalized",
   },
   {
     id: "brand-alder",
     name: "Alder & Thread",
     slug: "alder",
     positioning: "Natural fibers and relaxed weekend shapes.",
-    sizeChartConfidence: "verified"
+    sizeChartConfidence: "verified",
   },
   {
     id: "brand-marlowe",
     name: "Marlowe Studio",
     slug: "marlowe",
     positioning: "Design-forward silhouettes with cropped proportions.",
-    sizeChartConfidence: "ai_normalized"
+    sizeChartConfidence: "ai_normalized",
   },
   {
     id: "brand-finch",
     name: "Finch Athletics",
     slug: "finch",
     positioning: "Performance stretch pieces for wide motion ranges.",
-    sizeChartConfidence: "verified"
+    sizeChartConfidence: "verified",
   },
   {
     id: "brand-rowan",
     name: "Rowan Utility",
     slug: "rowan",
     positioning: "Workwear-inspired layers with roomy ease.",
-    sizeChartConfidence: "unverified"
+    sizeChartConfidence: "unverified",
   },
   {
     id: "brand-harbor",
     name: "Harbor Knitworks",
     slug: "harbor",
     positioning: "Soft knits, warm neutrals, and textured staples.",
-    sizeChartConfidence: "ai_normalized"
-  }
+    sizeChartConfidence: "ai_normalized",
+  },
 ];
 
 const archetypes: ProductArchetype[] = [
@@ -144,7 +173,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 7800,
     cut: "relaxed",
     stretchPct: 2,
-    imageUrl: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "denim-shirt",
@@ -158,7 +188,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 8800,
     cut: "regular",
     stretchPct: 1,
-    imageUrl: "https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1523398002811-999ca8dec234?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "linen-shirt",
@@ -172,7 +203,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 9200,
     cut: "regular",
     stretchPct: 2,
-    imageUrl: "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "straight-jeans",
@@ -186,7 +218,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 11800,
     cut: "regular",
     stretchPct: 1,
-    imageUrl: "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "wide-chino",
@@ -200,7 +233,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 9600,
     cut: "relaxed",
     stretchPct: 3,
-    imageUrl: "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "knit-sweater",
@@ -214,7 +248,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 7400,
     cut: "oversized",
     stretchPct: 8,
-    imageUrl: "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1434389677669-e08b4cac3105?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "summer-blazer",
@@ -228,7 +263,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 16800,
     cut: "regular",
     stretchPct: 2,
-    imageUrl: "https://images.unsplash.com/photo-1507680434567-5739c80be1ac?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1507680434567-5739c80be1ac?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "rain-shell",
@@ -242,7 +278,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 13800,
     cut: "relaxed",
     stretchPct: 4,
-    imageUrl: "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "rib-dress",
@@ -256,7 +293,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 11200,
     cut: "slim",
     stretchPct: 12,
-    imageUrl: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "wide-boot",
@@ -270,7 +308,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 18400,
     cut: "regular",
     stretchPct: 0,
-    imageUrl: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "jogger",
@@ -284,7 +323,8 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 8200,
     cut: "relaxed",
     stretchPct: 10,
-    imageUrl: "https://images.unsplash.com/photo-1506629905607-d405b7a30db9?auto=format&fit=crop&w=900&q=80"
+    imageUrl:
+      "https://images.unsplash.com/photo-1506629905607-d405b7a30db9?auto=format&fit=crop&w=900&q=80",
   },
   {
     slug: "belt-bag",
@@ -298,8 +338,9 @@ const archetypes: ProductArchetype[] = [
     basePriceCents: 5800,
     cut: "regular",
     stretchPct: 0,
-    imageUrl: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80"
-  }
+    imageUrl:
+      "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=80",
+  },
 ];
 
 const brandSizeOffsets: Record<string, number> = {
@@ -310,49 +351,71 @@ const brandSizeOffsets: Record<string, number> = {
   marlowe: -3,
   finch: 1,
   rowan: 6,
-  harbor: 5
+  harbor: 5,
 };
 
 const createdAt = "2026-07-04T00:00:00.000Z";
 
 export function getDemoBrands(): BrandRecord[] {
-  return brands;
+  return jeansBrands;
 }
 
 export function generateDemoCatalog(): ProductRecord[] {
-  return brands.flatMap((brand, brandIndex) =>
-    archetypes.map((archetype, archetypeIndex) => {
-      const color = archetype.colors[(brandIndex + archetypeIndex) % archetype.colors.length] ?? archetype.colors[0] ?? "black";
-      const brandShortName = brand.name.split(" ")[0] ?? brand.name;
-      const id = `${brand.slug}-${archetype.slug}-${slugify(color)}`;
-      const priceCents = archetype.basePriceCents + brandIndex * 450 + (archetypeIndex % 3) * 600;
-      return {
-        id,
-        merchantName: `${brand.name} Direct`,
-        brand,
-        title: `${brandShortName} ${archetype.title}`,
-        description: `${brand.positioning} This ${archetype.subcategory} is normalized into Rober's canonical fit model for cross-brand comparison.`,
-        category: archetype.category,
-        subcategory: archetype.subcategory,
-        material: archetype.material,
-        colors: [color],
-        styleTags: archetype.styleTags,
-        fitTags: archetype.fitTags,
-        priceCents,
-        ...(archetypeIndex % 4 === 0 ? { compareAtPriceCents: priceCents + 2200 } : {}),
-        currency: "USD",
-        heroImageUrl: archetype.imageUrl,
-        rating: 4.2 + ((brandIndex + archetypeIndex) % 7) / 10,
-        reviewCount: 38 + brandIndex * 18 + archetypeIndex * 7,
-        variants: buildVariants(id, brand.slug, color, priceCents, archetype),
-        createdAt
-      };
-    })
-  );
+  return generateJeansCatalogProducts();
 }
 
-export function filterProducts(products: ProductRecord[], filters: ProductFilters): ProductRecord[] {
+function generateSyntheticCatalog(): ProductRecord[] {
+  const syntheticProducts: ProductRecord[] = brands.flatMap(
+    (brand, brandIndex) =>
+      archetypes.map((archetype, archetypeIndex) => {
+        const color =
+          archetype.colors[
+            (brandIndex + archetypeIndex) % archetype.colors.length
+          ] ??
+          archetype.colors[0] ??
+          "black";
+        const brandShortName = brand.name.split(" ")[0] ?? brand.name;
+        const id = `${brand.slug}-${archetype.slug}-${slugify(color)}`;
+        const priceCents =
+          archetype.basePriceCents +
+          brandIndex * 450 +
+          (archetypeIndex % 3) * 600;
+        return {
+          id,
+          merchantName: `${brand.name} Direct`,
+          brand,
+          title: `${brandShortName} ${archetype.title}`,
+          description: `${brand.positioning} This ${archetype.subcategory} is normalized into Rober's canonical fit model for cross-brand comparison.`,
+          category: archetype.category,
+          subcategory: archetype.subcategory,
+          material: archetype.material,
+          colors: [color],
+          styleTags: archetype.styleTags,
+          fitTags: archetype.fitTags,
+          priceCents,
+          ...(archetypeIndex % 4 === 0
+            ? { compareAtPriceCents: priceCents + 2200 }
+            : {}),
+          currency: "USD",
+          heroImageUrl: archetype.imageUrl,
+          rating: 4.2 + ((brandIndex + archetypeIndex) % 7) / 10,
+          reviewCount: 38 + brandIndex * 18 + archetypeIndex * 7,
+          variants: buildVariants(id, brand.slug, color, priceCents, archetype),
+          createdAt,
+        };
+      }),
+  );
+  return syntheticProducts;
+}
+
+export function filterProducts(
+  products: ProductRecord[],
+  filters: ProductFilters,
+): ProductRecord[] {
   const normalizedQuery = filters.query?.trim().toLowerCase();
+  const queryTokens = normalizedQuery
+    ?.split(/[^a-z0-9]+/)
+    .filter((token) => token.length > 2 && !queryStopWords.has(token));
   return products.filter((product) => {
     const searchable = [
       product.title,
@@ -362,23 +425,41 @@ export function filterProducts(products: ProductRecord[], filters: ProductFilter
       product.material,
       product.colors.join(" "),
       product.styleTags.join(" "),
-      product.fitTags.join(" ")
+      product.fitTags.join(" "),
     ]
       .join(" ")
       .toLowerCase();
-    const matchesQuery = !normalizedQuery || searchable.includes(normalizedQuery);
-    const matchesCategory = !filters.category || product.category === filters.category;
-    const matchesSubcategory = !filters.subcategory || product.subcategory === filters.subcategory;
-    const matchesColor = !filters.colors?.length || product.colors.some((color) => filters.colors?.includes(color));
+    const matchesQuery =
+      !queryTokens?.length ||
+      queryTokens.every((token) => searchable.includes(token));
+    const matchesCategory =
+      !filters.category || product.category === filters.category;
+    const matchesSubcategory =
+      !filters.subcategory || product.subcategory === filters.subcategory;
+    const matchesColor =
+      !filters.colors?.length ||
+      product.colors.some((color) => filters.colors?.includes(color));
     const matchesMaterial =
-      !filters.materials?.length || filters.materials.some((material) => product.material.includes(material));
-    const matchesBrand = !filters.brands?.length || filters.brands.includes(product.brand.slug);
+      !filters.materials?.length ||
+      filters.materials.some((material) => product.material.includes(material));
+    const matchesBrand =
+      !filters.brands?.length || filters.brands.includes(product.brand.slug);
     const matchesStyle =
-      !filters.styleTags?.length || filters.styleTags.some((tag) => product.styleTags.includes(tag) || product.fitTags.includes(tag));
-    const matchesPriceMin = !filters.priceMin || product.priceCents >= filters.priceMin * 100;
-    const matchesPriceMax = !filters.priceMax || product.priceCents <= filters.priceMax * 100;
-    const matchesFit = !filters.fit || product.variants.some((variant) => variant.spec.cut === filters.fit);
-    const matchesAvailability = !filters.sizeAvailabilityRequired || product.variants.some((variant) => variant.stock > 0);
+      !filters.styleTags?.length ||
+      filters.styleTags.some(
+        (tag) =>
+          product.styleTags.includes(tag) || product.fitTags.includes(tag),
+      );
+    const matchesPriceMin =
+      !filters.priceMin || product.priceCents >= filters.priceMin * 100;
+    const matchesPriceMax =
+      !filters.priceMax || product.priceCents <= filters.priceMax * 100;
+    const matchesFit =
+      !filters.fit ||
+      product.variants.some((variant) => variant.spec.cut === filters.fit);
+    const matchesAvailability =
+      !filters.sizeAvailabilityRequired ||
+      product.variants.some((variant) => variant.stock > 0);
 
     return (
       matchesQuery &&
@@ -405,7 +486,7 @@ function buildVariants(
   brandSlug: string,
   color: string,
   priceCents: number,
-  archetype: ProductArchetype
+  archetype: ProductArchetype,
 ): ProductVariantRecord[] {
   const offset = brandSizeOffsets[brandSlug] ?? 0;
   if (archetype.category === "shoes") {
@@ -420,12 +501,15 @@ function buildVariants(
       spec: {
         shoeSizeUs: size,
         stretchPct: archetype.stretchPct,
-        cut: archetype.cut
-      }
+        cut: archetype.cut,
+      },
     }));
   }
 
-  const sizeLabels = archetype.category === "bottoms" ? ["28", "30", "32", "34", "36", "38"] : ["XS", "S", "M", "L", "XL", "XXL"];
+  const sizeLabels =
+    archetype.category === "bottoms"
+      ? ["28", "30", "32", "34", "36", "38"]
+      : ["XS", "S", "M", "L", "XL", "XXL"];
   return sizeLabels.map((sizeLabel, index) => ({
     id: `${productId}-${sizeLabel.toLowerCase()}`,
     productId,
@@ -434,11 +518,16 @@ function buildVariants(
     sku: `${productId}-${sizeLabel}`,
     stock: index === 0 && brandSlug === "marlowe" ? 0 : 22 + index * 5,
     priceCents,
-    spec: specForSize(archetype, sizeLabel, index, offset)
+    spec: specForSize(archetype, sizeLabel, index, offset),
   }));
 }
 
-function specForSize(archetype: ProductArchetype, sizeLabel: string, index: number, offset: number): CanonicalGarmentSpec {
+function specForSize(
+  archetype: ProductArchetype,
+  sizeLabel: string,
+  index: number,
+  offset: number,
+): CanonicalGarmentSpec {
   if (archetype.category === "bottoms") {
     const waist = Number(sizeLabel) * 2.54;
     const hip = waist + 15 + offset * 0.6;
@@ -449,7 +538,7 @@ function specForSize(archetype: ProductArchetype, sizeLabel: string, index: numb
       hipMaxCm: round(hip + 3),
       inseamCm: index % 2 === 0 ? 81 : 83,
       stretchPct: archetype.stretchPct,
-      cut: archetype.cut
+      cut: archetype.cut,
     };
   }
 
@@ -458,13 +547,18 @@ function specForSize(archetype: ProductArchetype, sizeLabel: string, index: numb
       waistMinCm: 62,
       waistMaxCm: 126,
       stretchPct: archetype.stretchPct,
-      cut: archetype.cut
+      cut: archetype.cut,
     };
   }
 
   const baseChest = 84 + index * 8 + offset;
   const baseWaist = 78 + index * 7 + offset * 0.7;
-  const ease = archetype.category === "outerwear" ? 6 : archetype.cut === "oversized" ? 8 : 3;
+  const ease =
+    archetype.category === "outerwear"
+      ? 6
+      : archetype.cut === "oversized"
+        ? 8
+        : 3;
   const spec: CanonicalGarmentSpec = {
     chestMinCm: round(baseChest + ease),
     chestMaxCm: round(baseChest + ease + 6),
@@ -472,7 +566,7 @@ function specForSize(archetype: ProductArchetype, sizeLabel: string, index: numb
     waistMaxCm: round(baseWaist + ease + 7),
     shoulderCm: round(39 + index * 2 + offset * 0.2),
     stretchPct: archetype.stretchPct,
-    cut: archetype.cut
+    cut: archetype.cut,
   };
   if (archetype.category === "dresses") {
     spec.hipMinCm = round(baseWaist + 8);
@@ -486,5 +580,8 @@ function round(value: number) {
 }
 
 function slugify(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }

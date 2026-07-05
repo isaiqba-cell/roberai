@@ -40,6 +40,6 @@ export function routeFromNotificationPayload(payload: RoberNotificationPayload) 
 export function mockNotificationPayload(): RoberNotificationPayload {
   return {
     type: "product",
-    productId: "fieldstone-overshirt-clay"
+    productId: "madewell-perfect-vintage-straight"
   };
 }

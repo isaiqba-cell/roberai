@@ -19,7 +19,13 @@ export type ProductCardModel = {
   explanation?: string;
 };
 
-export function ProductCard({ product, elevated }: { product: ProductCardModel; elevated?: boolean }) {
+export function ProductCard({
+  product,
+  elevated,
+}: {
+  product: ProductCardModel;
+  elevated?: boolean;
+}) {
   const theme = useThemeTokens();
   return (
     <Link href={`/product/${product.id}`} asChild>
@@ -30,37 +36,49 @@ export function ProductCard({ product, elevated }: { product: ProductCardModel; 
           styles.card,
           {
             backgroundColor: theme.surface,
-            borderColor: elevated ? theme.accent : theme.border,
+            borderColor: elevated ? theme.accent : theme.surface,
             opacity: pressed ? 0.88 : 1,
-            shadowOpacity: elevated ? 0.18 : 0.06
-          }
+            shadowOpacity: elevated ? 0.18 : 0.09,
+          },
         ]}
       >
         <View style={styles.imageWrap}>
           <Image
             source={{ uri: product.imageUrl }}
             style={styles.image}
-            contentFit="cover"
+            contentFit="contain"
             transition={180}
             placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
             accessibilityLabel={`${product.title} product image`}
           />
           <View style={styles.heartWrap}>
-            <IconButton accessibilityLabel={`Save ${product.title}`} style={styles.heartButton}>
+            <IconButton
+              accessibilityLabel={`Save ${product.title}`}
+              style={styles.heartButton}
+            >
               <Heart size={18} color={theme.text} />
             </IconButton>
           </View>
         </View>
         <View style={styles.body}>
-          <Text style={[styles.brand, { color: theme.textMuted }]}>{product.brand}</Text>
+          <Text
+            numberOfLines={1}
+            style={[styles.brand, { color: theme.textMuted }]}
+          >
+            {product.brand}
+          </Text>
           <Text numberOfLines={2} style={[styles.title, { color: theme.text }]}>
             {product.title}
           </Text>
           <Price
             cents={product.priceCents}
-            {...(product.compareAtCents ? { compareAtCents: product.compareAtCents } : {})}
+            {...(product.compareAtCents
+              ? { compareAtCents: product.compareAtCents }
+              : {})}
           />
-          {product.fitConfidence ? <FitConfidenceBadge confidence={product.fitConfidence} /> : null}
+          {product.fitConfidence ? (
+            <FitConfidenceBadge confidence={product.fitConfidence} />
+          ) : null}
         </View>
       </Pressable>
     </Link>
@@ -86,7 +104,12 @@ export function ProductRail({ products }: { products: ProductCardModel[] }) {
       horizontal
       keyExtractor={(item) => item.id}
       renderItem={({ item, index }) => (
-        <View style={{ width: 214, marginRight: index === products.length - 1 ? 0 : 14 }}>
+        <View
+          style={{
+            width: 186,
+            marginRight: index === products.length - 1 ? 0 : 14,
+          }}
+        >
           <ProductCard product={item} elevated={index === 0} />
         </View>
       )}
@@ -97,23 +120,43 @@ export function ProductRail({ products }: { products: ProductCardModel[] }) {
 
 export function CompareBrandCard({
   product,
-  best
+  best,
 }: {
   product: ProductCardModel;
   best?: boolean;
 }) {
   const theme = useThemeTokens();
   return (
-    <View style={[styles.compareCard, { backgroundColor: theme.surface, borderColor: best ? theme.accent : theme.border }]}>
-      {best ? <Text style={[styles.bestKicker, { color: theme.accent }]}>Best Fit for You</Text> : null}
+    <View
+      style={[
+        styles.compareCard,
+        {
+          backgroundColor: theme.surface,
+          borderColor: best ? theme.accent : theme.border,
+        },
+      ]}
+    >
+      {best ? (
+        <Text style={[styles.bestKicker, { color: theme.accent }]}>
+          Best Fit for You
+        </Text>
+      ) : null}
       <ProductCard product={product} {...(best ? { elevated: true } : {})} />
       <View style={styles.compareFooter}>
-        {product.fitConfidence ? <FitScorePill confidence={product.fitConfidence} /> : null}
-        {product.recommendedSize ? (
-          <Text style={[styles.recommendedSize, { color: theme.text }]}>Recommended size {product.recommendedSize}</Text>
+        {product.fitConfidence ? (
+          <FitScorePill confidence={product.fitConfidence} />
         ) : null}
-        <Text style={[styles.compareExplanation, { color: theme.textMuted }]} numberOfLines={2}>
-          {product.explanation ?? "Normalized size chart is ready for comparison."}
+        {product.recommendedSize ? (
+          <Text style={[styles.recommendedSize, { color: theme.text }]}>
+            Recommended size {product.recommendedSize}
+          </Text>
+        ) : null}
+        <Text
+          style={[styles.compareExplanation, { color: theme.textMuted }]}
+          numberOfLines={2}
+        >
+          {product.explanation ??
+            "Normalized size chart is ready for comparison."}
         </Text>
       </View>
     </View>
@@ -127,74 +170,78 @@ export function BestFitCompareCard({ product }: { product: ProductCardModel }) {
 const styles = StyleSheet.create({
   card: {
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 18,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowRadius: 16,
+    shadowColor: "#6F3328",
+    shadowRadius: 18,
     shadowOffset: { width: 0, height: 10 },
-    elevation: 2
+    elevation: 2,
   },
   imageWrap: {
-    aspectRatio: 0.82,
+    aspectRatio: 1.3,
     position: "relative",
-    backgroundColor: "#F4EEE9"
+    backgroundColor: "#F8FAFC",
+    margin: 8,
+    borderRadius: 14,
+    overflow: "hidden",
   },
   image: {
     height: "100%",
-    width: "100%"
+    width: "100%",
   },
   heartWrap: {
     position: "absolute",
-    top: 10,
-    right: 10
+    top: 8,
+    right: 8,
   },
   heartButton: {
-    minHeight: 38,
-    minWidth: 38
+    minHeight: 36,
+    minWidth: 36,
   },
   body: {
-    padding: 12,
-    gap: 8
+    paddingHorizontal: 12,
+    paddingBottom: 13,
+    gap: 5,
   },
   brand: {
     fontSize: 11,
     fontWeight: "900",
     letterSpacing: 0.7,
-    textTransform: "uppercase"
+    textTransform: "uppercase",
   },
   title: {
-    minHeight: 40,
-    fontSize: 15,
-    fontWeight: "800",
-    lineHeight: 20
+    minHeight: 38,
+    fontSize: 14,
+    fontWeight: "700",
+    lineHeight: 19,
   },
   gridContent: {
     paddingBottom: 120,
-    gap: 14
+    gap: 14,
   },
   compareCard: {
     width: 244,
-    borderRadius: 18,
+    borderRadius: 22,
     borderWidth: 1,
     padding: 10,
-    gap: 10
+    gap: 10,
   },
   bestKicker: {
     fontFamily: "Courier",
     fontSize: 10,
     fontWeight: "900",
     letterSpacing: 1,
-    textTransform: "uppercase"
+    textTransform: "uppercase",
   },
   compareFooter: {
-    gap: 8
+    gap: 8,
   },
   recommendedSize: {
     fontSize: 13,
-    fontWeight: "900"
+    fontWeight: "900",
   },
   compareExplanation: {
     fontSize: 12,
-    lineHeight: 17
-  }
+    lineHeight: 17,
+  },
 });

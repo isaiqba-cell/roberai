@@ -1,14 +1,24 @@
-import { StyleSheet, Text, View } from "react-native";
-import { useRouter } from "expo-router";
+import { ReactNode } from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import { Link, useRouter } from "expo-router";
+import { Plus } from "lucide-react-native";
 import { AppButton, Chip, SectionHeader } from "../../components/primitives";
 import { KnownGoodItemCard } from "./KnownGoodItemCard";
 import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
-const styleTags = ["utility", "minimal", "business casual", "denim", "soft tailoring", "athletic"];
-const colors = ["clay", "olive", "cream", "black", "light blue", "forest"];
-const materials = ["cotton", "denim", "linen", "wool", "stretch twill"];
+const styleTags = [
+  "straight",
+  "curvy",
+  "relaxed",
+  "rigid",
+  "everyday",
+  "heritage",
+];
+const colors = ["light blue", "medium wash", "dark wash", "washed black"];
+const materials = ["denim", "cotton", "stretch denim", "rigid denim"];
 const budgets = [
+  { label: "$40-$160", min: 40, max: 160 },
   { label: "Under $80", min: 20, max: 80 },
   { label: "$80-$160", min: 80, max: 160 },
   { label: "Investment", min: 160, max: 320 }
@@ -77,7 +87,30 @@ export function StyleQuiz() {
         ))}
       </PreferenceBlock>
       <View style={styles.knownGood}>
-        <SectionHeader kicker="Closet memory" title="Known-good items" />
+        <SectionHeader kicker="Closet memory" title="Favorite jeans" />
+        <Link href="/(onboarding)/garment-reference" asChild>
+          <Pressable
+            accessibilityRole="button"
+            style={[
+              styles.addFavorite,
+              { backgroundColor: theme.bgWarm, borderColor: theme.border },
+            ]}
+          >
+            <View
+              style={[styles.addIcon, { backgroundColor: theme.surface }]}
+            >
+              <Plus size={18} color={theme.accent} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.addTitle, { color: theme.text }]}>
+                Add your favorite pair
+              </Text>
+              <Text style={[styles.addCopy, { color: theme.textMuted }]}>
+                Brand, size, and fit note become your baseline for cross-brand jeans sizing.
+              </Text>
+            </View>
+          </Pressable>
+        </Link>
         {knownGoodItems.map((item) => (
           <KnownGoodItemCard key={item.id} item={item} />
         ))}
@@ -94,7 +127,7 @@ export function StyleQuiz() {
   );
 }
 
-function PreferenceBlock({ title, children }: { title: string; children: React.ReactNode }) {
+function PreferenceBlock({ title, children }: { title: string; children: ReactNode }) {
   const theme = useThemeTokens();
   return (
     <View style={styles.block}>
@@ -126,5 +159,31 @@ const styles = StyleSheet.create({
   },
   knownGood: {
     gap: 12
+  },
+  addFavorite: {
+    minHeight: 86,
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12
+  },
+  addIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  addTitle: {
+    fontSize: 16,
+    fontWeight: "900"
+  },
+  addCopy: {
+    marginTop: 3,
+    fontSize: 12,
+    lineHeight: 17,
+    fontWeight: "700"
   }
 });

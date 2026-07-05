@@ -1,38 +1,54 @@
 import { Tabs } from "expo-router";
-import { Home, Search, Heart, ShoppingBag, UserRound } from "lucide-react-native";
+import {
+  Home,
+  Search,
+  Heart,
+  ShoppingBag,
+  UserRound,
+} from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
 export default function TabsLayout() {
   const theme = useThemeTokens();
-  const iconColor = (focused: boolean) => (focused ? theme.accent : theme.tabText);
+  const insets = useSafeAreaInsets();
+  const iconColor = (focused: boolean) => (focused ? "#FFFFFF" : theme.tabText);
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: true,
-        tabBarActiveTintColor: theme.accent,
+        tabBarShowLabel: false,
+        tabBarActiveTintColor: "#FFFFFF",
         tabBarInactiveTintColor: theme.tabText,
+        tabBarActiveBackgroundColor: theme.accent,
         tabBarStyle: {
           position: "absolute",
-          left: 18,
-          right: 18,
-          bottom: 16,
-          height: 68,
+          left: 22,
+          right: 22,
+          bottom: insets.bottom + 12,
+          height: 66,
           borderRadius: 999,
           borderWidth: 0,
           backgroundColor: theme.tabBar,
-          shadowColor: "#000",
-          shadowOpacity: 0.18,
-          shadowRadius: 18,
+          shadowColor: "#6F3328",
+          shadowOpacity: 0.16,
+          shadowRadius: 20,
           shadowOffset: { width: 0, height: 8 },
           elevation: 12,
-          paddingTop: 8
+          paddingTop: 9,
+          paddingHorizontal: 8,
+        },
+        tabBarItemStyle: {
+          borderRadius: 999,
+          marginHorizontal: 2,
+          marginVertical: 5,
+          overflow: "hidden",
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: "800"
-        }
+          fontWeight: "800",
+        },
       }}
     >
       <Tabs.Screen
@@ -40,7 +56,9 @@ export default function TabsLayout() {
         options={{
           title: "Home",
           tabBarAccessibilityLabel: "Home tab",
-          tabBarIcon: ({ focused }) => <Home size={21} color={iconColor(focused)} />
+          tabBarIcon: ({ focused }) => (
+            <Home size={21} color={iconColor(focused)} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -48,7 +66,9 @@ export default function TabsLayout() {
         options={{
           title: "Discover",
           tabBarAccessibilityLabel: "Discover tab",
-          tabBarIcon: ({ focused }) => <Search size={21} color={iconColor(focused)} />
+          tabBarIcon: ({ focused }) => (
+            <Search size={21} color={iconColor(focused)} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -56,7 +76,9 @@ export default function TabsLayout() {
         options={{
           title: "Saved",
           tabBarAccessibilityLabel: "Wishlist tab",
-          tabBarIcon: ({ focused }) => <Heart size={21} color={iconColor(focused)} />
+          tabBarIcon: ({ focused }) => (
+            <Heart size={21} color={iconColor(focused)} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -64,7 +86,9 @@ export default function TabsLayout() {
         options={{
           title: "Bag",
           tabBarAccessibilityLabel: "Cart tab",
-          tabBarIcon: ({ focused }) => <ShoppingBag size={21} color={iconColor(focused)} />
+          tabBarIcon: ({ focused }) => (
+            <ShoppingBag size={21} color={iconColor(focused)} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -72,7 +96,9 @@ export default function TabsLayout() {
         options={{
           title: "Profile",
           tabBarAccessibilityLabel: "Profile tab",
-          tabBarIcon: ({ focused }) => <UserRound size={21} color={iconColor(focused)} />
+          tabBarIcon: ({ focused }) => (
+            <UserRound size={21} color={iconColor(focused)} />
+          ),
         }}
       />
     </Tabs>

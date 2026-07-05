@@ -1,127 +1,335 @@
 import { Link } from "expo-router";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
-import { Sparkles } from "lucide-react-native";
-import { AppButton, BrandPill, SectionHeader, ThemeToggle } from "../../components/primitives";
+import { Image } from "expo-image";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ArrowUpRight, Bell, Search, Sparkles } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  AppButton,
+  BrandPill,
+  IconButton,
+  SectionHeader,
+} from "../../components/primitives";
 import { FitConfidenceRing } from "../../components/fit";
-import { ProductRail } from "../../components/product";
-import { closetInspiredProducts, demoBrands, featuredProducts, newArrivalProducts, toProductCard } from "../../lib/catalog";
+import { ProductCard, ProductRail } from "../../components/product";
+import {
+  closetInspiredProducts,
+  demoBrands,
+  demoFavoriteJeans,
+  featuredProducts,
+  jeansProducts,
+  newArrivalProducts,
+  toProductCard,
+} from "../../lib/catalog";
+import { summarizeProductFit } from "../../lib/fitEngine";
 import { rankHomeFeed } from "../../lib/recommendations";
 import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
 export default function HomeScreen() {
   const theme = useThemeTokens();
+  const insets = useSafeAreaInsets();
   const bodyProfile = useDemoStore((state) => state.bodyProfile);
   const styleProfile = useDemoStore((state) => state.styleProfile);
   const favorite = useDemoStore((state) => state.knownGoodItems[0]);
-  const rankedFeed = rankHomeFeed(bodyProfile, styleProfile, favorite).slice(0, 8);
+  const favoriteReferenceItem = favorite
+    ? {
+        itemName: favorite.itemName,
+        category: favorite.category,
+        sizeLabel: favorite.sizeLabel,
+        fitNotes: favorite.fitNotes,
+        measurements: favorite.measurements,
+      }
+    : undefined;
+  const rankedFeed = rankHomeFeed(
+    bodyProfile,
+    styleProfile,
+    favoriteReferenceItem,
+  ).slice(
+    0,
+    8,
+  );
+  const heroProduct = jeansProducts[0] ?? featuredProducts[0];
+  const arrivalCards = jeansProducts
+    .slice(0, 4)
+    .map((product) =>
+      summarizeProductFit(product, bodyProfile, favoriteReferenceItem).card,
+    );
+
   return (
-    <ScrollView style={[styles.screen, { backgroundColor: theme.bgCanvas }]} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={[styles.screen, { backgroundColor: theme.bgCanvas }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + 30, paddingBottom: insets.bottom + 118 },
+      ]}
+    >
       <View style={styles.topbar}>
         <View>
-          <Text style={[styles.logo, { color: theme.text }]}>ROBER AI</Text>
-          <Text style={[styles.tagline, { color: theme.textMuted }]}>One Stop, Perfect Fit</Text>
+          <Text style={[styles.logo, { color: theme.text }]}>Rober</Text>
+          <Text style={[styles.tagline, { color: theme.textMuted }]}>
+            Jeans that fit like your favorite pair
+          </Text>
         </View>
-        <ThemeToggle />
-      </View>
-
-      <View style={[styles.hero, { backgroundColor: theme.bgWarm, borderColor: theme.border }]}>
-        <Text style={[styles.heroKicker, { color: theme.accent }]}>FIT INTELLIGENCE</Text>
-        <Text style={[styles.heroTitle, { color: theme.text }]}>Search once. See what fits across brands.</Text>
-        <Text style={[styles.heroCopy, { color: theme.textMuted }]}>
-          Rober normalizes every size chart against your profile, favorite garments, and preferred silhouette.
-        </Text>
-        <View style={styles.heroActions}>
-          <Link href="/compare" asChild>
-            <AppButton icon={<Sparkles color="#FFFFFF" size={18} />}>Find Best Fit</AppButton>
+        <View style={styles.topActions}>
+          <Link href="/(tabs)/discover" asChild>
+            <IconButton accessibilityLabel="Search">
+              <Search size={22} color={theme.text} />
+            </IconButton>
           </Link>
-          <Link href="/stylist" asChild>
-            <AppButton variant="secondary">Ask Stylist</AppButton>
-          </Link>
+          <IconButton accessibilityLabel="Notifications">
+            <Bell size={21} color={theme.text} />
+          </IconButton>
         </View>
       </View>
 
-      <SectionHeader kicker="Profile signal" title="Fit profile" />
-      <View style={[styles.fitSummary, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      {heroProduct ? (
+        <View
+          style={[
+            styles.hero,
+            { backgroundColor: theme.surface, borderColor: theme.surface },
+          ]}
+        >
+          <Image
+            source={{ uri: heroProduct.heroImageUrl }}
+            style={styles.heroImage}
+            contentFit="contain"
+            transition={180}
+          />
+          <View style={styles.heroScrim} />
+          <View style={styles.heroCopyBlock}>
+            <Text style={styles.heroTitle}>Find jeans that fit</Text>
+            <Text style={styles.heroSubtitle}>
+              Calibrated from your {demoFavoriteJeans.brandName}{" "}
+              {demoFavoriteJeans.sizeLabel}x
+              {Math.round(demoFavoriteJeans.inseamCm / 2.54)} baseline.
+            </Text>
+          </View>
+          <Link href="/(tabs)/discover" asChild>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Open collection"
+              style={styles.heroArrow}
+            >
+              <ArrowUpRight size={24} color={theme.text} />
+            </Pressable>
+          </Link>
+        </View>
+      ) : null}
+
+      <View style={styles.dots} accessibilityLabel="Carousel position 1 of 3">
+        <View style={[styles.dotActive, { backgroundColor: theme.accent }]} />
+        <View style={styles.dot} />
+        <View style={styles.dot} />
+      </View>
+
+      <View>
+        <InlineHeader title="Indexed Jeans Brands" action="See All" />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.pills}
+        >
+          {demoBrands.slice(0, 5).map((brand, index) => (
+            <BrandPill
+              key={brand.slug}
+              label={brand.name}
+              selected={index === 0}
+            />
+          ))}
+        </ScrollView>
+      </View>
+
+      <View>
+        <InlineHeader title="Best Jeans Matches" action="See All" />
+        <View style={styles.productGrid}>
+          {arrivalCards.map((product) => (
+            <View key={product.id} style={styles.gridCell}>
+              <ProductCard product={product} />
+            </View>
+          ))}
+        </View>
+      </View>
+
+      <View
+        style={[
+          styles.fitSummary,
+          { backgroundColor: theme.surface, borderColor: theme.border },
+        ]}
+      >
         <FitConfidenceRing confidence={88} />
         <View style={{ flex: 1 }}>
-          <Text style={[styles.summaryTitle, { color: theme.text }]}>Demo profile complete</Text>
+          <Text style={[styles.summaryTitle, { color: theme.text }]}>
+            Favorite jeans profile is active
+          </Text>
           <Text style={[styles.summaryCopy, { color: theme.textMuted }]}>
-            Relaxed top fit, regular bottoms, clay and olive palette, favorite overshirt reference item saved.
+            Waist {demoFavoriteJeans.waistCm}cm, hip {demoFavoriteJeans.hipCm}
+            cm, inseam {demoFavoriteJeans.inseamCm}cm from official chart data.
           </Text>
         </View>
       </View>
 
-      <SectionHeader kicker="Brand rail" title="Popular in your fit" />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.pills}>
-        {demoBrands.slice(0, 6).map((brand, index) => (
-          <BrandPill key={brand.slug} label={brand.name.split(" ")[0] ?? brand.name} selected={index === 0} />
-        ))}
-      </ScrollView>
+      <View style={styles.fitActions}>
+        <Link href="/compare" asChild>
+          <AppButton icon={<Sparkles color="#FFFFFF" size={18} />}>
+            Compare Jeans
+          </AppButton>
+        </Link>
+        <Link href="/stylist" asChild>
+          <AppButton variant="secondary">Ask Stylist</AppButton>
+        </Link>
+      </View>
 
-      <SectionHeader kicker="For you" title="Best Fit for You" />
+      <SectionHeader kicker="For you" title="Jeans Across Price Points" />
       <ProductRail products={rankedFeed.map((entry) => entry.card)} />
 
-      <SectionHeader kicker="New" title="New arrivals" />
-      <ProductRail products={newArrivalProducts.slice(0, 8).map((product, index) => toProductCard(product, 86 - index * 2))} />
-
-      <SectionHeader kicker="Closet signal" title="Because your overshirt fits well" />
-      <ProductRail products={closetInspiredProducts.slice(0, 8).map((product, index) => toProductCard(product, 89 - index))} />
-
-      <View style={{ height: 120 }} />
+      <SectionHeader
+        kicker="Closet signal"
+        title="Because your favorite jeans fit well"
+      />
+      <ProductRail
+        products={closetInspiredProducts
+          .slice(0, 8)
+          .map((product, index) => toProductCard(product, 89 - index))}
+      />
+      <View style={{ height: 12 }} />
     </ScrollView>
+  );
+}
+
+function InlineHeader({ title, action }: { title: string; action: string }) {
+  const theme = useThemeTokens();
+  return (
+    <View style={styles.inlineHeader}>
+      <Text style={[styles.inlineTitle, { color: theme.text }]}>{title}</Text>
+      <Text style={[styles.inlineAction, { color: theme.textMuted }]}>
+        {action}
+      </Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: {
-    flex: 1
+    flex: 1,
   },
   content: {
-    padding: 20,
-    paddingTop: 64,
-    gap: 24
+    padding: 18,
+    gap: 18,
   },
   topbar: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center"
+    alignItems: "center",
+  },
+  topActions: {
+    flexDirection: "row",
+    gap: 10,
   },
   logo: {
-    fontSize: 26,
-    fontWeight: "900"
+    fontSize: 29,
+    fontWeight: "900",
   },
   tagline: {
     marginTop: 2,
-    fontSize: 13,
-    fontWeight: "700"
+    fontSize: 12,
+    fontWeight: "800",
   },
   hero: {
-    borderRadius: 28,
+    minHeight: 230,
+    borderRadius: 30,
     borderWidth: 1,
-    padding: 24,
-    gap: 14
+    overflow: "hidden",
+    position: "relative",
+    shadowColor: "#6F3328",
+    shadowOpacity: 0.16,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 4,
   },
-  heroKicker: {
-    fontFamily: "Courier",
-    fontSize: 11,
-    fontWeight: "900",
-    letterSpacing: 1.4
+  heroImage: {
+    height: "100%",
+    width: "100%",
+    position: "absolute",
+  },
+  heroScrim: {
+    bottom: 0,
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0,
+    backgroundColor: "rgba(7, 18, 32, 0.28)",
+  },
+  heroCopyBlock: {
+    position: "absolute",
+    left: 22,
+    right: 88,
+    bottom: 22,
   },
   heroTitle: {
-    fontSize: 42,
+    color: "#FFFFFF",
+    fontSize: 26,
     fontWeight: "900",
-    lineHeight: 44
+    lineHeight: 30,
+    textTransform: "uppercase",
   },
-  heroCopy: {
+  heroSubtitle: {
+    color: "rgba(255, 255, 255, 0.86)",
     fontSize: 15,
-    lineHeight: 22
+    lineHeight: 21,
+    marginTop: 6,
+    fontWeight: "700",
   },
-  heroActions: {
+  heroArrow: {
+    position: "absolute",
+    right: 22,
+    bottom: 24,
+    height: 58,
+    width: 58,
+    borderRadius: 999,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  dots: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+    marginTop: -5,
+  },
+  dotActive: {
+    width: 34,
+    height: 4,
+    borderRadius: 999,
+  },
+  dot: {
+    width: 34,
+    height: 4,
+    borderRadius: 999,
+    backgroundColor: "rgba(89, 100, 116, 0.22)",
+  },
+  inlineHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  inlineTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  inlineAction: {
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  productGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    gap: 10,
-    marginTop: 6
+    gap: 12,
+  },
+  gridCell: {
+    width: "48%",
+    flexGrow: 1,
   },
   fitSummary: {
     borderWidth: 1,
@@ -129,18 +337,23 @@ const styles = StyleSheet.create({
     padding: 18,
     flexDirection: "row",
     gap: 16,
-    alignItems: "center"
+    alignItems: "center",
   },
   summaryTitle: {
     fontSize: 18,
     fontWeight: "900",
-    marginBottom: 5
+    marginBottom: 5,
   },
   summaryCopy: {
     fontSize: 14,
-    lineHeight: 20
+    lineHeight: 20,
+  },
+  fitActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
   },
   pills: {
-    gap: 10
-  }
+    gap: 10,
+  },
 });

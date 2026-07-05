@@ -12,7 +12,7 @@ export function KnownGoodItemCard({ item }: { item: KnownGoodItem }) {
       <Text style={[styles.copy, { color: theme.textMuted }]}>
         Size {item.sizeLabel}. {item.fitNotes}
       </Text>
-      <SimilarToFavoriteItemChip label={item.category} />
+      <SimilarToFavoriteItemChip label="Jeans baseline" />
     </View>
   );
 }

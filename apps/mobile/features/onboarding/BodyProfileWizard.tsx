@@ -1,199 +1,390 @@
-import { Control, Controller, FieldPath, useForm } from "react-hook-form";
-import { z } from "zod";
-import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
-import { useRouter } from "expo-router";
-import { BodyProfile, FitPreference } from "@rober/fit-engine";
+import { useState } from "react";
+import { Link, useRouter } from "expo-router";
+import { Pressable, StyleSheet, Text, View } from "react-native";
+import Svg, { Circle, Line, Path, Text as SvgText } from "react-native-svg";
+import { ArrowRight } from "lucide-react-native";
+import { FitPreference } from "@rober/fit-engine";
 import { AppButton, Chip, SectionHeader } from "../../components/primitives";
 import { MeasurementPrivacyNotice } from "./MeasurementPrivacyNotice";
 import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
-const fitPreferences: FitPreference[] = ["slim", "regular", "relaxed", "oversized"];
+const fitPreferences: FitPreference[] = [
+  "slim",
+  "regular",
+  "relaxed",
+  "oversized",
+];
+const primaryFields = [
+  { key: "waistCm", label: "Waist", min: 50, max: 160 },
+  { key: "hipCm", label: "Hip", min: 60, max: 170 },
+  { key: "inseamCm", label: "Inseam", min: 40, max: 110 },
+] as const;
+const optionalFields = [
+  { key: "heightCm", label: "Height", min: 120, max: 230 },
+  { key: "chestCm", label: "Chest", min: 60, max: 160 },
+  { key: "shoulderCm", label: "Shoulder", min: 30, max: 70 },
+] as const;
 
-const bodyProfileSchema = z.object({
-  heightCm: z.coerce.number().min(120).max(230),
-  weightKg: z.coerce.number().min(35).max(180).optional(),
-  chestCm: z.coerce.number().min(60).max(160).optional(),
-  waistCm: z.coerce.number().min(50).max(160).optional(),
-  hipCm: z.coerce.number().min(60).max(170).optional(),
-  inseamCm: z.coerce.number().min(40).max(110).optional(),
-  shoulderCm: z.coerce.number().min(30).max(70).optional(),
-  shoeSizeUs: z.coerce.number().min(3).max(18).optional(),
-  fitPreference: z.enum(["slim", "regular", "relaxed", "oversized"])
-});
-
-type BodyProfileForm = z.infer<typeof bodyProfileSchema>;
+type MeasurementKey =
+  | (typeof primaryFields)[number]["key"]
+  | (typeof optionalFields)[number]["key"];
+type Unit = "cm" | "in";
 
 export function BodyProfileWizard() {
   const theme = useThemeTokens();
   const router = useRouter();
   const bodyProfile = useDemoStore((state) => state.bodyProfile);
   const updateBodyProfile = useDemoStore((state) => state.updateBodyProfile);
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    watch,
-    formState: { errors }
-  } = useForm<BodyProfileForm>({
-    defaultValues: bodyProfile
+  const completeOnboarding = useDemoStore((state) => state.completeOnboarding);
+  const [unit, setUnit] = useState<Unit>("cm");
+  const [values, setValues] = useState<Record<MeasurementKey, number>>({
+    waistCm: bodyProfile.waistCm ?? 77,
+    hipCm: bodyProfile.hipCm ?? 102,
+    inseamCm: bodyProfile.inseamCm ?? 81,
+    heightCm: bodyProfile.heightCm ?? 178,
+    chestCm: bodyProfile.chestCm ?? 101,
+    shoulderCm: bodyProfile.shoulderCm ?? 46,
   });
-  const selectedFit = watch("fitPreference");
+  const [fitPreference, setFitPreference] = useState<FitPreference>(
+    bodyProfile.fitPreference,
+  );
 
-  const onSubmit = (values: BodyProfileForm) => {
-    const parsed = bodyProfileSchema.safeParse(values);
-    if (!parsed.success) {
-      return;
-    }
-    updateBodyProfile(compactBodyProfile(parsed.data));
-    router.push("/(onboarding)/style-quiz");
+  const setValue = (key: MeasurementKey, value: number) => {
+    setValues((current) => ({ ...current, [key]: Math.round(value) }));
+  };
+
+  const saveProfile = () => {
+    updateBodyProfile({
+      heightCm: values.heightCm,
+      chestCm: values.chestCm,
+      waistCm: values.waistCm,
+      hipCm: values.hipCm,
+      inseamCm: values.inseamCm,
+      shoulderCm: values.shoulderCm,
+      fitPreference,
+    });
+    completeOnboarding();
+    router.push("/(tabs)/home");
   };
 
   return (
     <View style={styles.wrap}>
-      <SectionHeader kicker="Step 1" title="Body profile" />
+      <SectionHeader kicker="Manual path" title="Enter measurements" />
       <MeasurementPrivacyNotice />
-      <View style={styles.grid}>
-        <MeasurementInput control={control} name="heightCm" label="Height" suffix="cm" error={errors.heightCm?.message} />
-        <MeasurementInput control={control} name="chestCm" label="Chest" suffix="cm" error={errors.chestCm?.message} />
-        <MeasurementInput control={control} name="waistCm" label="Waist" suffix="cm" error={errors.waistCm?.message} />
-        <MeasurementInput control={control} name="hipCm" label="Hip" suffix="cm" error={errors.hipCm?.message} />
-        <MeasurementInput control={control} name="shoulderCm" label="Shoulder" suffix="cm" error={errors.shoulderCm?.message} />
-        <MeasurementInput control={control} name="inseamCm" label="Inseam" suffix="cm" error={errors.inseamCm?.message} />
+      <View
+        style={[
+          styles.unitToggle,
+          { backgroundColor: theme.surface, borderColor: theme.border },
+        ]}
+      >
+        {(["cm", "in"] as const).map((option) => (
+          <Pressable
+            key={option}
+            accessibilityRole="button"
+            accessibilityState={{ selected: unit === option }}
+            onPress={() => setUnit(option)}
+            style={[
+              styles.unitButton,
+              { backgroundColor: unit === option ? theme.ink : "transparent" },
+            ]}
+          >
+            <Text
+              style={[
+                styles.unitText,
+                { color: unit === option ? "#FFFFFF" : theme.text },
+              ]}
+            >
+              {option}
+            </Text>
+          </Pressable>
+        ))}
       </View>
-      <View style={[styles.illustration, { backgroundColor: theme.surfaceWarm, borderColor: theme.border }]}>
-        <Text style={[styles.illustrationTitle, { color: theme.text }]}>Guided measurement placeholder</Text>
-        <Text style={[styles.illustrationCopy, { color: theme.textMuted }]}>
-          In production this step can show camera/photo guidance. The MVP uses manual and garment-reference inputs for safe, repeatable demos.
+
+      <MeasurementIllustration />
+
+      <Text style={[styles.groupTitle, { color: theme.text }]}>
+        Required for jeans
+      </Text>
+      <View style={styles.measurements}>
+        {primaryFields.map((field) => (
+          <MeasurementStepper
+            key={field.key}
+            label={field.label}
+            unit={unit}
+            valueCm={values[field.key]}
+            min={field.min}
+            max={field.max}
+            onChange={(value) => setValue(field.key, value)}
+          />
+        ))}
+      </View>
+
+      <Text style={[styles.groupTitle, { color: theme.text }]}>
+        Optional — improves accuracy later
+      </Text>
+      <View style={styles.measurements}>
+        {optionalFields.map((field) => (
+          <MeasurementStepper
+            key={field.key}
+            label={field.label}
+            unit={unit}
+            valueCm={values[field.key]}
+            min={field.min}
+            max={field.max}
+            onChange={(value) => setValue(field.key, value)}
+          />
+        ))}
+      </View>
+
+      <View
+        style={[
+          styles.referenceCard,
+          { backgroundColor: theme.bgWarm, borderColor: theme.border },
+        ]}
+      >
+        <Text style={[styles.referenceTitle, { color: theme.text }]}>
+          Prefer not to measure?
         </Text>
+        <Text style={[styles.referenceCopy, { color: theme.textMuted }]}>
+          Tell us your favorite pair instead - we'll estimate the rest.
+        </Text>
+        <Link href="/(onboarding)/garment-reference" asChild>
+          <Pressable accessibilityRole="button">
+            <Text style={[styles.referenceLink, { color: theme.accent }]}>
+              Add favorite jeans
+            </Text>
+          </Pressable>
+        </Link>
       </View>
-      <Text style={[styles.label, { color: theme.text }]}>Preferred silhouette</Text>
+
+      <Text style={[styles.groupTitle, { color: theme.text }]}>
+        Preferred silhouette
+      </Text>
       <View style={styles.fitRow}>
         {fitPreferences.map((preference) => (
           <Chip
             key={preference}
             label={preference}
-            selected={selectedFit === preference}
-            onPress={() => setValue("fitPreference", preference)}
+            selected={fitPreference === preference}
+            onPress={() => setFitPreference(preference)}
           />
         ))}
       </View>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Use garment reference instead"
-        onPress={() => router.push("/(onboarding)/garment-reference")}
-      >
-        <Text style={[styles.referenceLink, { color: theme.accent }]}>Use a garment you love instead</Text>
-      </Pressable>
-      <AppButton onPress={handleSubmit(onSubmit)}>Continue</AppButton>
+      <AppButton icon={<ArrowRight size={18} color="#FFFFFF" />} onPress={saveProfile}>
+        Build my recommendations
+      </AppButton>
     </View>
   );
 }
 
-function MeasurementInput({
-  control,
-  name,
+function MeasurementStepper({
   label,
-  suffix,
-  error
+  valueCm,
+  unit,
+  min,
+  max,
+  onChange,
 }: {
-  control: Control<BodyProfileForm>;
-  name: FieldPath<BodyProfileForm>;
   label: string;
-  suffix: string;
-  error: string | undefined;
+  valueCm: number;
+  unit: Unit;
+  min: number;
+  max: number;
+  onChange: (valueCm: number) => void;
 }) {
   const theme = useThemeTokens();
+  const displayValue = unit === "cm" ? valueCm : valueCm / 2.54;
+  const stepCm = unit === "cm" ? 1 : 2.54;
   return (
-    <Controller
-      control={control}
-      name={name}
-      render={({ field: { value, onChange, onBlur } }) => (
-        <View style={styles.inputWrap}>
-          <Text style={[styles.label, { color: theme.text }]}>{label}</Text>
-          <View style={[styles.inputShell, { borderColor: error ? theme.fitLow : theme.border, backgroundColor: theme.surface }]}>
-            <TextInput
-              accessibilityLabel={`${label} in ${suffix}`}
-              keyboardType="numeric"
-              onBlur={onBlur}
-              onChangeText={(text) => onChange(text)}
-              value={value === undefined ? "" : String(value)}
-              placeholder="0"
-              placeholderTextColor={theme.textMuted}
-              style={[styles.input, { color: theme.text }]}
-            />
-            <Text style={[styles.suffix, { color: theme.textMuted }]}>{suffix}</Text>
-          </View>
-          {error ? <Text style={[styles.error, { color: theme.fitLow }]}>Check value</Text> : null}
-        </View>
-      )}
-    />
+    <View
+      style={[
+        styles.stepperRow,
+        { backgroundColor: theme.surface, borderColor: theme.border },
+      ]}
+    >
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.measureLabel, { color: theme.text }]}>
+          {label}
+        </Text>
+        <Text style={[styles.measureHint, { color: theme.textMuted }]}>
+          {unit === "cm" ? "centimeters" : "inches"}
+        </Text>
+      </View>
+      <View style={styles.stepperControls}>
+        <RoundControl
+          label={`Decrease ${label}`}
+          onPress={() => onChange(Math.max(min, valueCm - stepCm))}
+        >
+          -
+        </RoundControl>
+        <Text style={[styles.valueText, { color: theme.text }]}>
+          {unit === "cm" ? Math.round(displayValue) : displayValue.toFixed(1)}
+        </Text>
+        <RoundControl
+          label={`Increase ${label}`}
+          onPress={() => onChange(Math.min(max, valueCm + stepCm))}
+        >
+          +
+        </RoundControl>
+      </View>
+    </View>
   );
 }
 
-function compactBodyProfile(values: BodyProfileForm): Partial<BodyProfile> {
-  return Object.fromEntries(Object.entries(values).filter(([, value]) => value !== undefined)) as Partial<BodyProfile>;
+function RoundControl({
+  label,
+  children,
+  onPress,
+}: {
+  label: string;
+  children: string;
+  onPress: () => void;
+}) {
+  const theme = useThemeTokens();
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={[styles.roundControl, { borderColor: theme.border }]}
+    >
+      <Text style={[styles.roundText, { color: theme.text }]}>{children}</Text>
+    </Pressable>
+  );
+}
+
+function MeasurementIllustration() {
+  const theme = useThemeTokens();
+  return (
+    <View
+      style={[
+        styles.illustration,
+        { backgroundColor: theme.surfaceWarm, borderColor: theme.border },
+      ]}
+    >
+      <Svg width="100%" height="170" viewBox="0 0 320 170">
+        <Circle cx="160" cy="32" r="16" fill="none" stroke={theme.text} strokeWidth="5" />
+        <Path
+          d="M128 67 C137 52 183 52 192 67 L204 135 C188 145 132 145 116 135 Z"
+          fill="none"
+          stroke={theme.text}
+          strokeWidth="5"
+          strokeLinejoin="round"
+        />
+        <Line x1="112" y1="92" x2="208" y2="92" stroke={theme.accent} strokeWidth="5" strokeLinecap="round" />
+        <Line x1="120" y1="120" x2="200" y2="120" stroke={theme.accent} strokeWidth="5" strokeLinecap="round" />
+        <Line x1="162" y1="138" x2="162" y2="160" stroke={theme.accent} strokeWidth="5" strokeLinecap="round" />
+        <SvgText x="214" y="95" fill={theme.textMuted} fontSize="12" fontWeight="700">
+          waist
+        </SvgText>
+        <SvgText x="206" y="124" fill={theme.textMuted} fontSize="12" fontWeight="700">
+          hip
+        </SvgText>
+        <SvgText x="170" y="160" fill={theme.textMuted} fontSize="12" fontWeight="700">
+          inseam
+        </SvgText>
+      </Svg>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
   wrap: {
-    gap: 18
+    gap: 16,
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 12
-  },
-  inputWrap: {
-    width: "47%",
-    gap: 7
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "900"
-  },
-  inputShell: {
-    minHeight: 52,
-    borderRadius: 16,
+  unitToggle: {
     borderWidth: 1,
-    paddingHorizontal: 12,
+    borderRadius: 999,
+    padding: 4,
     flexDirection: "row",
-    alignItems: "center"
   },
-  input: {
+  unitButton: {
     flex: 1,
-    fontSize: 18,
-    fontWeight: "800"
+    minHeight: 40,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  suffix: {
-    fontSize: 12,
-    fontWeight: "800"
-  },
-  error: {
-    fontSize: 11,
-    fontWeight: "800"
-  },
-  fitRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10
+  unitText: {
+    fontSize: 14,
+    fontWeight: "900",
+    textTransform: "uppercase",
   },
   illustration: {
     borderWidth: 1,
     borderRadius: 24,
-    padding: 18,
-    gap: 8
+    overflow: "hidden",
   },
-  illustrationTitle: {
-    fontSize: 17,
-    fontWeight: "900"
+  groupTitle: {
+    fontSize: 15,
+    fontWeight: "900",
   },
-  illustrationCopy: {
+  measurements: {
+    gap: 10,
+  },
+  stepperRow: {
+    minHeight: 74,
+    borderWidth: 1,
+    borderRadius: 20,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  measureLabel: {
+    fontSize: 16,
+    fontWeight: "900",
+  },
+  measureHint: {
+    marginTop: 3,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  stepperControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  roundControl: {
+    width: 38,
+    height: 38,
+    borderWidth: 1,
+    borderRadius: 999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  roundText: {
+    fontSize: 20,
+    fontWeight: "900",
+  },
+  valueText: {
+    minWidth: 46,
+    textAlign: "center",
+    fontSize: 21,
+    fontWeight: "900",
+  },
+  referenceCard: {
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 16,
+    gap: 8,
+  },
+  referenceTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  referenceCopy: {
     fontSize: 13,
-    lineHeight: 20
+    lineHeight: 19,
   },
   referenceLink: {
     fontSize: 14,
-    fontWeight: "900"
-  }
+    fontWeight: "900",
+  },
+  fitRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
 });
