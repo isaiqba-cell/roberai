@@ -111,10 +111,6 @@ export default function HomeScreen() {
           You wear {translation.anchor.brandName}{" "}
           {translation.anchor.styleName}, {translation.recommendedSize}
         </Text>
-        <Text style={[styles.passportCopy, { color: theme.textMuted }]}>
-          Rober translates that exact fit across brands using silhouette, rise,
-          seat/thigh room, stretch, hem shape, and construction.
-        </Text>
         <View style={[styles.passportRows, { borderColor: theme.border }]}>
           {passportRows.map((row, index) => (
             <PassportRow
@@ -180,33 +176,17 @@ export default function HomeScreen() {
           contentContainerStyle={styles.pills}
         >
           {demoBrands.slice(0, 5).map((brand, index) => (
-            <View key={brand.slug} style={styles.brandCluster}>
-              {index === 0 ? (
-                <View
-                  style={[
-                    styles.baselineBadge,
-                    {
-                      backgroundColor: theme.surfaceWarm,
-                      borderColor: theme.accent,
-                    },
-                  ]}
-                >
-                  <Text style={[styles.baselineBadgeText, { color: theme.accent }]}>
-                    Your baseline
-                  </Text>
-                </View>
-              ) : null}
-              <BrandPill
-                label={brand.name}
-                selected={index === 0}
-                onPress={() =>
-                  router.push({
-                    pathname: "/discover",
-                    params: { brand: brand.slug },
-                  })
-                }
-              />
-            </View>
+            <BrandPill
+              key={brand.slug}
+              label={brand.name}
+              selected={index === 0}
+              onPress={() =>
+                router.push({
+                  pathname: "/discover",
+                  params: { brand: brand.slug },
+                })
+              }
+            />
           ))}
         </ScrollView>
       </View>
@@ -432,11 +412,6 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     lineHeight: 25,
   },
-  passportCopy: {
-    fontSize: 12,
-    fontWeight: "700",
-    lineHeight: 17,
-  },
   passportRows: {
     borderTopWidth: 1,
     marginTop: 4,
@@ -571,7 +546,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   productSection: {
-    marginTop: 112,
+    marginTop: 150,
   },
   gridCell: {
     width: "48%",
@@ -602,22 +577,5 @@ const styles = StyleSheet.create({
   pills: {
     gap: 10,
     alignItems: "center",
-  },
-  brandCluster: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-  },
-  baselineBadge: {
-    minHeight: 24,
-    borderWidth: 1,
-    borderRadius: 999,
-    paddingHorizontal: 9,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  baselineBadgeText: {
-    fontSize: 10,
-    fontWeight: "900",
   },
 });
