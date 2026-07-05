@@ -11,6 +11,7 @@ export type GarmentMatchSummary = {
   product: ProductRecord;
   card: ProductCardModel;
   sizeLabel: string;
+  variantId: string;
   spec: GarmentSpec;
   result: GarmentMatchResult;
 };
@@ -76,6 +77,7 @@ export function computeGarmentMatches(
       return {
         product,
         sizeLabel: best.variant.sizeLabel,
+        variantId: best.variant.id,
         spec: best.variant.garmentSpec as GarmentSpec,
         result: best.result,
         card,

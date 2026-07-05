@@ -1,15 +1,16 @@
-import { useMemo, useState } from "react";
+import { ReactElement, useEffect, useMemo, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { formatCurrency } from "@rober/api-client";
-import { parseNaturalLanguageSearch } from "@rober/fit-engine";
+import { formatCurrency, TryOnPhotoRecord, TryOnRenderRecord } from "@rober/api-client";
+import { BodyProfile, parseNaturalLanguageSearch } from "@rober/fit-engine";
 import {
   AppButton,
   Chip,
   IconButton,
   SectionHeader,
+  Sheet,
 } from "../components/primitives";
 import {
   FitDimensionBreakdown,
@@ -18,6 +19,8 @@ import {
   RecommendedSizeCard,
 } from "../components/fit";
 import { BestFitCompareCard, CompareBrandCard } from "../components/product";
+import { StylizedAvatar, TryOnSkeleton } from "../components/tryOn";
+import { TryOnPhotoManager } from "../features/tryOn/TryOnPhotoManager";
 import { compareProductsForQuery, parsedToProductFilters } from "../lib/fitEngine";
 import {
   computeGarmentMatches,
@@ -28,6 +31,7 @@ import {
   sortByPrice,
 } from "../lib/garmentCompare";
 import { searchCatalog } from "../lib/catalog";
+import { ensureTryOnRender } from "../lib/tryOn";
 import { useDemoStore } from "../stores/useDemoStore";
 import { useThemeTokens } from "../theme/useThemeTokens";
 
@@ -40,8 +44,14 @@ export default function CompareScreen() {
   const [query, setQuery] = useState(defaultQuery);
   const [spectrum, setSpectrum] = useState(62);
   const [priceSortActive, setPriceSortActive] = useState(false);
+  const [tryOnEnabled, setTryOnEnabled] = useState(false);
+  const [tryOnPromptVisible, setTryOnPromptVisible] = useState(false);
   const bodyProfile = useDemoStore((state) => state.bodyProfile);
   const favorite = useDemoStore((state) => state.knownGoodItems[0]);
+  const activeTryOnPhoto = useDemoStore((state) =>
+    state.tryOnPhotos.find((photo) => photo.status === "active"),
+  );
+  const tryOnRenders = useDemoStore((state) => state.tryOnRenders);
   const parsed = useMemo(() => parseNaturalLanguageSearch(query), [query]);
   const filters = useMemo(() => parsedToProductFilters(query, parsed), [query, parsed]);
 
@@ -98,9 +108,64 @@ export default function CompareScreen() {
         recommendedSize: summary.sizeLabel,
         explanation: summary.result.explanation,
         dimensionScores: summary.result.dimensionScores,
+        variantId: summary.variantId as string | undefined,
       }))
-    : fallbackResults;
+    : fallbackResults.map((summary) => ({
+        product: summary.product,
+        card: summary.card,
+        confidence: summary.confidence,
+        recommendedSize: summary.recommendedSize,
+        explanation: summary.explanation,
+        dimensionScores: summary.dimensionScores,
+        variantId: undefined as string | undefined,
+      }));
   const [best, ...alternatives] = results;
+  const visibleForTryOn = [best, ...alternatives.slice(0, 8)].filter(
+    (entry): entry is (typeof results)[number] => Boolean(entry),
+  );
+
+  // Kick off generation for whatever's currently visible. ensureTryOnRender
+  // is cache-first (never regenerates an existing photo/variant pair), so
+  // re-running this on every relevant change is cheap — repeat calls for an
+  // already-requested pair just return the cached row.
+  useEffect(() => {
+    if (!tryOnEnabled || !activeTryOnPhoto) {
+      return;
+    }
+    visibleForTryOn.forEach((entry) => {
+      if (!entry.variantId) {
+        return;
+      }
+      ensureTryOnRender({
+        tryOnPhotoId: activeTryOnPhoto.id,
+        variantId: entry.variantId,
+        photoUri: activeTryOnPhoto.storagePath,
+        garmentImageUrl: entry.product.heroImageUrl,
+      });
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tryOnEnabled, activeTryOnPhoto, visibleForTryOn.map((entry) => entry.variantId).join(",")]);
+
+  const handleToggleTryOn = () => {
+    if (tryOnEnabled) {
+      setTryOnEnabled(false);
+      return;
+    }
+    if (!activeTryOnPhoto) {
+      setTryOnPromptVisible(true);
+      return;
+    }
+    setTryOnEnabled(true);
+  };
+
+  const tryOnDisplayFor = (variantId?: string) =>
+    resolveTryOnDisplay({
+      tryOnEnabled,
+      ...(activeTryOnPhoto ? { activeTryOnPhoto } : {}),
+      tryOnRenders,
+      ...(variantId ? { variantId } : {}),
+      bodyProfile,
+    });
 
   return (
     <ScrollView
@@ -222,6 +287,22 @@ export default function CompareScreen() {
         </View>
       </View>
 
+      {garmentToGarment ? (
+        <View style={styles.sortRow}>
+          <Text style={[styles.sortLabel, { color: theme.textMuted }]}>
+            Try it on
+          </Text>
+          <View style={styles.chips}>
+            <Chip
+              label={tryOnEnabled ? "Try it on: on" : "Try it on: off"}
+              selected={tryOnEnabled}
+              accessibilityLabel="Toggle try it on with your photo"
+              onPress={handleToggleTryOn}
+            />
+          </View>
+        </View>
+      ) : null}
+
       {best ? (
         <>
           <SectionHeader kicker="Best fit" title="Rober recommendation" />
@@ -233,7 +314,7 @@ export default function CompareScreen() {
               {best.product.brand.name}
             </Text>
           </RecommendedSizeCard>
-          <BestFitCompareCard product={best.card} />
+          <BestFitCompareCard product={best.card} {...tryOnDisplayFor(best.variantId)} />
           <FitExplanationCard lines={best.explanation} />
           <FitDimensionBreakdown scores={best.dimensionScores} />
         </>
@@ -261,7 +342,11 @@ export default function CompareScreen() {
         contentContainerStyle={styles.compareRail}
       >
         {alternatives.slice(0, 8).map((entry) => (
-          <CompareBrandCard key={entry.product.id} product={entry.card} />
+          <CompareBrandCard
+            key={entry.product.id}
+            product={entry.card}
+            {...tryOnDisplayFor(entry.variantId)}
+          />
         ))}
       </ScrollView>
 
@@ -271,8 +356,49 @@ export default function CompareScreen() {
       >
         <AppButton>{best ? "Open product detail" : "Browse catalog"}</AppButton>
       </Link>
+
+      <Sheet
+        title="Try it on with your photo"
+        visible={tryOnPromptVisible}
+        onClose={() => setTryOnPromptVisible(false)}
+      >
+        <TryOnPhotoManager
+          onPhotoReady={() => {
+            setTryOnPromptVisible(false);
+            setTryOnEnabled(true);
+          }}
+        />
+      </Sheet>
     </ScrollView>
   );
+}
+
+function resolveTryOnDisplay({
+  tryOnEnabled,
+  activeTryOnPhoto,
+  tryOnRenders,
+  variantId,
+  bodyProfile,
+}: {
+  tryOnEnabled: boolean;
+  activeTryOnPhoto?: TryOnPhotoRecord;
+  tryOnRenders: TryOnRenderRecord[];
+  variantId?: string;
+  bodyProfile: BodyProfile;
+}): { overrideImageUrl?: string; imageOverlay?: ReactElement } {
+  if (!tryOnEnabled || !activeTryOnPhoto || !variantId) {
+    return {};
+  }
+  const render = tryOnRenders.find(
+    (item) => item.tryOnPhotoId === activeTryOnPhoto.id && item.variantId === variantId,
+  );
+  if (render?.status === "ready" && render.storagePath) {
+    return { overrideImageUrl: render.storagePath };
+  }
+  if (render?.status === "failed") {
+    return { imageOverlay: <StylizedAvatar bodyProfile={bodyProfile} /> };
+  }
+  return { imageOverlay: <TryOnSkeleton /> };
 }
 
 function formatChipLabel(value: string) {

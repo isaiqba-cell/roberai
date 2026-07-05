@@ -1,3 +1,4 @@
+import { ReactNode } from "react";
 import { Link } from "expo-router";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -22,9 +23,15 @@ export type ProductCardModel = {
 export function ProductCard({
   product,
   elevated,
+  overrideImageUrl,
+  imageOverlay,
 }: {
   product: ProductCardModel;
   elevated?: boolean;
+  // Additive "try it on" hooks — both optional so the default product-photo
+  // rendering is unchanged when neither is passed.
+  overrideImageUrl?: string;
+  imageOverlay?: ReactNode;
 }) {
   const theme = useThemeTokens();
   return (
@@ -43,14 +50,16 @@ export function ProductCard({
         ]}
       >
         <View style={styles.imageWrap}>
-          <Image
-            source={{ uri: product.imageUrl }}
-            style={styles.image}
-            contentFit="contain"
-            transition={180}
-            placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
-            accessibilityLabel={`${product.title} product image`}
-          />
+          {imageOverlay ?? (
+            <Image
+              source={{ uri: overrideImageUrl ?? product.imageUrl }}
+              style={styles.image}
+              contentFit="contain"
+              transition={180}
+              placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
+              accessibilityLabel={`${product.title} product image`}
+            />
+          )}
           <View style={styles.heartWrap}>
             <IconButton
               accessibilityLabel={`Save ${product.title}`}
@@ -121,9 +130,13 @@ export function ProductRail({ products }: { products: ProductCardModel[] }) {
 export function CompareBrandCard({
   product,
   best,
+  overrideImageUrl,
+  imageOverlay,
 }: {
   product: ProductCardModel;
   best?: boolean;
+  overrideImageUrl?: string;
+  imageOverlay?: ReactNode;
 }) {
   const theme = useThemeTokens();
   return (
@@ -141,7 +154,12 @@ export function CompareBrandCard({
           Best Fit for You
         </Text>
       ) : null}
-      <ProductCard product={product} {...(best ? { elevated: true } : {})} />
+      <ProductCard
+        product={product}
+        {...(best ? { elevated: true } : {})}
+        {...(overrideImageUrl ? { overrideImageUrl } : {})}
+        {...(imageOverlay ? { imageOverlay } : {})}
+      />
       <View style={styles.compareFooter}>
         {product.fitConfidence ? (
           <FitScorePill confidence={product.fitConfidence} />
@@ -163,8 +181,23 @@ export function CompareBrandCard({
   );
 }
 
-export function BestFitCompareCard({ product }: { product: ProductCardModel }) {
-  return <CompareBrandCard product={product} best />;
+export function BestFitCompareCard({
+  product,
+  overrideImageUrl,
+  imageOverlay,
+}: {
+  product: ProductCardModel;
+  overrideImageUrl?: string;
+  imageOverlay?: ReactNode;
+}) {
+  return (
+    <CompareBrandCard
+      product={product}
+      best
+      {...(overrideImageUrl ? { overrideImageUrl } : {})}
+      {...(imageOverlay ? { imageOverlay } : {})}
+    />
+  );
 }
 
 const styles = StyleSheet.create({
