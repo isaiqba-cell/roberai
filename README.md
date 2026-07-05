@@ -101,6 +101,34 @@ npm run seed:jeans
 
 The current investor path is anchored on "I wear Levi's 501, size 32x32" and includes a structured fit-translation graph for Levi's, Wrangler, Lee, Dickies, and Dockers across closest-match, roomier, slimmer, stretchier, and boot-friendly alternatives.
 
+## Virtual Try-On
+
+Compare has an optional "Try it on" toggle that swaps each result card's product photo for a render of the user wearing that garment. It is off by default and additive on top of the existing match %, dimension explanations, and price sort — none of that changes when the toggle is off.
+
+**Providers.** `TryOnProvider` (`packages/api-client/src/tryOn.ts`) has three implementations behind one interface, picked via `TRYON_PROVIDER`:
+
+- `mock` — instant, zero external credentials. Default for local dev and CI.
+- `huggingface` — calls a public Gradio Space running an open-source VTON model (IDM-VTON or OOTDiffusion). Free but queued/rate-limited; requires `HF_API_TOKEN` and `HF_TRYON_SPACE_ID`.
+- `replicate` — the same class of model on Replicate's pay-per-second GPU billing. Costs fractions of a cent per image and removes the public-queue risk. Requires `REPLICATE_API_TOKEN` and `REPLICATE_TRYON_MODEL_VERSION`.
+
+Switching from the free/queued path to the paid/reliable one before a live demo is a one-line env change:
+
+```bash
+TRYON_PROVIDER=replicate
+```
+
+No code change, no redeploy of app logic — `createTryOnProvider()` reads this at call time.
+
+**Before a live demo:** free/community GPU endpoints are not guaranteed-fast, so don't rely on live generation during a pitch. Run the pre-generation script the day before, against the exact demo account and variant IDs you plan to click through live:
+
+```bash
+npm run seed:try-ons -- --photo <demo-user-photo-uri> --variants <variantId1,variantId2,...>
+```
+
+Add `--dry-run` to check without calling the provider, or `--retries <n>` to change the retry count (default 3). The script exits `0` only if every requested variant lands in `ready` status, and writes a summary to `supabase/seed/try-on-pregeneration-report.json`. Exit `1` means at least one variant isn't ready — fix it before the demo, don't walk on stage hoping the free tier cooperates live.
+
+Consent, storage, and safety details (why photo upload is opt-in, what's stored, deletion cascade behavior) live in `BUILD_BRIEF.md`.
+
 ## Stripe Test Mode
 
 The app uses a mock PaymentSheet-compatible fallback when Stripe keys are absent. When test keys are configured, use Stripe's test card:
@@ -126,6 +154,7 @@ Unit tests cover exact matches, too-small/too-large garments, stretch tolerance,
 - Shopify: provider interfaces and mock provider exist; live ingestion is intentionally not required.
 - Push: permission/token/deep-link helpers exist; real delivery needs Expo project/device setup.
 - Metrics: investor dashboard values are synthetic and clearly labeled.
+- Virtual try-on: MockTryOnProvider is the default (zero credentials); HuggingFaceTryOnProvider/ReplicateTryOnProvider are wired but credential-gated. Demo mode uploads store the local photo URI as a stand-in for a signed Supabase Storage URL.
 
 ## Architecture
 

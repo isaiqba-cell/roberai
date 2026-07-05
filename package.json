@@ -19,6 +19,7 @@
     "test:e2e": "maestro test apps/mobile/maestro/onboarding-to-checkout.yaml",
     "seed": "tsx scripts/seed/generate-demo-catalog.ts",
     "seed:jeans": "tsx scripts/seed/generate-jeans-size-chart-database.ts",
+    "seed:try-ons": "tsx scripts/seed/pregenerate-try-ons.ts",
     "supabase:migrate": "echo \"Run: supabase db reset --local or supabase migration up --linked after configuring Supabase CLI\""
   },
   "devDependencies": {

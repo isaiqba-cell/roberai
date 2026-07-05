@@ -184,3 +184,88 @@ Deferred:
   garments are user-input only, matched against fictional seeded brands.
 - Live returns data and a trained ML fit model remain out of scope per the
   original MVP constraints.
+
+## Add-On: Photo-Based Virtual Try-On
+
+An explicit, intentional pivot beyond the original MVP's AR/3D-try-on
+exclusion, built as an additive layer on top of Compare — match %, dimension
+explanations, and price sort are unchanged when the feature is off.
+
+### Phase T1 - Consent, Capture, And Storage
+
+- Added `try_on_photos`/`try_on_renders` tables with owner-only RLS and a
+  private `try-on-assets` Supabase Storage bucket (never public), with
+  folder-scoped storage policies and an `on delete cascade` FK so deleting a
+  photo removes every render derived from it, not just the photo row.
+- Photo upload is opt-in, never a default onboarding step. `TryOnConsentSheet`
+  states in plain language what the photo is used for, that it's private,
+  never used for analytics/training beyond the user's own renders, and
+  deletable anytime (cascading to renders); it requires an explicit "I am
+  18+ and this is a photo of myself" checkbox before upload can proceed.
+- A basic person-presence check (`apps/mobile/lib/tryOnSafety.ts`) rejects
+  obviously-invalid uploads before ever forwarding them to a generative
+  model. This is intentionally an aspect-ratio heuristic, not a full
+  moderation pipeline — the assumption made per the standing conservative-
+  default guardrail, since a real face/person-detection model was out of
+  scope for this pass.
+
+Deferred: real Supabase Storage upload (demo mode has no live bucket — the
+local asset URI stands in for `storage_path`), a proper face/person-
+detection model, multi-photo support.
+
+### Phase T2 - Provider Interface And Pipeline
+
+- Added a `TryOnProvider` interface (`packages/api-client/src/tryOn.ts`)
+  with `MockTryOnProvider` (default, zero credentials), `HuggingFaceTryOnProvider`
+  (public Gradio Space REST call), and `ReplicateTryOnProvider` (pay-per-second
+  GPU, polls until resolved), selected via `createTryOnProvider(kind)`.
+- `findExistingRender()`/`requestTryOnRender()` implement the caching-first
+  contract: a (photo, variant) pair is looked up first and the provider is
+  only ever called on a genuine miss. Five unit tests cover this, including
+  that requesting the same pair twice calls the provider exactly once.
+- `apps/mobile/lib/tryOn.ts` wires this into the demo store: pending rows
+  are upserted immediately so the UI can show a skeleton via its normal
+  reactive store subscription (the demo-mode analog of polling/subscribing
+  to Supabase Realtime), with the provider call resolving in the background.
+
+Deferred: live edge function wired to a real Supabase connection (stub only,
+in `supabase/functions/generate-try-on`), and an actual Supabase Realtime
+subscription (demo mode substitutes zustand reactivity, matching how the
+rest of the app already handles checkout/orders).
+
+### Phase T3 - Compare Screen Integration And Stylized Fallback
+
+- Added a "Try it on" toggle to Compare, off by default. Turning it on
+  without an active photo opens the consent + upload sheet inline before
+  enabling. Each visible result card's image is replaced by its cached/
+  generated render, with a skeleton while pending and a silent fallback to
+  a body-profile-driven `StylizedAvatar` SVG on failure.
+- `ProductCard`/`CompareBrandCard`/`BestFitCompareCard` gained two optional,
+  purely additive props (`overrideImageUrl`, `imageOverlay`) so this swap-in
+  never changes default rendering when try-on is off.
+- Changing the silhouette slider or price sort re-triggers generation for
+  newly visible variants via the same cache-first pipeline from Phase T2.
+
+Deferred: end-to-end verification of the ready/failed render swap itself —
+`expo-image-picker`'s web path opens a native OS file dialog that headless
+browser tooling can't drive. The surrounding pipeline (caching, skeleton,
+fallback selection) is unit-tested and type-checked.
+
+### Phase T4 - Demo Reliability Tooling
+
+- Added `scripts/seed/pregenerate-try-ons.ts` (`npm run seed:try-ons`):
+  takes a photo URI and a list of variant IDs, retries failures (default 3
+  attempts), and exits non-zero if any variant isn't `ready`. `--dry-run`
+  checks without calling the provider. Writes a summary to
+  `supabase/seed/try-on-pregeneration-report.json`.
+- README documents running this the day before a live demo and the
+  one-line `TRYON_PROVIDER=replicate` switch if the free Hugging Face tier
+  is unreliable on demo day.
+- Verified directly: dry-run against valid variant IDs exits 1 (nothing
+  generated yet); a real run against the mock provider exits 0 with all
+  variants `ready`; an unknown variant ID correctly exits 1.
+
+Deferred: wiring this script against a live Supabase project (no live
+project in this environment) — it currently calls the provider directly and
+reports results, matching this repo's existing seed-script pattern rather
+than writing to a real database.

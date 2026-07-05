@@ -1,0 +1,22 @@
+{
+  "generatedAt": "2026-07-05T23:09:41.355Z",
+  "provider": "mock",
+  "dryRun": false,
+  "results": [
+    {
+      "variantId": "levis-501-original-32-32",
+      "title": "Levi's 501 Original Fit Jean (32x32)",
+      "status": "ready"
+    },
+    {
+      "variantId": "dockers-airweave-slim-taper-32-32",
+      "title": "Dockers Go Airweave 5-Pocket Slim Tapered (32x32)",
+      "status": "ready"
+    },
+    {
+      "variantId": "madewell-perfect-vintage-straight-29-32",
+      "title": "Marlow Denim Perfect Vintage Straight Jean (29x32)",
+      "status": "ready"
+    }
+  ]
+}
