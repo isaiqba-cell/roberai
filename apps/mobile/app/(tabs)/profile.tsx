@@ -3,6 +3,7 @@ import { useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppButton, SectionHeader, ThemeToggle } from "../../components/primitives";
 import { SimilarToFavoriteItemChip } from "../../components/fit";
+import { TryOnPhotoManager } from "../../features/tryOn/TryOnPhotoManager";
 import { mockNotificationPayload, requestNotificationPermission, routeFromNotificationPayload } from "../../services/notifications";
 import { authenticateSensitiveAccess } from "../../services/localAuthentication";
 import { useThemeTokens } from "../../theme/useThemeTokens";
@@ -23,6 +24,14 @@ export default function ProfileScreen() {
       <Link href="/(onboarding)/body-profile" asChild>
         <AppButton variant="secondary">Edit body profile</AppButton>
       </Link>
+      <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <Text style={[styles.title, { color: theme.text }]}>Try it on</Text>
+        <Text style={[styles.copy, { color: theme.textMuted }]}>
+          Upload a photo to see candidate jeans on you in Compare. Optional,
+          private, and deletable anytime.
+        </Text>
+        <TryOnPhotoManager />
+      </View>
       <Link href="/investor-demo" asChild>
         <AppButton>Open investor dashboard</AppButton>
       </Link>

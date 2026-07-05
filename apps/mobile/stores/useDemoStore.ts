@@ -6,7 +6,11 @@ import {
   defaultFavoriteJeansInput,
   resolveFavoriteJeans,
   resolveGarmentReference,
+  TryOnPhotoRecord,
+  TryOnRenderRecord,
 } from "@rober/api-client";
+
+export const DEMO_USER_ID = "demo-user";
 
 export type StyleProfile = {
   styleTags: string[];
@@ -50,6 +54,9 @@ type DemoUserState = {
   savedProductIds: string[];
   cartItems: DemoCartItem[];
   orders: DemoOrder[];
+  tryOnConsentAccepted: boolean;
+  tryOnPhotos: TryOnPhotoRecord[];
+  tryOnRenders: TryOnRenderRecord[];
   setGuestMode: (guestMode: boolean) => void;
   updateBodyProfile: (profile: Partial<BodyProfile>) => void;
   updateFitPreference: (fitPreference: FitPreference) => void;
@@ -62,6 +69,10 @@ type DemoUserState = {
   createOrderFromCart: () => DemoOrder;
   submitFitFeedback: (orderItemId: string, feedback: FitFeedback) => void;
   completeOnboarding: () => void;
+  acceptTryOnConsent: () => void;
+  addTryOnPhoto: (photo: TryOnPhotoRecord) => void;
+  deleteTryOnPhoto: (photoId: string) => void;
+  upsertTryOnRender: (render: TryOnRenderRecord) => void;
 };
 
 export type FitFeedback = "too_small" | "true_to_size" | "too_large";
@@ -205,6 +216,9 @@ export const useDemoStore = create<DemoUserState>((set) => ({
       ),
     },
   ],
+  tryOnConsentAccepted: false,
+  tryOnPhotos: [],
+  tryOnRenders: [],
   setGuestMode: (guestMode) => set({ guestMode }),
   updateBodyProfile: (profile) =>
     set((state) => ({
@@ -319,4 +333,25 @@ export const useDemoStore = create<DemoUserState>((set) => ({
       })),
     })),
   completeOnboarding: () => set({ onboardingCompleted: true }),
+  acceptTryOnConsent: () => set({ tryOnConsentAccepted: true }),
+  addTryOnPhoto: (photo) =>
+    set((state) => ({
+      tryOnPhotos: [photo, ...state.tryOnPhotos],
+    })),
+  deleteTryOnPhoto: (photoId) =>
+    set((state) => ({
+      tryOnPhotos: state.tryOnPhotos.filter((photo) => photo.id !== photoId),
+      // Cascade: deleting the source photo deletes every render derived
+      // from it, not just the photo row itself.
+      tryOnRenders: state.tryOnRenders.filter(
+        (render) => render.tryOnPhotoId !== photoId,
+      ),
+    })),
+  upsertTryOnRender: (render) =>
+    set((state) => ({
+      tryOnRenders: [
+        render,
+        ...state.tryOnRenders.filter((existing) => existing.id !== render.id),
+      ],
+    })),
 }));
