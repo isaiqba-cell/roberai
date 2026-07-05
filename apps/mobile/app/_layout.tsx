@@ -61,8 +61,8 @@ function IPhonePreviewFrame({ children }: { children: ReactNode }) {
           <View style={styles.phoneVolumeDown} />
           <View style={styles.phonePowerButton} />
           <View style={styles.phoneShell}>
-            <View style={styles.dynamicIsland} />
-            <View style={styles.islandCamera} />
+            <View pointerEvents="none" style={styles.dynamicIsland} />
+            <View pointerEvents="none" style={styles.islandCamera} />
             <View style={styles.phoneScreen}>{children}</View>
           </View>
         </View>

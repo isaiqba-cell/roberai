@@ -80,15 +80,12 @@ export default function HomeScreen() {
       style={[styles.screen, { backgroundColor: theme.bgCanvas }]}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + 30, paddingBottom: insets.bottom + 118 },
+        { paddingTop: insets.top + 30, paddingBottom: insets.bottom + 36 },
       ]}
     >
       <View style={styles.topbar}>
         <View>
           <Text style={[styles.logo, { color: theme.text }]}>Rober</Text>
-          <Text style={[styles.tagline, { color: theme.textMuted }]}>
-            Jeans that fit like your favorite pair
-          </Text>
         </View>
         <View style={styles.topActions}>
           <Link href="/discover" asChild>
@@ -365,16 +362,11 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   logo: {
-    fontSize: 29,
+    fontSize: 34,
     fontWeight: "900",
   },
-  tagline: {
-    marginTop: 2,
-    fontSize: 12,
-    fontWeight: "800",
-  },
   hero: {
-    minHeight: 230,
+    minHeight: 216,
     borderRadius: 30,
     borderWidth: 1,
     overflow: "hidden",
@@ -402,7 +394,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 22,
     right: 88,
-    bottom: 22,
+    bottom: 30,
   },
   heroTitle: {
     color: "#FFFFFF",
@@ -421,7 +413,7 @@ const styles = StyleSheet.create({
   heroArrow: {
     position: "absolute",
     right: 22,
-    bottom: 24,
+    bottom: 30,
     height: 58,
     width: 58,
     borderRadius: 999,

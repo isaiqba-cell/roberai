@@ -19,6 +19,13 @@ import { useThemePreference } from "../theme/ThemeProvider";
 
 type PressableBase = {
   accessibilityLabel?: string;
+  accessibilityState?: {
+    busy?: boolean;
+    checked?: boolean | "mixed";
+    disabled?: boolean;
+    expanded?: boolean;
+    selected?: boolean;
+  };
   disabled?: boolean;
   onPress?: () => void;
 };
@@ -28,6 +35,7 @@ export function AppButton({
   variant = "primary",
   icon,
   accessibilityLabel,
+  accessibilityState,
   disabled,
   onPress,
 }: PressableBase & {
@@ -43,6 +51,7 @@ export function AppButton({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [
@@ -80,6 +89,7 @@ export function AppButton({
 export function IconButton({
   children,
   accessibilityLabel,
+  accessibilityState,
   disabled,
   onPress,
   style,
@@ -90,6 +100,7 @@ export function IconButton({
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={accessibilityState}
       disabled={disabled}
       onPress={onPress}
       hitSlop={10}

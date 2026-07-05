@@ -1,7 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+  ScrollView,
+  Share as NativeShare,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import * as Haptics from "expo-haptics";
 import { ArrowLeft, Heart, Share2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -137,6 +144,41 @@ export default function ProductDetailScreen() {
           .toLowerCase()
           .includes(item.style.styleName.split(" ")[0]?.toLowerCase() ?? ""),
     )?.style;
+  const actionTopOffset = Math.max(74, insets.top + 36);
+  const handleShare = () => {
+    const productUrl =
+      typeof window !== "undefined"
+        ? window.location.href
+        : `https://rober.ai/product/${product.id}`;
+    const webNavigator = (globalThis as {
+      navigator?: {
+        share?: (data: {
+          title: string;
+          text: string;
+          url: string;
+        }) => Promise<void>;
+        clipboard?: { writeText?: (text: string) => Promise<void> };
+      };
+    }).navigator;
+    if (Platform.OS === "web" && webNavigator) {
+      if (webNavigator.share) {
+        webNavigator
+          .share({
+            title: product.title,
+            text: `${product.title} by ${product.brand.name} on Rober`,
+            url: productUrl,
+          })
+          .catch(() => undefined);
+        return;
+      }
+      webNavigator.clipboard?.writeText?.(productUrl).catch(() => undefined);
+      return;
+    }
+    NativeShare.share({
+      message: `${product.title} by ${product.brand.name} on Rober`,
+      title: product.title,
+    }).catch(() => undefined);
+  };
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.bgCanvas }]}>
@@ -153,16 +195,23 @@ export default function ProductDetailScreen() {
             contentFit="contain"
             transition={180}
           />
-          <View style={[styles.overlayTop, { top: insets.top + 18 }]}>
-            <IconButton accessibilityLabel="Back" onPress={() => router.back()}>
+          <View style={[styles.overlayTop, { top: actionTopOffset }]}>
+            <IconButton
+              accessibilityLabel="Back to Rober home"
+              onPress={() => router.push("/home")}
+            >
               <ArrowLeft size={20} color={theme.text} />
             </IconButton>
             <View style={styles.overlayActions}>
-              <IconButton accessibilityLabel="Share product">
+              <IconButton
+                accessibilityLabel="Share product"
+                onPress={handleShare}
+              >
                 <Share2 size={18} color={theme.text} />
               </IconButton>
               <IconButton
                 accessibilityLabel="Save product"
+                accessibilityState={{ selected: savedProductIds.includes(product.id) }}
                 onPress={() => toggleSavedProduct(product.id)}
               >
                 <Heart
@@ -364,6 +413,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 16,
     right: 16,
+    zIndex: 12,
     flexDirection: "row",
     justifyContent: "space-between",
   },
