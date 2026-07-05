@@ -1,5 +1,6 @@
 export * from "./types";
 export * from "./scoring";
+export * from "./garmentMatch";
 export * from "./parser";
 export * from "./recommendation";
 export * from "./size-chart";
