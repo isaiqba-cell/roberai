@@ -142,6 +142,7 @@ export type GarmentReferenceInput = {
   modelName?: string;
   sizeLabel: string;
   inseamIn?: number;
+  category?: "jeans" | "chinos" | "pants";
 };
 
 export type GarmentReferenceResolution = {
@@ -1302,7 +1303,7 @@ export function resolveGarmentReference(
       brandSlug: input.brandSlug,
       modelName: input.modelName ?? "Self-reported",
       sizeLabel: parsedSize.sizeLabel,
-      category: "jeans",
+      category: input.category ?? "jeans",
       resolvedFromCatalog: false,
       spec: {
         ...(entry ? { waistCm: entry.waistCm } : {}),

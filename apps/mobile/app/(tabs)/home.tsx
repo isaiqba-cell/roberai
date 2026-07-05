@@ -15,14 +15,11 @@ import {
 } from "../../components/primitives";
 import { FitConfidenceRing } from "../../components/fit";
 import { ProductCard, ProductRail } from "../../components/product";
-import {
-  formatCurrency,
-  translateFavoriteJeansFit,
-  type JeansTranslationRecommendation,
-} from "@rober/api-client";
+import { formatCurrency } from "@rober/api-client";
 import {
   closetInspiredProducts,
   demoBrands,
+  demoCatalog,
   demoFavoriteJeans,
   featuredProducts,
   jeansProducts,
@@ -30,6 +27,11 @@ import {
   toProductCard,
 } from "../../lib/catalog";
 import { summarizeProductFit } from "../../lib/fitEngine";
+import {
+  computeGarmentMatches,
+  GarmentCardCategory,
+  pickGarmentCardCategories,
+} from "../../lib/garmentCompare";
 import { rankHomeFeed } from "../../lib/recommendations";
 import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
@@ -60,11 +62,11 @@ export default function HomeScreen() {
     8,
   );
   const heroProduct = jeansProducts[0] ?? featuredProducts[0];
-  const translation = translateFavoriteJeansFit({
-    anchorStyleId: "levis-501-original",
-    taggedSize: "32x32",
-  });
-  const passportRows = selectPassportRows(translation);
+  const anchorSpec = favorite?.canonicalSpec;
+  const garmentMatches = anchorSpec ? computeGarmentMatches(anchorSpec, demoCatalog) : [];
+  const passportCategories = anchorSpec
+    ? pickGarmentCardCategories(anchorSpec, garmentMatches)
+    : [];
   const arrivalCards = jeansProducts
     .slice(0, 4)
     .map((product) =>
@@ -108,15 +110,16 @@ export default function HomeScreen() {
           FIT PASSPORT
         </Text>
         <Text style={[styles.passportTitle, { color: theme.text }]}>
-          You wear {translation.anchor.brandName}{" "}
-          {translation.anchor.styleName}, {translation.recommendedSize}
+          {favorite
+            ? `You wear ${favorite.brand} ${favorite.itemName}, ${favorite.sizeLabel}`
+            : "Add a reference garment to build your fit passport"}
         </Text>
         <View style={[styles.passportRows, { borderColor: theme.border }]}>
-          {passportRows.map((row, index) => (
+          {passportCategories.map((row, index) => (
             <PassportRow
-              key={row.item.style.id}
+              key={row.entry.product.id}
               label={row.label}
-              item={row.item}
+              entry={row.entry}
               showDivider={index > 0}
             />
           ))}
@@ -295,54 +298,13 @@ function InlineHeader({
   );
 }
 
-type PassportRowModel = {
-  label: string;
-  item: JeansTranslationRecommendation;
-};
-
-function selectPassportRows(
-  translation: ReturnType<typeof translateFavoriteJeansFit>,
-): PassportRowModel[] {
-  const usedIds = new Set<string>();
-  const pick = (
-    predicate: (item: JeansTranslationRecommendation) => boolean,
-  ) => {
-    const item =
-      translation.recommendations.find(
-        (candidate) =>
-          !usedIds.has(candidate.style.id) && predicate(candidate),
-      ) ??
-      translation.recommendations.find(
-        (candidate) => !usedIds.has(candidate.style.id),
-      );
-    if (item) {
-      usedIds.add(item.style.id);
-    }
-    return item;
-  };
-
-  const closest = pick(() => true);
-  const lowerPrice = pick(
-    (item) => item.style.priceCents < translation.anchor.priceCents,
-  );
-  const moreStretch = pick((item) => item.label === "more-stretch");
-  const betterBoots = pick((item) => item.label === "better-for-boots");
-
-  return [
-    { label: "Closest match", item: closest },
-    { label: "Lower price", item: lowerPrice },
-    { label: "More stretch", item: moreStretch },
-    { label: "Boot-friendly", item: betterBoots },
-  ].filter((row): row is PassportRowModel => Boolean(row.item));
-}
-
 function PassportRow({
   label,
-  item,
+  entry,
   showDivider,
 }: {
   label: string;
-  item: JeansTranslationRecommendation;
+  entry: GarmentCardCategory["entry"];
   showDivider?: boolean;
 }) {
   const theme = useThemeTokens();
@@ -358,15 +320,15 @@ function PassportRow({
           {label}
         </Text>
         <Text style={[styles.passportRowTitle, { color: theme.text }]}>
-          {item.style.styleName}
+          {entry.card.brand} {entry.product.title}
         </Text>
       </View>
       <View style={styles.passportMetrics}>
         <Text style={[styles.passportPrice, { color: theme.text }]}>
-          {formatCurrency(item.style.priceCents)}
+          {formatCurrency(entry.product.priceCents)}
         </Text>
         <Text style={[styles.passportFit, { color: theme.accent }]}>
-          {item.overallScore}% fit
+          {entry.result.confidence}% fit
         </Text>
       </View>
     </View>

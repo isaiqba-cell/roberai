@@ -75,7 +75,7 @@ export function summarizeProductFit(product: ProductRecord, body: BodyProfile, f
   };
 }
 
-function parsedToProductFilters(query: string, parsed: ReturnType<typeof parseNaturalLanguageSearch>): ProductFilters {
+export function parsedToProductFilters(query: string, parsed: ReturnType<typeof parseNaturalLanguageSearch>): ProductFilters {
   const category = parsed.category === "jeans" ? "bottoms" : parsed.category === "boots" ? "shoes" : parsed.category;
   const subcategory = parsed.category === "jeans" ? "jeans" : parsed.category === "boots" ? "boots" : undefined;
   const colors = parsed.colors.flatMap((color) => (color === "green" ? ["olive", "forest"] : [color]));

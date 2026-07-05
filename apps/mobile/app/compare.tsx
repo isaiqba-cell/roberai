@@ -3,10 +3,7 @@ import { Link, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import {
-  translateFavoriteJeansFit,
-  type JeansTranslationRecommendation,
-} from "@rober/api-client";
+import { formatCurrency } from "@rober/api-client";
 import { parseNaturalLanguageSearch } from "@rober/fit-engine";
 import {
   AppButton,
@@ -21,7 +18,16 @@ import {
   RecommendedSizeCard,
 } from "../components/fit";
 import { BestFitCompareCard, CompareBrandCard } from "../components/product";
-import { compareProductsForQuery } from "../lib/fitEngine";
+import { compareProductsForQuery, parsedToProductFilters } from "../lib/fitEngine";
+import {
+  computeGarmentMatches,
+  GarmentCardCategory,
+  pickGarmentCardCategories,
+  rerankBySilhouette,
+  silhouetteCutFromSlider,
+  sortByPrice,
+} from "../lib/garmentCompare";
+import { searchCatalog } from "../lib/catalog";
 import { useDemoStore } from "../stores/useDemoStore";
 import { useThemeTokens } from "../theme/useThemeTokens";
 
@@ -33,35 +39,67 @@ export default function CompareScreen() {
   const router = useRouter();
   const [query, setQuery] = useState(defaultQuery);
   const [spectrum, setSpectrum] = useState(62);
+  const [priceSortActive, setPriceSortActive] = useState(false);
   const bodyProfile = useDemoStore((state) => state.bodyProfile);
   const favorite = useDemoStore((state) => state.knownGoodItems[0]);
   const parsed = useMemo(() => parseNaturalLanguageSearch(query), [query]);
-  const translation = useMemo(
-    () =>
-      translateFavoriteJeansFit({
-        anchorStyleId: "levis-501-original",
-        taggedSize: "32x32",
-      }),
-    [],
+  const filters = useMemo(() => parsedToProductFilters(query, parsed), [query, parsed]);
+
+  const anchorSpec = favorite?.canonicalSpec;
+  const garmentToGarment = Boolean(anchorSpec);
+
+  const garmentSummaries = useMemo(() => {
+    if (!anchorSpec) {
+      return [];
+    }
+    return computeGarmentMatches(anchorSpec, searchCatalog(filters));
+  }, [anchorSpec, filters]);
+
+  const targetCut = silhouetteCutFromSlider(spectrum);
+  const rerankedSummaries = useMemo(
+    () => rerankBySilhouette(garmentSummaries, targetCut),
+    [garmentSummaries, targetCut],
   );
-  const results = useMemo(
-    () =>
-      compareProductsForQuery(
-        query,
-        bodyProfile,
-        spectrum,
-        favorite
-          ? {
-              itemName: favorite.itemName,
-              category: favorite.category,
-              sizeLabel: favorite.sizeLabel,
-              fitNotes: favorite.fitNotes,
-              measurements: favorite.measurements,
-            }
-          : undefined,
-      ),
-    [bodyProfile, favorite, query, spectrum],
+  const orderedSummaries = priceSortActive
+    ? sortByPrice(rerankedSummaries)
+    : rerankedSummaries;
+
+  const passportCategories: GarmentCardCategory[] = useMemo(
+    () => (anchorSpec ? pickGarmentCardCategories(anchorSpec, garmentSummaries) : []),
+    [anchorSpec, garmentSummaries],
   );
+
+  const fallbackResults = useMemo(
+    () =>
+      garmentToGarment
+        ? []
+        : compareProductsForQuery(
+            query,
+            bodyProfile,
+            spectrum,
+            favorite
+              ? {
+                  itemName: favorite.itemName,
+                  category: favorite.category,
+                  sizeLabel: favorite.sizeLabel,
+                  fitNotes: favorite.fitNotes,
+                  measurements: favorite.measurements,
+                }
+              : undefined,
+          ),
+    [garmentToGarment, query, bodyProfile, spectrum, favorite],
+  );
+
+  const results = garmentToGarment
+    ? orderedSummaries.map((summary) => ({
+        product: summary.product,
+        card: summary.card,
+        confidence: summary.result.confidence,
+        recommendedSize: summary.sizeLabel,
+        explanation: summary.result.explanation,
+        dimensionScores: summary.result.dimensionScores,
+      }))
+    : fallbackResults;
   const [best, ...alternatives] = results;
 
   return (
@@ -93,49 +131,44 @@ export default function CompareScreen() {
         ]}
       >
         <Text style={[styles.kicker, { color: theme.accent }]}>
-          JEANS SIZE-CHART MATCHING
+          GARMENT-TO-GARMENT MATCHING
         </Text>
         <Text style={[styles.title, { color: theme.text }]}>
-          One favorite pair, every brand size normalized.
+          One favorite pair, every brand's construction compared.
         </Text>
         <Text style={[styles.copy, { color: theme.textMuted }]}>
-          Rober compares official jeans waist, hip, and inseam charts, then
-          recommends the closest size across price points.
+          Rober matches your anchor garment's actual thigh, rise, inseam, and
+          leg-opening measurements against every other brand's size chart, not
+          your body.
         </Text>
       </View>
 
-      <SectionHeader
-        kicker="Fit passport"
-        title={`${translation.anchor.brandName} ${translation.anchor.styleName} vs alternatives`}
-      />
-      <View
-        style={[
-          styles.translationTable,
-          { backgroundColor: theme.surface, borderColor: theme.border },
-        ]}
-      >
-        <View
-          style={[
-            styles.anchorRow,
-            { backgroundColor: theme.surfaceWarm, borderColor: theme.border },
-          ]}
-        >
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.anchorKicker, { color: theme.accent }]}>
-              Anchor
-            </Text>
-            <Text style={[styles.anchorTitle, { color: theme.text }]}>
-              {translation.anchor.styleName} in {translation.recommendedSize}
-            </Text>
+      {favorite ? (
+        <>
+          <SectionHeader
+            kicker="Fit passport"
+            title={`You wear ${favorite.brand} ${favorite.itemName}, ${favorite.sizeLabel}`}
+          />
+          <View
+            style={[
+              styles.translationTable,
+              { backgroundColor: theme.surface, borderColor: theme.border },
+            ]}
+          >
+            {passportCategories.length ? (
+              passportCategories.map((row) => (
+                <GarmentCategoryRow key={row.label} row={row} />
+              ))
+            ) : (
+              <View style={styles.emptyPassport}>
+                <Text style={[styles.copy, { color: theme.textMuted }]}>
+                  No garment-construction matches for this search yet.
+                </Text>
+              </View>
+            )}
           </View>
-          <Text style={[styles.anchorMeta, { color: theme.textMuted }]}>
-            {translation.anchor.taxonomy.fitFamily}
-          </Text>
-        </View>
-        {translation.recommendations.slice(0, 5).map((item) => (
-          <TranslationComparisonRow key={item.style.id} item={item} />
-        ))}
-      </View>
+        </>
+      ) : null}
 
       <View
         style={[
@@ -167,12 +200,27 @@ export default function CompareScreen() {
         {parsed.priceMax ? (
           <Chip label={`Under $${parsed.priceMax}`} selected />
         ) : null}
-        {parsed.fitIntent ? (
-          <Chip label={`${formatChipLabel(parsed.fitIntent)} fit`} selected />
-        ) : null}
       </View>
 
       <FitSpectrumSlider value={spectrum} onChange={setSpectrum} />
+
+      <View style={styles.sortRow}>
+        <Text style={[styles.sortLabel, { color: theme.textMuted }]}>
+          Sort by
+        </Text>
+        <View style={styles.chips}>
+          <Chip
+            label="Best match"
+            selected={!priceSortActive}
+            onPress={() => setPriceSortActive(false)}
+          />
+          <Chip
+            label="Price: low to high"
+            selected={priceSortActive}
+            onPress={() => setPriceSortActive(true)}
+          />
+        </View>
+      </View>
 
       {best ? (
         <>
@@ -234,37 +282,31 @@ function formatChipLabel(value: string) {
     .join(" ");
 }
 
-function TranslationComparisonRow({
-  item,
-}: {
-  item: JeansTranslationRecommendation;
-}) {
+function GarmentCategoryRow({ row }: { row: GarmentCardCategory }) {
   const theme = useThemeTokens();
+  const { label, entry } = row;
   return (
     <View style={[styles.translationRow, { borderColor: theme.border }]}>
       <View style={{ flex: 1 }}>
         <Text style={[styles.translationBrand, { color: theme.textMuted }]}>
-          {item.style.brandName}
+          {label}
         </Text>
         <Text style={[styles.translationTitle, { color: theme.text }]}>
-          {item.style.styleName}
+          {entry.card.brand} {entry.product.title}
         </Text>
         <Text
           numberOfLines={2}
           style={[styles.translationWhy, { color: theme.textMuted }]}
         >
-          {item.explanation}
+          {entry.result.explanation[0]}
         </Text>
       </View>
       <View style={styles.translationMetrics}>
         <Text style={[styles.translationScore, { color: theme.accent }]}>
-          {item.overallScore}
+          {entry.result.confidence}
         </Text>
         <Text style={[styles.translationMeta, { color: theme.textMuted }]}>
-          {item.style.taxonomy.seatRoom}/{item.style.taxonomy.thighRoom}
-        </Text>
-        <Text style={[styles.translationMeta, { color: theme.textMuted }]}>
-          {item.style.taxonomy.hemBehavior}
+          {formatCurrency(entry.product.priceCents)}
         </Text>
       </View>
     </View>
@@ -314,33 +356,11 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     overflow: "hidden",
   },
-  anchorRow: {
-    borderBottomWidth: 1,
-    padding: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  anchorKicker: {
-    fontFamily: "Courier",
-    fontSize: 10,
-    fontWeight: "900",
-    letterSpacing: 1,
-    textTransform: "uppercase",
-  },
-  anchorTitle: {
-    marginTop: 3,
-    fontSize: 18,
-    fontWeight: "900",
-  },
-  anchorMeta: {
-    fontSize: 12,
-    fontWeight: "900",
-    maxWidth: 96,
-    textAlign: "right",
+  emptyPassport: {
+    padding: 18,
   },
   translationRow: {
-    minHeight: 112,
+    minHeight: 100,
     borderBottomWidth: 1,
     padding: 14,
     flexDirection: "row",
@@ -394,6 +414,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 8,
+  },
+  sortRow: {
+    gap: 8,
+  },
+  sortLabel: {
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
   },
   sizeContext: {
     fontSize: 12,

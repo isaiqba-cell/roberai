@@ -8,6 +8,8 @@ import {
   jeansSizeChartEntries,
   parseJeansSizeInput,
   resolveFavoriteJeans,
+  resolveGarmentReference,
+  type GarmentReferenceResolution,
 } from "@rober/api-client";
 import { AppButton, Chip } from "../../components/primitives";
 import { useDemoStore } from "../../stores/useDemoStore";
@@ -19,6 +21,12 @@ const fitNotes = [
   "Runs a little big",
 ];
 
+const categories: Array<{ label: string; value: "jeans" | "chinos" | "pants" }> = [
+  { label: "Jeans", value: "jeans" },
+  { label: "Chinos", value: "chinos" },
+  { label: "Pants", value: "pants" },
+];
+
 export function FavoriteJeansReferenceForm() {
   const theme = useThemeTokens();
   const router = useRouter();
@@ -27,15 +35,11 @@ export function FavoriteJeansReferenceForm() {
   const completeOnboarding = useDemoStore((state) => state.completeOnboarding);
   const [brandQuery, setBrandQuery] = useState(jeansBrands[0]?.name ?? "");
   const [brandSlug, setBrandSlug] = useState(jeansBrands[0]?.slug ?? "");
+  const [modelName, setModelName] = useState("501");
+  const [category, setCategory] = useState<"jeans" | "chinos" | "pants">("jeans");
   const [sizeLabel, setSizeLabel] = useState("29x32");
   const [fitNote, setFitNote] = useState(fitNotes[0] ?? "Fits true to size");
-  const [estimate, setEstimate] = useState<{
-    waistCm: number;
-    hipCm: number;
-    inseamCm: number;
-    brandName: string;
-    baseSizeLabel: string;
-  }>();
+  const [resolution, setResolution] = useState<GarmentReferenceResolution>();
   const parsedSize = parseJeansSizeInput(sizeLabel);
   const exactEntry = jeansSizeChartEntries.find(
     (entry) =>
@@ -47,7 +51,7 @@ export function FavoriteJeansReferenceForm() {
       .filter((brand) => !query || brand.name.toLowerCase().includes(query))
       .slice(0, 5);
   }, [brandQuery]);
-  const matches = estimate
+  const matches = resolution
     ? findJeansFitMatches({
         brandSlug,
         sizeLabel,
@@ -55,47 +59,43 @@ export function FavoriteJeansReferenceForm() {
     : [];
 
   const submitReference = () => {
-    if (!exactEntry) {
-      return;
-    }
-    const favorite = resolveFavoriteJeans({ brandSlug, sizeLabel });
-    setEstimate({
-      waistCm: favorite.waistCm,
-      hipCm: favorite.hipCm,
-      inseamCm: favorite.inseamCm,
-      brandName: favorite.brandName,
-      baseSizeLabel: `${favorite.sizeLabel}x${Math.round(favorite.inseamCm / 2.54)}`,
-    });
+    setResolution(resolveGarmentReference({ brandSlug, modelName, sizeLabel, category }));
   };
 
   const saveBaseline = () => {
-    if (!estimate) {
+    if (!resolution) {
       return;
     }
+    const { spec } = resolution;
+    const fullSizeLabel = spec.inseamCm
+      ? `${resolution.sizeLabel}x${Math.round(spec.inseamCm / 2.54)}`
+      : resolution.sizeLabel;
     updateBodyProfile({
-      waistCm: estimate.waistCm,
-      hipCm: estimate.hipCm,
-      inseamCm: estimate.inseamCm,
+      ...(spec.waistCm !== undefined ? { waistCm: spec.waistCm } : {}),
+      ...(spec.inseamCm !== undefined ? { inseamCm: spec.inseamCm } : {}),
       fitPreference: fitNote === "Runs a little small" ? "relaxed" : "regular",
     });
     addKnownGoodItem({
       id: `known-jeans-${brandSlug}-${parsedSize.sizeLabel}`,
-      brand: estimate.brandName,
+      brand: resolution.brandName,
       category: "bottoms",
-      itemName: "straight jeans",
-      sizeLabel: estimate.baseSizeLabel,
+      itemName: resolution.modelName,
+      sizeLabel: fullSizeLabel,
       fitNotes: fitNote,
       measurements: {
-        waistCm: estimate.waistCm,
-        hipCm: estimate.hipCm,
-        inseamCm: estimate.inseamCm,
+        ...(spec.waistCm !== undefined ? { waistCm: spec.waistCm } : {}),
+        ...(spec.inseamCm !== undefined ? { inseamCm: spec.inseamCm } : {}),
       },
+      canonicalSpec: spec,
+      resolvedFromCatalog: resolution.resolvedFromCatalog,
+      matchPath: "garment_to_garment",
     });
     completeOnboarding();
     router.push("/(tabs)/home");
   };
 
-  if (estimate) {
+  if (resolution) {
+    const { spec } = resolution;
     return (
       <View style={styles.wrap}>
         <View
@@ -105,31 +105,48 @@ export function FavoriteJeansReferenceForm() {
           ]}
         >
           <Text style={[styles.kicker, { color: theme.accent }]}>
-            ESTIMATED FROM YOUR JEANS
+            MATCHED FROM YOUR JEANS' CONSTRUCTION
           </Text>
           <Text style={[styles.title, { color: theme.text }]}>
-            Here's what we estimated.
+            Here's your fit anchor.
           </Text>
           <Text style={[styles.copy, { color: theme.textMuted }]}>
-            Adjust anything that's off, then Rober can recommend matching
-            jeans across brands.
+            {resolution.resolvedFromCatalog
+              ? `Waist, inseam, thigh, and rise pulled from ${resolution.brandName} ${resolution.modelName}'s own size chart. Rober compares this against every other brand's construction, not your body.`
+              : "This brand/model/size combination isn't indexed yet, so we used a self-reported estimate. Flagged for review."}
           </Text>
         </View>
         <EditableMetric
           label="Waist"
-          value={estimate.waistCm}
-          onChange={(value) => setEstimate({ ...estimate, waistCm: value })}
-        />
-        <EditableMetric
-          label="Hip"
-          value={estimate.hipCm}
-          onChange={(value) => setEstimate({ ...estimate, hipCm: value })}
+          value={spec.waistCm ?? 0}
+          onChange={(value) =>
+            setResolution({ ...resolution, spec: { ...spec, waistCm: value } })
+          }
         />
         <EditableMetric
           label="Inseam"
-          value={estimate.inseamCm}
-          onChange={(value) => setEstimate({ ...estimate, inseamCm: value })}
+          value={spec.inseamCm ?? 0}
+          onChange={(value) =>
+            setResolution({ ...resolution, spec: { ...spec, inseamCm: value } })
+          }
         />
+        {spec.thighCm !== undefined && spec.riseCm !== undefined ? (
+          <View
+            style={[
+              styles.matchCard,
+              { backgroundColor: theme.surface, borderColor: theme.border },
+            ]}
+          >
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.matchTitle, { color: theme.text }]}>
+                Thigh {spec.thighCm}cm &middot; Rise {spec.riseCm}cm
+              </Text>
+              <Text style={[styles.copy, { color: theme.textMuted }]}>
+                Construction measurements from the matched garment
+              </Text>
+            </View>
+          </View>
+        ) : null}
         <View style={styles.matchList}>
           {matches.map((match) => (
             <View
@@ -202,6 +219,25 @@ export function FavoriteJeansReferenceForm() {
           ))}
         </View>
 
+        <Text style={[styles.fieldLabel, { color: theme.text }]}>
+          Model / style name
+        </Text>
+        <View
+          style={[
+            styles.searchBox,
+            { backgroundColor: theme.surfaceRaised, borderColor: theme.border },
+          ]}
+        >
+          <TextInput
+            accessibilityLabel="Favorite jeans model or style name"
+            value={modelName}
+            onChangeText={setModelName}
+            placeholder="501, 505 Regular Straight"
+            placeholderTextColor={theme.textMuted}
+            style={[styles.input, { color: theme.text }]}
+          />
+        </View>
+
         <Text style={[styles.fieldLabel, { color: theme.text }]}>Size</Text>
         <View
           style={[
@@ -221,9 +257,25 @@ export function FavoriteJeansReferenceForm() {
         </View>
         {!exactEntry ? (
           <Text style={[styles.error, { color: theme.fitLow }]}>
-            Pick an indexed brand and size so we can estimate your baseline.
+            Pick an indexed brand and size so we can match your garment's
+            construction. Otherwise we'll fall back to a self-reported
+            estimate.
           </Text>
         ) : null}
+
+        <Text style={[styles.fieldLabel, { color: theme.text }]}>
+          Category
+        </Text>
+        <View style={styles.chips}>
+          {categories.map((option) => (
+            <Chip
+              key={option.value}
+              label={option.label}
+              selected={category === option.value}
+              onPress={() => setCategory(option.value)}
+            />
+          ))}
+        </View>
 
         <Text style={[styles.fieldLabel, { color: theme.text }]}>
           Fit note
@@ -241,7 +293,7 @@ export function FavoriteJeansReferenceForm() {
       </View>
       <AppButton
         icon={<ArrowRight size={18} color="#FFFFFF" />}
-        disabled={!exactEntry}
+        disabled={!brandSlug || !sizeLabel.trim()}
         onPress={submitReference}
       >
         Use this as my baseline

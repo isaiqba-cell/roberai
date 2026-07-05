@@ -38,26 +38,27 @@ export default function WelcomeScreen() {
         ]}
       >
         <Text style={[styles.kicker, { color: theme.accent }]}>
-          BUILD YOUR FIT PROFILE
+          MATCH YOUR FIT ANCHOR
         </Text>
         <Text style={[styles.title, { color: theme.text }]}>
-          How do you want to start?
+          What's a pair that fits you perfectly?
         </Text>
         <Text style={[styles.copy, { color: theme.textMuted }]}>
-          One path is enough. Add exact measurements or tell us the jeans you
-          already love, then Rober can recommend your closest matching sizes.
+          We match your favorite pair's actual construction, thigh, inseam,
+          and rise, against every other brand's size chart. Body measurements
+          are optional and only needed if you don't have a reference pair yet.
         </Text>
       </View>
 
       <View style={styles.pathGrid}>
         <PathCard
           title="I have a favorite pair of jeans"
-          body="Enter brand, size, and one fit note. We estimate waist, hip, and inseam from indexed size-chart data."
+          body="Enter brand, model/style, size, and one fit note. We match its actual waist, inseam, thigh, and rise from indexed size-chart data."
           icon={<Sparkles size={22} color={theme.accent} />}
           onPress={() => router.push("/(onboarding)/garment-reference")}
         />
         <PathCard
-          title="I know my measurements"
+          title="Prefer not to enter a reference item? Measure instead"
           body="Use bigger stepper controls for waist, hip, and inseam. Height, chest, and shoulder stay optional."
           icon={<Ruler size={22} color={theme.accent} />}
           onPress={() => router.push("/(onboarding)/body-profile")}
