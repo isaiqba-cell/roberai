@@ -1,4 +1,8 @@
-import { Link } from "expo-router";
+import {
+  Link,
+  useRouter,
+  type Href,
+} from "expo-router";
 import { Image } from "expo-image";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { ArrowUpRight, Bell, Search, Sparkles } from "lucide-react-native";
@@ -32,6 +36,8 @@ import { useThemeTokens } from "../../theme/useThemeTokens";
 export default function HomeScreen() {
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const bottomClearance = 112;
   const bodyProfile = useDemoStore((state) => state.bodyProfile);
   const styleProfile = useDemoStore((state) => state.styleProfile);
   const favorite = useDemoStore((state) => state.knownGoodItems[0]);
@@ -80,7 +86,10 @@ export default function HomeScreen() {
       style={[styles.screen, { backgroundColor: theme.bgCanvas }]}
       contentContainerStyle={[
         styles.content,
-        { paddingTop: insets.top + 30, paddingBottom: insets.bottom + 36 },
+        {
+          paddingTop: insets.top + 28,
+          paddingBottom: insets.bottom + bottomClearance + 28,
+        },
       ]}
     >
       <View style={styles.topbar}>
@@ -181,7 +190,12 @@ export default function HomeScreen() {
       </View>
 
       <View>
-        <InlineHeader title="Indexed Jeans Brands" action="See All" />
+        <InlineHeader
+          title="Indexed Jeans Brands"
+          action="See All"
+          href="/discover"
+          testID="indexed-brands-see-all"
+        />
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -192,13 +206,27 @@ export default function HomeScreen() {
               key={brand.slug}
               label={brand.name}
               selected={index === 0}
+              onPress={() =>
+                router.push({
+                  pathname: "/discover",
+                  params: { brand: brand.slug },
+                })
+              }
             />
           ))}
         </ScrollView>
       </View>
 
-      <View>
-        <InlineHeader title="Best Jeans Matches" action="See All" />
+      <View style={styles.productSection}>
+        <InlineHeader
+          title="Best Jeans Matches"
+          action="See All"
+          testID="best-matches-see-all"
+          href={{
+            pathname: "/discover",
+            params: { query: "jeans" },
+          }}
+        />
         <View style={styles.productGrid}>
           {arrivalCards.map((product) => (
             <View key={product.id} style={styles.gridCell}>
@@ -254,14 +282,41 @@ export default function HomeScreen() {
   );
 }
 
-function InlineHeader({ title, action }: { title: string; action: string }) {
+function InlineHeader({
+  title,
+  action,
+  href,
+  testID,
+}: {
+  title: string;
+  action: string;
+  href?: Href;
+  testID?: string;
+}) {
   const theme = useThemeTokens();
+  const actionText = (
+    <Text style={[styles.inlineAction, { color: theme.textMuted }]}>
+      {action}
+    </Text>
+  );
+
   return (
     <View style={styles.inlineHeader}>
       <Text style={[styles.inlineTitle, { color: theme.text }]}>{title}</Text>
-      <Text style={[styles.inlineAction, { color: theme.textMuted }]}>
-        {action}
-      </Text>
+      {href ? (
+        <Link href={href} asChild>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${action} ${title}`}
+            hitSlop={8}
+            testID={testID}
+          >
+            {actionText}
+          </Pressable>
+        </Link>
+      ) : (
+        actionText
+      )}
     </View>
   );
 }
@@ -297,7 +352,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 18,
-    gap: 18,
+    gap: 16,
   },
   topbar: {
     flexDirection: "row",
@@ -309,10 +364,10 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   passport: {
-    borderRadius: 26,
+    borderRadius: 24,
     borderWidth: 1,
-    padding: 18,
-    gap: 10,
+    padding: 14,
+    gap: 8,
     shadowColor: "#6F3328",
     shadowOpacity: 0.09,
     shadowRadius: 18,
@@ -326,21 +381,21 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   passportTitle: {
-    fontSize: 25,
+    fontSize: 22,
     fontWeight: "900",
-    lineHeight: 30,
+    lineHeight: 25,
   },
   passportCopy: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "700",
-    lineHeight: 19,
+    lineHeight: 17,
   },
   passportRows: {
     borderTopWidth: 1,
     marginTop: 4,
   },
   passportRow: {
-    minHeight: 58,
+    minHeight: 43,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
@@ -352,11 +407,11 @@ const styles = StyleSheet.create({
   },
   passportRowTitle: {
     marginTop: 3,
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "900",
   },
   passportMeta: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: "900",
     maxWidth: 92,
     textAlign: "right",
@@ -366,8 +421,8 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   hero: {
-    minHeight: 216,
-    borderRadius: 30,
+    minHeight: 178,
+    borderRadius: 26,
     borderWidth: 1,
     overflow: "hidden",
     position: "relative",
@@ -392,30 +447,30 @@ const styles = StyleSheet.create({
   },
   heroCopyBlock: {
     position: "absolute",
-    left: 22,
-    right: 88,
-    bottom: 30,
+    left: 20,
+    right: 82,
+    bottom: 24,
   },
   heroTitle: {
     color: "#FFFFFF",
-    fontSize: 26,
+    fontSize: 22,
     fontWeight: "900",
-    lineHeight: 30,
+    lineHeight: 25,
     textTransform: "uppercase",
   },
   heroSubtitle: {
     color: "rgba(255, 255, 255, 0.86)",
-    fontSize: 15,
-    lineHeight: 21,
+    fontSize: 13,
+    lineHeight: 18,
     marginTop: 6,
     fontWeight: "700",
   },
   heroArrow: {
     position: "absolute",
-    right: 22,
-    bottom: 30,
-    height: 58,
-    width: 58,
+    right: 20,
+    bottom: 24,
+    height: 54,
+    width: 54,
     borderRadius: 999,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
@@ -457,6 +512,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
+  },
+  productSection: {
+    marginTop: 112,
   },
   gridCell: {
     width: "48%",

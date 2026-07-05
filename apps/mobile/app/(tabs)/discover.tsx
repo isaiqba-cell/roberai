@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   RefreshControl,
   StyleSheet,
@@ -8,6 +8,7 @@ import {
 } from "react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Bell, Search } from "lucide-react-native";
+import { useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProductCategory, ProductFilters } from "@rober/api-client";
 import {
@@ -24,15 +25,28 @@ import { useThemeTokens } from "../../theme/useThemeTokens";
 export default function DiscoverScreen() {
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
-  const [query, setQuery] = useState("");
+  const params = useLocalSearchParams<{ brand?: string; query?: string }>();
+  const routeBrand = typeof params.brand === "string" ? params.brand : undefined;
+  const routeQuery = typeof params.query === "string" ? params.query : "";
+  const [query, setQuery] = useState(routeQuery);
   const [category, setCategory] = useState<ProductCategory | undefined>(
     "bottoms",
   );
   const [fit, setFit] = useState<ProductFilters["fit"]>();
   const [styleTag, setStyleTag] = useState<string | undefined>();
-  const [brand, setBrand] = useState<string | undefined>();
-  const [under100, setUnder100] = useState(true);
+  const [brand, setBrand] = useState<string | undefined>(routeBrand);
+  const [under100, setUnder100] = useState(!routeBrand);
   const { refreshing, onRefresh } = useDemoRefresh();
+
+  useEffect(() => {
+    setBrand(routeBrand);
+    setUnder100(!routeBrand);
+  }, [routeBrand]);
+
+  useEffect(() => {
+    setQuery(routeQuery);
+  }, [routeQuery]);
+
   const products = useMemo(
     () =>
       searchCatalog({

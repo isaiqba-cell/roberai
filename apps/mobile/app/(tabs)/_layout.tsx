@@ -12,6 +12,7 @@ import { useThemeTokens } from "../../theme/useThemeTokens";
 export default function TabsLayout() {
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
+  const dockHeight = 74 + insets.bottom;
   const iconColor = (focused: boolean) => (focused ? "#FFFFFF" : theme.tabText);
 
   return (
@@ -22,8 +23,13 @@ export default function TabsLayout() {
         tabBarActiveTintColor: "#FFFFFF",
         tabBarInactiveTintColor: theme.tabText,
         tabBarActiveBackgroundColor: theme.accent,
+        sceneStyle: {
+          backgroundColor: theme.bgCanvas,
+          overflow: "hidden",
+        },
         tabBarStyle: {
-          height: 74 + insets.bottom,
+          position: "relative",
+          height: dockHeight,
           borderTopLeftRadius: 28,
           borderTopRightRadius: 28,
           borderTopWidth: 1,
