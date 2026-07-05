@@ -119,10 +119,10 @@ export const demoKnownGoodItems: KnownGoodItem[] = [
     id: "known-favorite-jeans",
     brand: demoFavoriteJeans.brandName,
     category: "bottoms",
-    itemName: "Favorite straight jeans",
+    itemName: "501 Original Fit Jean",
     sizeLabel: `${demoFavoriteJeans.sizeLabel}x${Math.round(demoFavoriteJeans.inseamCm / 2.54)}`,
     fitNotes:
-      "Waist sits clean, no hip pulling, and the inseam breaks once at the shoe.",
+      "Levi's 501 baseline: waist sits clean, no hip pulling, and the inseam breaks once at the shoe.",
     measurements: {
       waistCm: demoFavoriteJeans.waistCm,
       hipCm: demoFavoriteJeans.hipCm,

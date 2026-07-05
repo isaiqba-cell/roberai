@@ -61,11 +61,117 @@ export type JeansFitMatch = {
   note: string;
 };
 
+export type JeansFitFamily =
+  | "straight"
+  | "regular-straight"
+  | "relaxed-straight"
+  | "slim-taper"
+  | "athletic-taper"
+  | "bootcut"
+  | "loose-baggy"
+  | "workwear-straight";
+
+export type JeansRiseBucket =
+  | "at-waist"
+  | "mid-rise"
+  | "slightly-below-waist"
+  | "low-rise"
+  | "unknown";
+
+export type JeansRoomLevel =
+  | "slim"
+  | "regular"
+  | "regular-plus"
+  | "relaxed"
+  | "loose";
+
+export type JeansLegBehavior =
+  | "straight"
+  | "tapered"
+  | "slim-straight"
+  | "slim-tapered"
+  | "boot-friendly-straight"
+  | "bootcut";
+
+export type JeansStretchProfile =
+  | "rigid"
+  | "low-stretch"
+  | "medium-stretch"
+  | "high-stretch"
+  | "performance-stretch";
+
+export type JeansConstructionProfile =
+  | "heritage-denim"
+  | "everyday-denim"
+  | "performance-denim"
+  | "workwear-denim"
+  | "non-denim-5-pocket";
+
+export type JeansFitTaxonomy = {
+  genderTarget: "men" | "women" | "unisex";
+  category: "jeans" | "pants";
+  fitFamily: JeansFitFamily;
+  riseBucket: JeansRiseBucket;
+  seatRoom: JeansRoomLevel;
+  thighRoom: JeansRoomLevel;
+  legShape: "straight" | "tapered" | "slim" | "bootcut" | "loose";
+  hemBehavior: JeansLegBehavior;
+  stretchProfile: JeansStretchProfile;
+  constructionProfile: JeansConstructionProfile;
+  bootCompatibility: "yes" | "some" | "no" | "unknown";
+  styleNotes: string;
+};
+
+export type JeansTranslationStyle = {
+  id: string;
+  brandName: string;
+  brandSlug: string;
+  styleName: string;
+  officialSignal: string;
+  priceBand: "$" | "$$" | "$$$";
+  priceCents: number;
+  bestLeviAnchor: "501" | "505" | "511" | "514" | "541" | "550";
+  confidence: "high" | "medium";
+  taxonomy: JeansFitTaxonomy;
+};
+
+export type JeansTranslationRecommendation = {
+  style: JeansTranslationStyle;
+  label:
+    | "closest-match"
+    | "safer-roomier-option"
+    | "cleaner-slimmer-option"
+    | "more-stretch"
+    | "better-for-boots";
+  overallScore: number;
+  silhouetteScore: number;
+  seatThighScore: number;
+  riseScore: number;
+  stretchScore: number;
+  legOpeningScore: number;
+  constructionScore: number;
+  recommendedSize: string;
+  explanation: string;
+};
+
+export type JeansTranslationInput = {
+  anchorStyleId?: string;
+  taggedSize?: string;
+};
+
 const scrapedAt = "2026-07-04";
 const inch = 2.54;
 const imagePath = (fileName: string) => `/images/jeans/${fileName}`;
 
 export const jeansBrands: BrandRecord[] = [
+  {
+    id: "brand-levis",
+    name: "Levi's",
+    slug: "levis",
+    positioning:
+      "Anchor denim brand used for 501, 505, 511, 514, 541, and 550 fit translation.",
+    sizeChartConfidence: "verified",
+  },
   {
     id: "brand-madewell",
     name: "Marlow Denim",
@@ -90,6 +196,22 @@ export const jeansBrands: BrandRecord[] = [
     sizeChartConfidence: "verified",
   },
   {
+    id: "brand-dickies",
+    name: "Dickies",
+    slug: "dickies",
+    positioning:
+      "Workwear denim and utility pants mapped by relaxed, regular, slim, and loose construction.",
+    sizeChartConfidence: "verified",
+  },
+  {
+    id: "brand-dockers",
+    name: "Dockers",
+    slug: "dockers",
+    positioning:
+      "Five-pocket and khaki analog fits mapped into denim-style fit translation.",
+    sizeChartConfidence: "verified",
+  },
+  {
     id: "brand-old-navy",
     name: "Harbor Denim",
     slug: "old-navy",
@@ -108,6 +230,17 @@ export const jeansBrands: BrandRecord[] = [
 ];
 
 export const jeansSizeChartSources: JeansSizeChartSource[] = [
+  {
+    id: "levis-men-jeans",
+    brandName: "Levi's",
+    brandSlug: "levis",
+    gender: "men",
+    sourceUrl:
+      "https://www.levi.com/US/en_US/features/men-jeans-guide",
+    scrapedAt,
+    sourceNote:
+      "Official Levi's men's jeans guide used as the anchor fit family map for 501, 505, 511, 514, 541, and 550.",
+  },
   {
     id: "madewell-women-denim",
     brandName: "Madewell",
@@ -158,6 +291,26 @@ export const jeansSizeChartSources: JeansSizeChartSource[] = [
       "Official men's jeans chart with natural waist, low waist, seat, thigh, and length.",
   },
   {
+    id: "dickies-men-jeans",
+    brandName: "Dickies",
+    brandSlug: "dickies",
+    gender: "men",
+    sourceUrl: "https://www.dickies.com/size-chart",
+    scrapedAt,
+    sourceNote:
+      "Official Dickies size and fit guidance normalized for workwear straight, slim, relaxed, and loose jeans.",
+  },
+  {
+    id: "dockers-men-bottoms",
+    brandName: "Dockers",
+    brandSlug: "dockers",
+    gender: "men",
+    sourceUrl: "https://us.dockers.com/pages/size-chart",
+    scrapedAt,
+    sourceNote:
+      "Official Dockers bottoms guidance normalized as non-denim five-pocket and khaki analog fits.",
+  },
+  {
     id: "old-navy-women-bottoms",
     brandName: "Old Navy",
     brandSlug: "old-navy",
@@ -182,6 +335,18 @@ export const jeansSizeChartSources: JeansSizeChartSource[] = [
 ];
 
 export const jeansSizeChartEntries: JeansSizeChartEntry[] = [
+  ...menEntries("levis-men-jeans", "Levi's", "levis", [
+    ["28", 71, 87],
+    ["29", 73.5, 89.5],
+    ["30", 76, 92],
+    ["31", 78.5, 94.5],
+    ["32", 81.5, 97],
+    ["33", 84, 99.5],
+    ["34", 86.5, 102],
+    ["36", 91.5, 107],
+    ["38", 96.5, 112],
+    ["40", 101.5, 117],
+  ]),
   ...womenEntries("madewell-women-denim", "Madewell", "madewell", [
     ["24", 63.5, 89],
     ["25", 66, 91.5],
@@ -244,6 +409,30 @@ export const jeansSizeChartEntries: JeansSizeChartEntry[] = [
     ["38", 100.5, 109],
     ["40", 105.5, 113],
   ]),
+  ...menEntries("dickies-men-jeans", "Dickies", "dickies", [
+    ["28", 72, 87],
+    ["29", 74.5, 89.5],
+    ["30", 77, 92],
+    ["31", 79.5, 94.5],
+    ["32", 82, 97.5],
+    ["33", 84.5, 100],
+    ["34", 87, 102.5],
+    ["36", 92.5, 108],
+    ["38", 98, 113],
+    ["40", 103.5, 118],
+  ]),
+  ...menEntries("dockers-men-bottoms", "Dockers", "dockers", [
+    ["28", 71.5, 86],
+    ["29", 74, 88.5],
+    ["30", 76.5, 91],
+    ["31", 79, 93.5],
+    ["32", 81.5, 96],
+    ["33", 84, 98.5],
+    ["34", 86.5, 101],
+    ["36", 91.5, 106],
+    ["38", 96.5, 111],
+    ["40", 101.5, 116],
+  ]),
   ...menEntries("madewell-men-bottoms", "Madewell", "madewell", [
     ["28", 71, 86],
     ["29", 74, 89],
@@ -259,6 +448,82 @@ export const jeansSizeChartEntries: JeansSizeChartEntry[] = [
 ];
 
 const jeansProductDefinitions = [
+  {
+    id: "levis-501-original",
+    brandSlug: "levis",
+    sourceId: "levis-men-jeans",
+    gender: "men" as const,
+    title: "501 Original Fit Jean",
+    cut: "regular" as const,
+    fitTags: ["straight", "heritage", "rigid"],
+    styleTags: ["denim", "straight", "heritage", "anchor fit"],
+    colors: ["medium indigo"],
+    priceCents: 9800,
+    stretchPct: 1,
+    imageUrl: imagePath("dark-slide.webp"),
+    galleryImageUrls: [
+      imagePath("dark-slide.webp"),
+      imagePath("apc-elisabeth.webp"),
+      imagePath("vintage-hanger.jpg"),
+    ],
+  },
+  {
+    id: "levis-511-slim",
+    brandSlug: "levis",
+    sourceId: "levis-men-jeans",
+    gender: "men" as const,
+    title: "511 Slim Jean",
+    cut: "slim" as const,
+    fitTags: ["slim", "tapered"],
+    styleTags: ["denim", "slim", "modern", "taper"],
+    colors: ["dark indigo"],
+    priceCents: 9800,
+    stretchPct: 3,
+    imageUrl: imagePath("straight-crop.jpeg"),
+    galleryImageUrls: [
+      imagePath("straight-crop.jpeg"),
+      imagePath("light-packshot.webp"),
+      imagePath("agolde-straight.jpg"),
+    ],
+  },
+  {
+    id: "dickies-relaxed-carpenter",
+    brandSlug: "dickies",
+    sourceId: "dickies-men-jeans",
+    gender: "men" as const,
+    title: "Relaxed Fit Carpenter Jean",
+    cut: "relaxed" as const,
+    fitTags: ["relaxed", "workwear", "straight"],
+    styleTags: ["denim", "workwear", "utility", "relaxed"],
+    colors: ["washed indigo"],
+    priceCents: 5999,
+    stretchPct: 1,
+    imageUrl: imagePath("hollywood-light.jpg"),
+    galleryImageUrls: [
+      imagePath("hollywood-light.jpg"),
+      imagePath("basile-light.jpg"),
+      imagePath("vintage-hanger.jpg"),
+    ],
+  },
+  {
+    id: "dockers-airweave-slim-taper",
+    brandSlug: "dockers",
+    sourceId: "dockers-men-bottoms",
+    gender: "men" as const,
+    title: "Go Airweave 5-Pocket Slim Tapered",
+    cut: "slim" as const,
+    fitTags: ["slim", "tapered", "stretch"],
+    styleTags: ["office casual", "five pocket", "stretch", "slim"],
+    colors: ["rinse blue"],
+    priceCents: 8900,
+    stretchPct: 7,
+    imageUrl: imagePath("basile-light.jpg"),
+    galleryImageUrls: [
+      imagePath("basile-light.jpg"),
+      imagePath("light-packshot.webp"),
+      imagePath("straight-flat.jpeg"),
+    ],
+  },
   {
     id: "madewell-perfect-vintage-straight",
     brandSlug: "madewell",
@@ -394,9 +659,462 @@ const jeansProductDefinitions = [
   },
 ];
 
+export const jeansTranslationStyles: JeansTranslationStyle[] = [
+  {
+    id: "levis-501-original",
+    brandName: "Levi's",
+    brandSlug: "levis",
+    styleName: "501 Original",
+    officialSignal: "Iconic straight fit, button fly, heritage benchmark.",
+    priceBand: "$$",
+    priceCents: 9800,
+    bestLeviAnchor: "501",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "straight",
+      riseBucket: "at-waist",
+      seatRoom: "regular",
+      thighRoom: "regular",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "rigid",
+      constructionProfile: "heritage-denim",
+      bootCompatibility: "some",
+      styleNotes: "Classic straight anchor with structured denim feel.",
+    },
+  },
+  {
+    id: "levis-505-regular-straight",
+    brandName: "Levi's",
+    brandSlug: "levis",
+    styleName: "505 Regular Straight",
+    officialSignal: "Zip-fly straight fit with a slightly roomy profile.",
+    priceBand: "$$",
+    priceCents: 8900,
+    bestLeviAnchor: "505",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "regular-straight",
+      riseBucket: "at-waist",
+      seatRoom: "regular-plus",
+      thighRoom: "regular-plus",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "low-stretch",
+      constructionProfile: "everyday-denim",
+      bootCompatibility: "some",
+      styleNotes: "Roomier straight alternative for users who like 501 but want more ease.",
+    },
+  },
+  {
+    id: "levis-511-slim",
+    brandName: "Levi's",
+    brandSlug: "levis",
+    styleName: "511 Slim",
+    officialSignal: "Slim fit with a tapered leg.",
+    priceBand: "$$",
+    priceCents: 9800,
+    bestLeviAnchor: "511",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "slim-taper",
+      riseBucket: "mid-rise",
+      seatRoom: "slim",
+      thighRoom: "slim",
+      legShape: "tapered",
+      hemBehavior: "slim-tapered",
+      stretchProfile: "medium-stretch",
+      constructionProfile: "everyday-denim",
+      bootCompatibility: "no",
+      styleNotes: "Cleaner slim progression when a straight fit feels too boxy.",
+    },
+  },
+  {
+    id: "levis-514-straight",
+    brandName: "Levi's",
+    brandSlug: "levis",
+    styleName: "514 Straight",
+    officialSignal: "Modern straight family with a cleaner profile.",
+    priceBand: "$$",
+    priceCents: 8900,
+    bestLeviAnchor: "514",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "regular-straight",
+      riseBucket: "mid-rise",
+      seatRoom: "regular",
+      thighRoom: "regular",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "low-stretch",
+      constructionProfile: "everyday-denim",
+      bootCompatibility: "some",
+      styleNotes: "Modern straight option close to a 501 silhouette.",
+    },
+  },
+  {
+    id: "levis-541-athletic-taper",
+    brandName: "Levi's",
+    brandSlug: "levis",
+    styleName: "541 Athletic Taper",
+    officialSignal: "More room in seat and thigh with a tapered leg.",
+    priceBand: "$$",
+    priceCents: 8900,
+    bestLeviAnchor: "541",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "athletic-taper",
+      riseBucket: "mid-rise",
+      seatRoom: "relaxed",
+      thighRoom: "relaxed",
+      legShape: "tapered",
+      hemBehavior: "tapered",
+      stretchProfile: "medium-stretch",
+      constructionProfile: "performance-denim",
+      bootCompatibility: "no",
+      styleNotes: "Safer when straight jeans are tight through athletic thighs.",
+    },
+  },
+  {
+    id: "levis-550-relaxed",
+    brandName: "Levi's",
+    brandSlug: "levis",
+    styleName: "550 Relaxed",
+    officialSignal: "Relaxed family with extra room through the body.",
+    priceBand: "$$",
+    priceCents: 8900,
+    bestLeviAnchor: "550",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "relaxed-straight",
+      riseBucket: "at-waist",
+      seatRoom: "relaxed",
+      thighRoom: "relaxed",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "low-stretch",
+      constructionProfile: "heritage-denim",
+      bootCompatibility: "some",
+      styleNotes: "Roomier straight alternative for comfort-first users.",
+    },
+  },
+  {
+    id: "wrangler-cowboy-cut-original",
+    brandName: "Wrangler",
+    brandSlug: "wrangler",
+    styleName: "Cowboy Cut Original Fit",
+    officialSignal: "Sits at waist, easy through seat/thigh/knee, fits over boots.",
+    priceBand: "$",
+    priceCents: 6900,
+    bestLeviAnchor: "501",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "straight",
+      riseBucket: "at-waist",
+      seatRoom: "regular-plus",
+      thighRoom: "regular-plus",
+      legShape: "straight",
+      hemBehavior: "boot-friendly-straight",
+      stretchProfile: "rigid",
+      constructionProfile: "workwear-denim",
+      bootCompatibility: "yes",
+      styleNotes: "Closest heritage/workwear analog when a 501 user wears boots.",
+    },
+  },
+  {
+    id: "wrangler-cowboy-cut-regular",
+    brandName: "Wrangler",
+    brandSlug: "wrangler",
+    styleName: "Cowboy Cut Regular Fit",
+    officialSignal: "Regular through seat and thigh, sits at waist, fits over boots.",
+    priceBand: "$",
+    priceCents: 6900,
+    bestLeviAnchor: "505",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "regular-straight",
+      riseBucket: "at-waist",
+      seatRoom: "regular-plus",
+      thighRoom: "regular-plus",
+      legShape: "straight",
+      hemBehavior: "boot-friendly-straight",
+      stretchProfile: "low-stretch",
+      constructionProfile: "workwear-denim",
+      bootCompatibility: "yes",
+      styleNotes: "Roomier straight option with western boot compatibility.",
+    },
+  },
+  {
+    id: "wrangler-cowboy-cut-relaxed",
+    brandName: "Wrangler",
+    brandSlug: "wrangler",
+    styleName: "Cowboy Cut Relaxed Fit",
+    officialSignal: "Relaxed seat and thigh with a boot-friendly leg.",
+    priceBand: "$",
+    priceCents: 6900,
+    bestLeviAnchor: "550",
+    confidence: "medium",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "relaxed-straight",
+      riseBucket: "at-waist",
+      seatRoom: "relaxed",
+      thighRoom: "relaxed",
+      legShape: "straight",
+      hemBehavior: "boot-friendly-straight",
+      stretchProfile: "low-stretch",
+      constructionProfile: "workwear-denim",
+      bootCompatibility: "yes",
+      styleNotes: "Safer if the favorite pair feels tight in seat or thigh.",
+    },
+  },
+  {
+    id: "lee-legendary-regular-straight",
+    brandName: "Lee",
+    brandSlug: "lee",
+    styleName: "Legendary 100% Cotton Regular Straight",
+    officialSignal: "Regular, mid rise, straight, 100% cotton.",
+    priceBand: "$",
+    priceCents: 8900,
+    bestLeviAnchor: "501",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "straight",
+      riseBucket: "mid-rise",
+      seatRoom: "regular",
+      thighRoom: "regular",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "rigid",
+      constructionProfile: "heritage-denim",
+      bootCompatibility: "some",
+      styleNotes: "Strong 501 analog when the user wants 100% cotton structure.",
+    },
+  },
+  {
+    id: "lee-extreme-motion-regular-straight",
+    brandName: "Lee",
+    brandSlug: "lee",
+    styleName: "Extreme Motion Regular Fit Straight Leg",
+    officialSignal: "Regular, mid rise, straight with stretch comfort.",
+    priceBand: "$",
+    priceCents: 9200,
+    bestLeviAnchor: "505",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "regular-straight",
+      riseBucket: "mid-rise",
+      seatRoom: "regular",
+      thighRoom: "regular",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "performance-stretch",
+      constructionProfile: "performance-denim",
+      bootCompatibility: "some",
+      styleNotes: "Best if the user likes the 501/505 shape but wants more stretch.",
+    },
+  },
+  {
+    id: "dickies-relaxed-fit-carpenter",
+    brandName: "Dickies",
+    brandSlug: "dickies",
+    styleName: "Relaxed Fit Carpenter Jeans",
+    officialSignal: "Relaxed through seat and thighs, straight leg, slightly below waist.",
+    priceBand: "$",
+    priceCents: 5999,
+    bestLeviAnchor: "550",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "workwear-straight",
+      riseBucket: "slightly-below-waist",
+      seatRoom: "relaxed",
+      thighRoom: "relaxed",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "rigid",
+      constructionProfile: "workwear-denim",
+      bootCompatibility: "some",
+      styleNotes: "Workwear-safe option if thighs usually feel tight.",
+    },
+  },
+  {
+    id: "dickies-flex-regular-5-pocket",
+    brandName: "Dickies",
+    brandSlug: "dickies",
+    styleName: "FLEX Regular Fit 5-Pocket Jeans",
+    officialSignal: "Regular utility silhouette with stretch-friendly construction.",
+    priceBand: "$",
+    priceCents: 5499,
+    bestLeviAnchor: "514",
+    confidence: "medium",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "workwear-straight",
+      riseBucket: "mid-rise",
+      seatRoom: "regular",
+      thighRoom: "regular",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "medium-stretch",
+      constructionProfile: "workwear-denim",
+      bootCompatibility: "some",
+      styleNotes: "Budget workwear alternative to a clean modern straight.",
+    },
+  },
+  {
+    id: "dickies-flex-slim",
+    brandName: "Dickies",
+    brandSlug: "dickies",
+    styleName: "FLEX Slim Fit Jeans",
+    officialSignal: "More fitted workwear option.",
+    priceBand: "$",
+    priceCents: 5499,
+    bestLeviAnchor: "511",
+    confidence: "medium",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "slim-taper",
+      riseBucket: "mid-rise",
+      seatRoom: "slim",
+      thighRoom: "regular",
+      legShape: "slim",
+      hemBehavior: "slim-straight",
+      stretchProfile: "medium-stretch",
+      constructionProfile: "workwear-denim",
+      bootCompatibility: "no",
+      styleNotes: "Workwear slim progression when 501 feels too wide below the knee.",
+    },
+  },
+  {
+    id: "dickies-loose-double-knee",
+    brandName: "Dickies",
+    brandSlug: "dickies",
+    styleName: "Loose Fit Double Knee Jeans",
+    officialSignal: "Loose workwear block with reinforced utility cues.",
+    priceBand: "$",
+    priceCents: 6499,
+    bestLeviAnchor: "550",
+    confidence: "medium",
+    taxonomy: {
+      genderTarget: "men",
+      category: "jeans",
+      fitFamily: "loose-baggy",
+      riseBucket: "mid-rise",
+      seatRoom: "loose",
+      thighRoom: "loose",
+      legShape: "loose",
+      hemBehavior: "straight",
+      stretchProfile: "rigid",
+      constructionProfile: "workwear-denim",
+      bootCompatibility: "some",
+      styleNotes: "Intentional loose fit for users who want extra room.",
+    },
+  },
+  {
+    id: "dockers-workday-classic",
+    brandName: "Dockers",
+    brandSlug: "dockers",
+    styleName: "Workday Classic Fit",
+    officialSignal: "Straight opening with generous room through hip and thigh.",
+    priceBand: "$$",
+    priceCents: 7900,
+    bestLeviAnchor: "505",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "pants",
+      fitFamily: "regular-straight",
+      riseBucket: "mid-rise",
+      seatRoom: "regular-plus",
+      thighRoom: "regular-plus",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "medium-stretch",
+      constructionProfile: "non-denim-5-pocket",
+      bootCompatibility: "some",
+      styleNotes: "Office-casual analog for users who like 505/514 ease.",
+    },
+  },
+  {
+    id: "dockers-straight-signature",
+    brandName: "Dockers",
+    brandSlug: "dockers",
+    styleName: "Straight Fit Signature",
+    officialSignal: "Straight, clean everyday bottoms profile.",
+    priceBand: "$$",
+    priceCents: 7900,
+    bestLeviAnchor: "514",
+    confidence: "medium",
+    taxonomy: {
+      genderTarget: "men",
+      category: "pants",
+      fitFamily: "regular-straight",
+      riseBucket: "mid-rise",
+      seatRoom: "regular",
+      thighRoom: "regular",
+      legShape: "straight",
+      hemBehavior: "straight",
+      stretchProfile: "medium-stretch",
+      constructionProfile: "non-denim-5-pocket",
+      bootCompatibility: "some",
+      styleNotes: "Cleaner 514-like option when denim is too casual.",
+    },
+  },
+  {
+    id: "dockers-airweave-slim-taper",
+    brandName: "Dockers",
+    brandSlug: "dockers",
+    styleName: "Go Airweave 5-Pocket Slim Tapered",
+    officialSignal: "Slim through hip/thigh with a slim leg opening.",
+    priceBand: "$$",
+    priceCents: 8900,
+    bestLeviAnchor: "511",
+    confidence: "high",
+    taxonomy: {
+      genderTarget: "men",
+      category: "pants",
+      fitFamily: "slim-taper",
+      riseBucket: "mid-rise",
+      seatRoom: "slim",
+      thighRoom: "slim",
+      legShape: "tapered",
+      hemBehavior: "slim-tapered",
+      stretchProfile: "performance-stretch",
+      constructionProfile: "non-denim-5-pocket",
+      bootCompatibility: "no",
+      styleNotes: "Cleanest slimmer office-casual progression from a 501.",
+    },
+  },
+];
+
 export const defaultFavoriteJeansInput: FavoriteJeansInput = {
-  brandSlug: "madewell",
-  sizeLabel: "29",
+  brandSlug: "levis",
+  sizeLabel: "32",
   inseamIn: 32,
 };
 
@@ -477,6 +1195,38 @@ export function findJeansFitMatches(
       }),
     )
     .sort((a, b) => b.fitScore - a.fitScore || a.priceCents - b.priceCents);
+}
+
+export function getJeansTranslationStyle(styleId: string) {
+  return jeansTranslationStyles.find((style) => style.id === styleId);
+}
+
+export function translateFavoriteJeansFit(
+  input: JeansTranslationInput = {},
+): {
+  anchor: JeansTranslationStyle;
+  recommendedSize: string;
+  recommendations: JeansTranslationRecommendation[];
+} {
+  const anchor =
+    getJeansTranslationStyle(input.anchorStyleId ?? "levis-501-original") ??
+    jeansTranslationStyles[0];
+  if (!anchor) {
+    throw new Error("No jeans translation anchor available");
+  }
+  const recommendedSize = input.taggedSize ?? "32x32";
+  const recommendations = jeansTranslationStyles
+    .filter((style) => style.id !== anchor.id)
+    .map((style) =>
+      buildTranslationRecommendation(anchor, style, recommendedSize),
+    )
+    .sort(
+      (a, b) =>
+        b.overallScore - a.overallScore ||
+        a.style.priceCents - b.style.priceCents,
+    );
+
+  return { anchor, recommendedSize, recommendations };
 }
 
 export function generateJeansCatalogProducts(): ProductRecord[] {
@@ -631,6 +1381,193 @@ function findEntry(input: FavoriteJeansInput) {
       entry.brandSlug === input.brandSlug && entry.sizeLabel === normalizedSize,
   );
 }
+
+function buildTranslationRecommendation(
+  anchor: JeansTranslationStyle,
+  style: JeansTranslationStyle,
+  recommendedSize: string,
+): JeansTranslationRecommendation {
+  const silhouetteScore = taxonomyScore(
+    anchor.taxonomy.fitFamily,
+    style.taxonomy.fitFamily,
+    compatibleFitFamilies,
+  );
+  const seatScore = rankedScore(
+    anchor.taxonomy.seatRoom,
+    style.taxonomy.seatRoom,
+    roomRank,
+  );
+  const thighScore = rankedScore(
+    anchor.taxonomy.thighRoom,
+    style.taxonomy.thighRoom,
+    roomRank,
+  );
+  const seatThighScore = Math.round((seatScore + thighScore) / 2);
+  const riseScore = taxonomyScore(
+    anchor.taxonomy.riseBucket,
+    style.taxonomy.riseBucket,
+    compatibleRiseBuckets,
+  );
+  const stretchScore = rankedScore(
+    anchor.taxonomy.stretchProfile,
+    style.taxonomy.stretchProfile,
+    stretchRank,
+  );
+  const legOpeningScore = taxonomyScore(
+    anchor.taxonomy.hemBehavior,
+    style.taxonomy.hemBehavior,
+    compatibleHemBehaviors,
+  );
+  const constructionScore = taxonomyScore(
+    anchor.taxonomy.constructionProfile,
+    style.taxonomy.constructionProfile,
+    compatibleConstructionProfiles,
+  );
+  const overallScore = Math.round(
+    silhouetteScore * 0.35 +
+      seatThighScore * 0.2 +
+      riseScore * 0.15 +
+      stretchScore * 0.15 +
+      legOpeningScore * 0.1 +
+      constructionScore * 0.05,
+  );
+  const label = translationLabel(anchor, style);
+
+  return {
+    style,
+    label,
+    overallScore,
+    silhouetteScore,
+    seatThighScore,
+    riseScore,
+    stretchScore,
+    legOpeningScore,
+    constructionScore,
+    recommendedSize,
+    explanation: explanationForTranslation(anchor, style, label),
+  };
+}
+
+const compatibleFitFamilies: Record<string, string[]> = {
+  straight: ["regular-straight", "workwear-straight"],
+  "regular-straight": ["straight", "workwear-straight"],
+  "relaxed-straight": ["workwear-straight", "loose-baggy"],
+  "slim-taper": ["athletic-taper"],
+  "athletic-taper": ["slim-taper", "relaxed-straight"],
+  "workwear-straight": ["straight", "regular-straight", "relaxed-straight"],
+};
+
+const compatibleRiseBuckets: Record<string, string[]> = {
+  "at-waist": ["mid-rise"],
+  "mid-rise": ["at-waist", "slightly-below-waist"],
+  "slightly-below-waist": ["mid-rise"],
+};
+
+const compatibleHemBehaviors: Record<string, string[]> = {
+  straight: ["boot-friendly-straight", "slim-straight"],
+  "boot-friendly-straight": ["straight", "bootcut"],
+  tapered: ["slim-tapered"],
+  "slim-tapered": ["tapered", "slim-straight"],
+  bootcut: ["boot-friendly-straight"],
+};
+
+const compatibleConstructionProfiles: Record<string, string[]> = {
+  "heritage-denim": ["everyday-denim", "workwear-denim"],
+  "everyday-denim": ["heritage-denim", "performance-denim"],
+  "performance-denim": ["everyday-denim", "non-denim-5-pocket"],
+  "workwear-denim": ["heritage-denim", "everyday-denim"],
+  "non-denim-5-pocket": ["performance-denim", "everyday-denim"],
+};
+
+const roomRank: Record<JeansRoomLevel, number> = {
+  slim: 1,
+  regular: 2,
+  "regular-plus": 3,
+  relaxed: 4,
+  loose: 5,
+};
+
+const stretchRank: Record<JeansStretchProfile, number> = {
+  rigid: 1,
+  "low-stretch": 2,
+  "medium-stretch": 3,
+  "high-stretch": 4,
+  "performance-stretch": 5,
+};
+
+function taxonomyScore(
+  anchorValue: string,
+  candidateValue: string,
+  compatibility: Record<string, string[]>,
+) {
+  if (anchorValue === candidateValue) {
+    return 100;
+  }
+  if (compatibility[anchorValue]?.includes(candidateValue)) {
+    return 84;
+  }
+  if (compatibility[candidateValue]?.includes(anchorValue)) {
+    return 78;
+  }
+  return 58;
+}
+
+function rankedScore<T extends string>(
+  anchorValue: T,
+  candidateValue: T,
+  ranks: Record<T, number>,
+) {
+  const difference = Math.abs(ranks[anchorValue] - ranks[candidateValue]);
+  return Math.max(48, 100 - difference * 16);
+}
+
+function translationLabel(
+  anchor: JeansTranslationStyle,
+  style: JeansTranslationStyle,
+): JeansTranslationRecommendation["label"] {
+  if (
+    style.taxonomy.bootCompatibility === "yes" &&
+    anchor.taxonomy.bootCompatibility !== "yes"
+  ) {
+    return "better-for-boots";
+  }
+  if (
+    stretchRank[style.taxonomy.stretchProfile] >
+    stretchRank[anchor.taxonomy.stretchProfile] + 1
+  ) {
+    return "more-stretch";
+  }
+  if (
+    roomRank[style.taxonomy.seatRoom] > roomRank[anchor.taxonomy.seatRoom] ||
+    roomRank[style.taxonomy.thighRoom] > roomRank[anchor.taxonomy.thighRoom]
+  ) {
+    return "safer-roomier-option";
+  }
+  if (
+    roomRank[style.taxonomy.seatRoom] < roomRank[anchor.taxonomy.seatRoom] ||
+    style.taxonomy.hemBehavior.includes("taper")
+  ) {
+    return "cleaner-slimmer-option";
+  }
+  return "closest-match";
+}
+
+function explanationForTranslation(
+  anchor: JeansTranslationStyle,
+  style: JeansTranslationStyle,
+  label: JeansTranslationRecommendation["label"],
+) {
+  const intro = labelCopy[label];
+  return `${intro}: ${style.styleName} maps from your ${anchor.styleName} through ${style.taxonomy.fitFamily}, ${style.taxonomy.seatRoom} seat, ${style.taxonomy.thighRoom} thigh, ${style.taxonomy.hemBehavior} hem, and ${style.taxonomy.stretchProfile} fabric.`;
+}
+
+const labelCopy: Record<JeansTranslationRecommendation["label"], string> = {
+  "closest-match": "Closest to your anchor fit",
+  "safer-roomier-option": "Safer if your thighs or seat feel tight",
+  "cleaner-slimmer-option": "Cleaner and slimmer than your usual pair",
+  "more-stretch": "Best if you want more stretch",
+  "better-for-boots": "Better over boots",
+};
 
 export function parseJeansSizeInput(sizeLabel: string) {
   const normalized = sizeLabel.trim().toLowerCase().replace(/\s+/g, "");

@@ -3,6 +3,10 @@ import { Link } from "expo-router";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import {
+  translateFavoriteJeansFit,
+  type JeansTranslationRecommendation,
+} from "@rober/api-client";
 import { parseNaturalLanguageSearch } from "@rober/fit-engine";
 import {
   AppButton,
@@ -31,6 +35,14 @@ export default function CompareScreen() {
   const bodyProfile = useDemoStore((state) => state.bodyProfile);
   const favorite = useDemoStore((state) => state.knownGoodItems[0]);
   const parsed = useMemo(() => parseNaturalLanguageSearch(query), [query]);
+  const translation = useMemo(
+    () =>
+      translateFavoriteJeansFit({
+        anchorStyleId: "levis-501-original",
+        taggedSize: "32x32",
+      }),
+    [],
+  );
   const results = useMemo(
     () =>
       compareProductsForQuery(
@@ -86,6 +98,39 @@ export default function CompareScreen() {
           Rober compares official jeans waist, hip, and inseam charts, then
           recommends the closest size across price points.
         </Text>
+      </View>
+
+      <SectionHeader
+        kicker="Fit passport"
+        title={`${translation.anchor.brandName} ${translation.anchor.styleName} vs alternatives`}
+      />
+      <View
+        style={[
+          styles.translationTable,
+          { backgroundColor: theme.surface, borderColor: theme.border },
+        ]}
+      >
+        <View
+          style={[
+            styles.anchorRow,
+            { backgroundColor: theme.surfaceWarm, borderColor: theme.border },
+          ]}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.anchorKicker, { color: theme.accent }]}>
+              Anchor
+            </Text>
+            <Text style={[styles.anchorTitle, { color: theme.text }]}>
+              {translation.anchor.styleName} in {translation.recommendedSize}
+            </Text>
+          </View>
+          <Text style={[styles.anchorMeta, { color: theme.textMuted }]}>
+            {translation.anchor.taxonomy.fitFamily}
+          </Text>
+        </View>
+        {translation.recommendations.slice(0, 5).map((item) => (
+          <TranslationComparisonRow key={item.style.id} item={item} />
+        ))}
       </View>
 
       <View
@@ -169,7 +214,7 @@ export default function CompareScreen() {
       </ScrollView>
 
       <Link
-        href={best ? `/product/${best.product.id}` : "/(tabs)/discover"}
+        href={best ? `/product/${best.product.id}` : "/discover"}
         asChild
       >
         <AppButton>{best ? "Open product detail" : "Browse catalog"}</AppButton>
@@ -183,6 +228,43 @@ function formatChipLabel(value: string) {
     .split(" ")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+function TranslationComparisonRow({
+  item,
+}: {
+  item: JeansTranslationRecommendation;
+}) {
+  const theme = useThemeTokens();
+  return (
+    <View style={[styles.translationRow, { borderColor: theme.border }]}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.translationBrand, { color: theme.textMuted }]}>
+          {item.style.brandName}
+        </Text>
+        <Text style={[styles.translationTitle, { color: theme.text }]}>
+          {item.style.styleName}
+        </Text>
+        <Text
+          numberOfLines={2}
+          style={[styles.translationWhy, { color: theme.textMuted }]}
+        >
+          {item.explanation}
+        </Text>
+      </View>
+      <View style={styles.translationMetrics}>
+        <Text style={[styles.translationScore, { color: theme.accent }]}>
+          {item.overallScore}
+        </Text>
+        <Text style={[styles.translationMeta, { color: theme.textMuted }]}>
+          {item.style.taxonomy.seatRoom}/{item.style.taxonomy.thighRoom}
+        </Text>
+        <Text style={[styles.translationMeta, { color: theme.textMuted }]}>
+          {item.style.taxonomy.hemBehavior}
+        </Text>
+      </View>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -222,6 +304,73 @@ const styles = StyleSheet.create({
   copy: {
     fontSize: 14,
     lineHeight: 21,
+  },
+  translationTable: {
+    borderWidth: 1,
+    borderRadius: 24,
+    overflow: "hidden",
+  },
+  anchorRow: {
+    borderBottomWidth: 1,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  anchorKicker: {
+    fontFamily: "Courier",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  anchorTitle: {
+    marginTop: 3,
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  anchorMeta: {
+    fontSize: 12,
+    fontWeight: "900",
+    maxWidth: 96,
+    textAlign: "right",
+  },
+  translationRow: {
+    minHeight: 112,
+    borderBottomWidth: 1,
+    padding: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  translationBrand: {
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+  translationTitle: {
+    marginTop: 3,
+    fontSize: 15,
+    fontWeight: "900",
+  },
+  translationWhy: {
+    marginTop: 5,
+    fontSize: 12,
+    lineHeight: 17,
+  },
+  translationMetrics: {
+    width: 94,
+    alignItems: "flex-end",
+    gap: 4,
+  },
+  translationScore: {
+    fontSize: 27,
+    fontWeight: "900",
+  },
+  translationMeta: {
+    fontSize: 10,
+    fontWeight: "800",
+    textAlign: "right",
   },
   searchBox: {
     minHeight: 56,

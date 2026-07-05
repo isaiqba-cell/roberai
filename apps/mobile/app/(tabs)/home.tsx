@@ -12,6 +12,10 @@ import {
 import { FitConfidenceRing } from "../../components/fit";
 import { ProductCard, ProductRail } from "../../components/product";
 import {
+  formatCurrency,
+  translateFavoriteJeansFit,
+} from "@rober/api-client";
+import {
   closetInspiredProducts,
   demoBrands,
   demoFavoriteJeans,
@@ -49,6 +53,22 @@ export default function HomeScreen() {
     8,
   );
   const heroProduct = jeansProducts[0] ?? featuredProducts[0];
+  const translation = translateFavoriteJeansFit({
+    anchorStyleId: "levis-501-original",
+    taggedSize: "32x32",
+  });
+  const closest = translation.recommendations[0];
+  const lowerPrice =
+    translation.recommendations.find(
+      (item) => item.style.priceCents < translation.anchor.priceCents,
+    ) ?? closest;
+  const moreStretch =
+    translation.recommendations.find((item) => item.label === "more-stretch") ??
+    closest;
+  const betterBoots =
+    translation.recommendations.find(
+      (item) => item.label === "better-for-boots",
+    ) ?? closest;
   const arrivalCards = jeansProducts
     .slice(0, 4)
     .map((product) =>
@@ -71,7 +91,7 @@ export default function HomeScreen() {
           </Text>
         </View>
         <View style={styles.topActions}>
-          <Link href="/(tabs)/discover" asChild>
+          <Link href="/discover" asChild>
             <IconButton accessibilityLabel="Search">
               <Search size={22} color={theme.text} />
             </IconButton>
@@ -79,6 +99,47 @@ export default function HomeScreen() {
           <IconButton accessibilityLabel="Notifications">
             <Bell size={21} color={theme.text} />
           </IconButton>
+        </View>
+      </View>
+
+      <View
+        style={[
+          styles.passport,
+          { backgroundColor: theme.surface, borderColor: theme.border },
+        ]}
+      >
+        <Text style={[styles.passportKicker, { color: theme.accent }]}>
+          FIT PASSPORT
+        </Text>
+        <Text style={[styles.passportTitle, { color: theme.text }]}>
+          You wear {translation.anchor.brandName}{" "}
+          {translation.anchor.styleName}, {translation.recommendedSize}
+        </Text>
+        <Text style={[styles.passportCopy, { color: theme.textMuted }]}>
+          Rober translates that exact fit across brands using silhouette, rise,
+          seat/thigh room, stretch, hem shape, and construction.
+        </Text>
+        <View style={[styles.passportRows, { borderColor: theme.border }]}>
+          <PassportRow
+            label="Closest match"
+            title={closest?.style.styleName ?? "Wrangler Cowboy Cut"}
+            meta={`${closest?.overallScore ?? 88}% confidence`}
+          />
+          <PassportRow
+            label="Same fit, lower price"
+            title={lowerPrice?.style.styleName ?? "Lee Regular Straight"}
+            meta={formatCurrency(lowerPrice?.style.priceCents ?? 6900)}
+          />
+          <PassportRow
+            label="Same vibe, more stretch"
+            title={moreStretch?.style.styleName ?? "Lee Extreme Motion"}
+            meta={moreStretch?.style.taxonomy.stretchProfile ?? "stretch"}
+          />
+          <PassportRow
+            label="Better for boots"
+            title={betterBoots?.style.styleName ?? "Wrangler Cowboy Cut"}
+            meta={betterBoots?.style.taxonomy.hemBehavior ?? "boot-ready"}
+          />
         </View>
       </View>
 
@@ -104,7 +165,7 @@ export default function HomeScreen() {
               {Math.round(demoFavoriteJeans.inseamCm / 2.54)} baseline.
             </Text>
           </View>
-          <Link href="/(tabs)/discover" asChild>
+          <Link href="/discover" asChild>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Open collection"
@@ -208,6 +269,31 @@ function InlineHeader({ title, action }: { title: string; action: string }) {
   );
 }
 
+function PassportRow({
+  label,
+  title,
+  meta,
+}: {
+  label: string;
+  title: string;
+  meta: string;
+}) {
+  const theme = useThemeTokens();
+  return (
+    <View style={styles.passportRow}>
+      <View style={{ flex: 1 }}>
+        <Text style={[styles.passportLabel, { color: theme.textMuted }]}>
+          {label}
+        </Text>
+        <Text style={[styles.passportRowTitle, { color: theme.text }]}>
+          {title}
+        </Text>
+      </View>
+      <Text style={[styles.passportMeta, { color: theme.accent }]}>{meta}</Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
@@ -224,6 +310,59 @@ const styles = StyleSheet.create({
   topActions: {
     flexDirection: "row",
     gap: 10,
+  },
+  passport: {
+    borderRadius: 26,
+    borderWidth: 1,
+    padding: 18,
+    gap: 10,
+    shadowColor: "#6F3328",
+    shadowOpacity: 0.09,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 9 },
+    elevation: 3,
+  },
+  passportKicker: {
+    fontFamily: "Courier",
+    fontSize: 11,
+    fontWeight: "900",
+    letterSpacing: 1,
+  },
+  passportTitle: {
+    fontSize: 25,
+    fontWeight: "900",
+    lineHeight: 30,
+  },
+  passportCopy: {
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 19,
+  },
+  passportRows: {
+    borderTopWidth: 1,
+    marginTop: 4,
+  },
+  passportRow: {
+    minHeight: 58,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  passportLabel: {
+    fontSize: 11,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+  passportRowTitle: {
+    marginTop: 3,
+    fontSize: 14,
+    fontWeight: "900",
+  },
+  passportMeta: {
+    fontSize: 12,
+    fontWeight: "900",
+    maxWidth: 92,
+    textAlign: "right",
   },
   logo: {
     fontSize: 29,

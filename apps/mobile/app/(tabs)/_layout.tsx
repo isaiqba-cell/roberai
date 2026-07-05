@@ -1,9 +1,9 @@
 import { Tabs } from "expo-router";
 import {
+  Bookmark,
+  GitCompareArrows,
   Home,
   Search,
-  Heart,
-  ShoppingBag,
   UserRound,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -18,7 +18,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarShowLabel: false,
+        tabBarShowLabel: true,
         tabBarActiveTintColor: "#FFFFFF",
         tabBarInactiveTintColor: theme.tabText,
         tabBarActiveBackgroundColor: theme.accent,
@@ -62,10 +62,20 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="compare"
+        options={{
+          title: "Compare",
+          tabBarAccessibilityLabel: "Compare tab",
+          tabBarIcon: ({ focused }) => (
+            <GitCompareArrows size={21} color={iconColor(focused)} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="discover"
         options={{
-          title: "Discover",
-          tabBarAccessibilityLabel: "Discover tab",
+          title: "Search",
+          tabBarAccessibilityLabel: "Search tab",
           tabBarIcon: ({ focused }) => (
             <Search size={21} color={iconColor(focused)} />
           ),
@@ -75,19 +85,9 @@ export default function TabsLayout() {
         name="wishlist"
         options={{
           title: "Saved",
-          tabBarAccessibilityLabel: "Wishlist tab",
+          tabBarAccessibilityLabel: "Saved tab",
           tabBarIcon: ({ focused }) => (
-            <Heart size={21} color={iconColor(focused)} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="cart"
-        options={{
-          title: "Bag",
-          tabBarAccessibilityLabel: "Cart tab",
-          tabBarIcon: ({ focused }) => (
-            <ShoppingBag size={21} color={iconColor(focused)} />
+            <Bookmark size={21} color={iconColor(focused)} />
           ),
         }}
       />
@@ -101,6 +101,7 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="cart" options={{ href: null }} />
     </Tabs>
   );
 }

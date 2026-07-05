@@ -99,6 +99,8 @@ npm run seed:jeans
 
 `npm run seed:jeans` writes `supabase/seed/jeans-size-chart-database.json` with normalized jeans size-chart rows and cross-brand recommendations. The in-app catalog uses fictional display brands such as Marlow Denim, Loom & Line, Range Standard, Harbor Denim, and Alder Curve. Source size charts are used as benchmark inputs only; the demo does not claim retailer partnerships. Product imagery is supplied denim packshot placeholder imagery stored under `apps/mobile/public/images/jeans`.
 
+The current investor path is anchored on "I wear Levi's 501, size 32x32" and includes a structured fit-translation graph for Levi's, Wrangler, Lee, Dickies, and Dockers across closest-match, roomier, slimmer, stretchier, and boot-friendly alternatives.
+
 ## Stripe Test Mode
 
 The app uses a mock PaymentSheet-compatible fallback when Stripe keys are absent. When test keys are configured, use Stripe's test card:

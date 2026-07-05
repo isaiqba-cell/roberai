@@ -4,7 +4,7 @@ import "react-native-reanimated";
 import { ReactNode } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Platform, StyleSheet, View, useWindowDimensions } from "react-native";
+import { Platform, StyleSheet, View } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -32,16 +32,11 @@ function RootNavigator() {
 }
 
 function IPhonePreviewFrame({ children }: { children: ReactNode }) {
-  const { width, height } = useWindowDimensions();
-
   if (Platform.OS !== "web") {
     return <>{children}</>;
   }
 
-  const hasViewport = width > 28 && height > 28;
-  const scale = hasViewport
-    ? Math.min(1, (width - 28) / iPhoneWidth, (height - 28) / iPhoneHeight)
-    : 1;
+  const scale = 0.78;
 
   return (
     <View style={styles.webStage}>
@@ -100,7 +95,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: "#E9E4DF",
-    padding: 14,
+    overflow: "hidden",
+    paddingHorizontal: 24,
+    paddingVertical: 44,
   },
   phoneScaleBox: {
     position: "relative",

@@ -367,6 +367,175 @@ create table if not exists import_jobs (
   created_at timestamptz default now()
 );
 
+create table if not exists fit_taxonomy (
+  id uuid primary key default gen_random_uuid(),
+  gender_target text check (gender_target in ('men','women','unisex')),
+  category text not null,
+  fit_family text not null,
+  rise_bucket text,
+  seat_room text,
+  thigh_room text,
+  leg_shape text,
+  hem_behavior text,
+  stretch_profile text,
+  construction_profile text,
+  boot_compatibility text,
+  style_notes text,
+  created_at timestamptz default now()
+);
+
+create table if not exists styles (
+  id uuid primary key default gen_random_uuid(),
+  brand_id uuid references brands(id),
+  slug text unique not null,
+  style_name text not null,
+  official_signal text,
+  category text not null,
+  fit_taxonomy_id uuid references fit_taxonomy(id),
+  best_anchor_style text,
+  confidence text check (confidence in ('high','medium','low')) default 'medium',
+  source_url text,
+  active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists style_variants (
+  id uuid primary key default gen_random_uuid(),
+  style_id uuid references styles(id) on delete cascade,
+  sku text,
+  color text,
+  tagged_size text,
+  waist_label text,
+  inseam_label text,
+  price_cents int,
+  compare_at_price_cents int,
+  in_stock boolean default true,
+  metadata_json jsonb,
+  created_at timestamptz default now()
+);
+
+create table if not exists style_measurements (
+  id uuid primary key default gen_random_uuid(),
+  style_id uuid references styles(id) on delete cascade,
+  style_variant_id uuid references style_variants(id) on delete cascade,
+  waist_cm numeric,
+  hip_cm numeric,
+  rise_cm numeric,
+  thigh_cm numeric,
+  knee_cm numeric,
+  leg_opening_cm numeric,
+  inseam_cm numeric,
+  stretch_pct numeric,
+  fabric_weight_oz numeric,
+  source text check (source in ('official_page','brand_chart','manual_admin','user_feedback','seed')),
+  approved boolean default false,
+  created_at timestamptz default now()
+);
+
+create table if not exists style_fit_vectors (
+  style_id uuid primary key references styles(id) on delete cascade,
+  structured_vector vector(1024),
+  description_embedding vector(1024),
+  review_embedding vector(1024),
+  updated_at timestamptz default now()
+);
+
+create table if not exists style_similarity_edges (
+  id uuid primary key default gen_random_uuid(),
+  source_style_id uuid references styles(id) on delete cascade,
+  target_style_id uuid references styles(id) on delete cascade,
+  overall_score numeric,
+  silhouette_score numeric,
+  rise_score numeric,
+  seat_thigh_score numeric,
+  stretch_score numeric,
+  leg_opening_score numeric,
+  construction_context_score numeric,
+  label text,
+  explanation text,
+  approved boolean default false,
+  created_at timestamptz default now(),
+  unique (source_style_id, target_style_id)
+);
+
+create table if not exists user_fit_profiles (
+  user_id uuid references profiles(id) on delete cascade primary key,
+  preferred_rise text,
+  preferred_seat_room text,
+  preferred_thigh_room text,
+  preferred_leg_shape text,
+  preferred_stretch_profile text,
+  budget_bands int4range[],
+  notes text,
+  updated_at timestamptz default now()
+);
+
+create table if not exists user_anchor_items (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade,
+  style_id uuid references styles(id),
+  brand_name text,
+  style_name text,
+  tagged_size text,
+  stretch_feel text,
+  likes text,
+  dislikes text,
+  tight_or_loose_notes text,
+  worn_with text check (worn_with in ('sneakers','boots','both','unknown')) default 'unknown',
+  active boolean default true,
+  created_at timestamptz default now()
+);
+
+create table if not exists comparison_sets (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id) on delete cascade,
+  anchor_item_id uuid references user_anchor_items(id) on delete set null,
+  title text,
+  style_ids uuid[],
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists recommendation_impressions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id),
+  anchor_item_id uuid references user_anchor_items(id),
+  style_id uuid references styles(id),
+  similarity_edge_id uuid references style_similarity_edges(id),
+  surface text,
+  rank int,
+  confidence_score numeric,
+  explanation text,
+  created_at timestamptz default now()
+);
+
+create table if not exists recommendation_actions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references profiles(id),
+  impression_id uuid references recommendation_impressions(id) on delete cascade,
+  action text check (action in ('view','save','compare','add_to_bag','dismiss','feedback')),
+  metadata_json jsonb,
+  created_at timestamptz default now()
+);
+
+create table if not exists return_reasons (
+  id uuid primary key default gen_random_uuid(),
+  code text unique not null,
+  label text not null,
+  fit_direction text check (fit_direction in ('too_small','too_large','too_short','too_long','not_fit_related'))
+);
+
+create table if not exists returns (
+  id uuid primary key default gen_random_uuid(),
+  order_id uuid references orders(id) on delete cascade,
+  order_item_id uuid references order_items(id) on delete cascade,
+  return_reason_id uuid references return_reasons(id),
+  status text check (status in ('requested','approved','received','refunded','rejected')) default 'requested',
+  notes text,
+  created_at timestamptz default now()
+);
+
 alter table profiles enable row level security;
 alter table user_roles enable row level security;
 alter table body_profiles enable row level security;
@@ -386,6 +555,12 @@ alter table recommendation_events enable row level security;
 alter table search_events enable row level security;
 alter table notification_preferences enable row level security;
 alter table analytics_events enable row level security;
+alter table user_fit_profiles enable row level security;
+alter table user_anchor_items enable row level security;
+alter table comparison_sets enable row level security;
+alter table recommendation_impressions enable row level security;
+alter table recommendation_actions enable row level security;
+alter table returns enable row level security;
 
 alter table brands enable row level security;
 alter table merchants enable row level security;
@@ -399,6 +574,13 @@ alter table size_chart_entries enable row level security;
 alter table inventory_snapshots enable row level security;
 alter table reviews enable row level security;
 alter table import_jobs enable row level security;
+alter table fit_taxonomy enable row level security;
+alter table styles enable row level security;
+alter table style_variants enable row level security;
+alter table style_measurements enable row level security;
+alter table style_fit_vectors enable row level security;
+alter table style_similarity_edges enable row level security;
+alter table return_reasons enable row level security;
 
 create policy "profiles own read" on profiles for select using (auth.uid() = id);
 create policy "profiles own update" on profiles for update using (auth.uid() = id);
@@ -414,6 +596,11 @@ create policy "chat sessions own" on chat_sessions for all using (auth.uid() = u
 create policy "search own" on search_events for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "recommendation own" on recommendation_events for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 create policy "notification own" on notification_preferences for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "user fit profiles own" on user_fit_profiles for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "anchor items own" on user_anchor_items for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "comparison sets own" on comparison_sets for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "recommendation impressions own" on recommendation_impressions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "recommendation actions own" on recommendation_actions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "public brand read" on brands for select using (true);
 create policy "public merchant read" on merchants for select using (active = true);
@@ -427,3 +614,13 @@ create policy "approved entry read" on size_chart_entries for select using (
   exists (select 1 from size_charts where size_charts.id = size_chart_entries.size_chart_id and size_charts.status = 'approved')
 );
 create policy "public reviews read" on reviews for select using (true);
+create policy "public fit taxonomy read" on fit_taxonomy for select using (true);
+create policy "public styles read" on styles for select using (active = true);
+create policy "public style variants read" on style_variants for select using (true);
+create policy "approved style measurements read" on style_measurements for select using (approved = true);
+create policy "public style vectors read" on style_fit_vectors for select using (true);
+create policy "approved similarity edges read" on style_similarity_edges for select using (approved = true);
+create policy "public return reasons read" on return_reasons for select using (true);
+create policy "returns own" on returns for select using (
+  exists (select 1 from orders where orders.id = returns.order_id and orders.user_id = auth.uid())
+);

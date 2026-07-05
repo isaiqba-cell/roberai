@@ -5,7 +5,11 @@ import { ScrollView, StyleSheet, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
 import { ArrowLeft, Heart, Share2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { formatCurrency } from "@rober/api-client";
+import {
+  formatCurrency,
+  getJeansTranslationStyle,
+  translateFavoriteJeansFit,
+} from "@rober/api-client";
 import { computeFitScore } from "@rober/fit-engine";
 import {
   AppButton,
@@ -86,8 +90,8 @@ export default function ProductDetailScreen() {
         <Text style={[styles.title, { color: theme.text }]}>
           Product not found
         </Text>
-        <Link href="/(tabs)/discover" asChild>
-          <AppButton>Back to discover</AppButton>
+        <Link href="/discover" asChild>
+          <AppButton>Back to search</AppButton>
         </Link>
       </View>
     );
@@ -121,6 +125,18 @@ export default function ProductDetailScreen() {
   const galleryImages = product.galleryImageUrls?.length
     ? product.galleryImageUrls
     : [product.heroImageUrl];
+  const productTranslationStyle =
+    getJeansTranslationStyle(product.id) ??
+    translateFavoriteJeansFit({
+      anchorStyleId: "levis-501-original",
+      taggedSize: "32x32",
+    }).recommendations.find(
+      (item) =>
+        item.style.brandSlug === product.brand.slug &&
+        product.title
+          .toLowerCase()
+          .includes(item.style.styleName.split(" ")[0]?.toLowerCase() ?? ""),
+    )?.style;
 
   return (
     <View style={[styles.screen, { backgroundColor: theme.bgCanvas }]}>
@@ -207,6 +223,28 @@ export default function ProductDetailScreen() {
             />
             <Text style={[styles.fitText, { color: theme.accent }]}>
               {fit.confidence}% fit in {fit.recommendedSize}
+            </Text>
+          </View>
+
+          <View
+            style={[
+              styles.fingerprint,
+              { backgroundColor: theme.surfaceWarm, borderColor: theme.border },
+            ]}
+          >
+            <Text style={[styles.fingerprintKicker, { color: theme.accent }]}>
+              Fit fingerprint
+            </Text>
+            <Text style={[styles.fingerprintTitle, { color: theme.text }]}>
+              {productTranslationStyle
+                ? `${productTranslationStyle.taxonomy.fitFamily} / ${productTranslationStyle.taxonomy.hemBehavior}`
+                : "Size-chart normalized"}
+            </Text>
+            <Text style={[styles.fingerprintCopy, { color: theme.textMuted }]}>
+              If your Levi's 501 32x32 feels perfect, this will likely feel{" "}
+              {productTranslationStyle
+                ? `${productTranslationStyle.taxonomy.seatRoom} in the seat, ${productTranslationStyle.taxonomy.thighRoom} in the thigh, and ${productTranslationStyle.taxonomy.stretchProfile} through the fabric.`
+                : "closest in the recommended size, with confidence adjusted for missing chart data."}
             </Text>
           </View>
 
@@ -389,6 +427,28 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     gap: 12,
+  },
+  fingerprint: {
+    borderWidth: 1,
+    borderRadius: 22,
+    padding: 14,
+    gap: 6,
+  },
+  fingerprintKicker: {
+    fontFamily: "Courier",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 1,
+    textTransform: "uppercase",
+  },
+  fingerprintTitle: {
+    fontSize: 18,
+    fontWeight: "900",
+  },
+  fingerprintCopy: {
+    fontSize: 13,
+    fontWeight: "700",
+    lineHeight: 19,
   },
   fitText: {
     fontSize: 13,
