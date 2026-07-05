@@ -18,6 +18,7 @@ import { ProductCard, ProductRail } from "../../components/product";
 import {
   formatCurrency,
   translateFavoriteJeansFit,
+  type JeansTranslationRecommendation,
 } from "@rober/api-client";
 import {
   closetInspiredProducts,
@@ -63,18 +64,7 @@ export default function HomeScreen() {
     anchorStyleId: "levis-501-original",
     taggedSize: "32x32",
   });
-  const closest = translation.recommendations[0];
-  const lowerPrice =
-    translation.recommendations.find(
-      (item) => item.style.priceCents < translation.anchor.priceCents,
-    ) ?? closest;
-  const moreStretch =
-    translation.recommendations.find((item) => item.label === "more-stretch") ??
-    closest;
-  const betterBoots =
-    translation.recommendations.find(
-      (item) => item.label === "better-for-boots",
-    ) ?? closest;
+  const passportRows = selectPassportRows(translation);
   const arrivalCards = jeansProducts
     .slice(0, 4)
     .map((product) =>
@@ -126,26 +116,14 @@ export default function HomeScreen() {
           seat/thigh room, stretch, hem shape, and construction.
         </Text>
         <View style={[styles.passportRows, { borderColor: theme.border }]}>
-          <PassportRow
-            label="Closest match"
-            title={closest?.style.styleName ?? "Wrangler Cowboy Cut"}
-            meta={`${closest?.overallScore ?? 88}% confidence`}
-          />
-          <PassportRow
-            label="Same fit, lower price"
-            title={lowerPrice?.style.styleName ?? "Lee Regular Straight"}
-            meta={formatCurrency(lowerPrice?.style.priceCents ?? 6900)}
-          />
-          <PassportRow
-            label="Same vibe, more stretch"
-            title={moreStretch?.style.styleName ?? "Lee Extreme Motion"}
-            meta={moreStretch?.style.taxonomy.stretchProfile ?? "stretch"}
-          />
-          <PassportRow
-            label="Better for boots"
-            title={betterBoots?.style.styleName ?? "Wrangler Cowboy Cut"}
-            meta={betterBoots?.style.taxonomy.hemBehavior ?? "boot-ready"}
-          />
+          {passportRows.map((row, index) => (
+            <PassportRow
+              key={row.item.style.id}
+              label={row.label}
+              item={row.item}
+              showDivider={index > 0}
+            />
+          ))}
         </View>
       </View>
 
@@ -202,17 +180,33 @@ export default function HomeScreen() {
           contentContainerStyle={styles.pills}
         >
           {demoBrands.slice(0, 5).map((brand, index) => (
-            <BrandPill
-              key={brand.slug}
-              label={brand.name}
-              selected={index === 0}
-              onPress={() =>
-                router.push({
-                  pathname: "/discover",
-                  params: { brand: brand.slug },
-                })
-              }
-            />
+            <View key={brand.slug} style={styles.brandCluster}>
+              {index === 0 ? (
+                <View
+                  style={[
+                    styles.baselineBadge,
+                    {
+                      backgroundColor: theme.surfaceWarm,
+                      borderColor: theme.accent,
+                    },
+                  ]}
+                >
+                  <Text style={[styles.baselineBadgeText, { color: theme.accent }]}>
+                    Your baseline
+                  </Text>
+                </View>
+              ) : null}
+              <BrandPill
+                label={brand.name}
+                selected={index === 0}
+                onPress={() =>
+                  router.push({
+                    pathname: "/discover",
+                    params: { brand: brand.slug },
+                  })
+                }
+              />
+            </View>
           ))}
         </ScrollView>
       </View>
@@ -321,27 +315,80 @@ function InlineHeader({
   );
 }
 
+type PassportRowModel = {
+  label: string;
+  item: JeansTranslationRecommendation;
+};
+
+function selectPassportRows(
+  translation: ReturnType<typeof translateFavoriteJeansFit>,
+): PassportRowModel[] {
+  const usedIds = new Set<string>();
+  const pick = (
+    predicate: (item: JeansTranslationRecommendation) => boolean,
+  ) => {
+    const item =
+      translation.recommendations.find(
+        (candidate) =>
+          !usedIds.has(candidate.style.id) && predicate(candidate),
+      ) ??
+      translation.recommendations.find(
+        (candidate) => !usedIds.has(candidate.style.id),
+      );
+    if (item) {
+      usedIds.add(item.style.id);
+    }
+    return item;
+  };
+
+  const closest = pick(() => true);
+  const lowerPrice = pick(
+    (item) => item.style.priceCents < translation.anchor.priceCents,
+  );
+  const moreStretch = pick((item) => item.label === "more-stretch");
+  const betterBoots = pick((item) => item.label === "better-for-boots");
+
+  return [
+    { label: "Closest match", item: closest },
+    { label: "Lower price", item: lowerPrice },
+    { label: "More stretch", item: moreStretch },
+    { label: "Boot-friendly", item: betterBoots },
+  ].filter((row): row is PassportRowModel => Boolean(row.item));
+}
+
 function PassportRow({
   label,
-  title,
-  meta,
+  item,
+  showDivider,
 }: {
   label: string;
-  title: string;
-  meta: string;
+  item: JeansTranslationRecommendation;
+  showDivider?: boolean;
 }) {
   const theme = useThemeTokens();
   return (
-    <View style={styles.passportRow}>
+    <View
+      style={[
+        styles.passportRow,
+        showDivider ? { borderTopColor: theme.border, borderTopWidth: 1 } : null,
+      ]}
+    >
       <View style={{ flex: 1 }}>
         <Text style={[styles.passportLabel, { color: theme.textMuted }]}>
           {label}
         </Text>
         <Text style={[styles.passportRowTitle, { color: theme.text }]}>
-          {title}
+          {item.style.styleName}
         </Text>
       </View>
-      <Text style={[styles.passportMeta, { color: theme.accent }]}>{meta}</Text>
+      <View style={styles.passportMetrics}>
+        <Text style={[styles.passportPrice, { color: theme.text }]}>
+          {formatCurrency(item.style.priceCents)}
+        </Text>
+        <Text style={[styles.passportFit, { color: theme.accent }]}>
+          {item.overallScore}% fit
+        </Text>
+      </View>
     </View>
   );
 }
@@ -352,7 +399,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 18,
-    gap: 16,
+    gap: 13,
   },
   topbar: {
     flexDirection: "row",
@@ -395,10 +442,11 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   passportRow: {
-    minHeight: 43,
+    minHeight: 50,
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
+    paddingVertical: 7,
   },
   passportLabel: {
     fontSize: 11,
@@ -410,10 +458,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: "900",
   },
-  passportMeta: {
-    fontSize: 11,
+  passportMetrics: {
+    width: 74,
+    alignItems: "flex-end",
+    gap: 3,
+  },
+  passportPrice: {
+    fontSize: 12,
     fontWeight: "900",
-    maxWidth: 92,
+    textAlign: "right",
+  },
+  passportFit: {
+    fontSize: 10,
+    fontWeight: "900",
     textAlign: "right",
   },
   logo: {
@@ -421,7 +478,7 @@ const styles = StyleSheet.create({
     fontWeight: "900",
   },
   hero: {
-    minHeight: 178,
+    minHeight: 150,
     borderRadius: 26,
     borderWidth: 1,
     overflow: "hidden",
@@ -449,28 +506,28 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 20,
     right: 82,
-    bottom: 24,
+    bottom: 20,
   },
   heroTitle: {
     color: "#FFFFFF",
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "900",
-    lineHeight: 25,
+    lineHeight: 22,
     textTransform: "uppercase",
   },
   heroSubtitle: {
     color: "rgba(255, 255, 255, 0.86)",
-    fontSize: 13,
-    lineHeight: 18,
-    marginTop: 6,
+    fontSize: 12,
+    lineHeight: 16,
+    marginTop: 5,
     fontWeight: "700",
   },
   heroArrow: {
     position: "absolute",
     right: 20,
-    bottom: 24,
-    height: 54,
-    width: 54,
+    bottom: 20,
+    height: 50,
+    width: 50,
     borderRadius: 999,
     backgroundColor: "#FFFFFF",
     alignItems: "center",
@@ -544,5 +601,23 @@ const styles = StyleSheet.create({
   },
   pills: {
     gap: 10,
+    alignItems: "center",
+  },
+  brandCluster: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  baselineBadge: {
+    minHeight: 24,
+    borderWidth: 1,
+    borderRadius: 999,
+    paddingHorizontal: 9,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  baselineBadgeText: {
+    fontSize: 10,
+    fontWeight: "900",
   },
 });
