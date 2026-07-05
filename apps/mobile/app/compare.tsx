@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ArrowLeft, SlidersHorizontal } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -30,6 +30,7 @@ const defaultQuery = "straight denim jeans under $150";
 export default function CompareScreen() {
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [query, setQuery] = useState(defaultQuery);
   const [spectrum, setSpectrum] = useState(62);
   const bodyProfile = useDemoStore((state) => state.bodyProfile);
@@ -72,11 +73,14 @@ export default function CompareScreen() {
       ]}
     >
       <View style={styles.topbar}>
-        <Link href="/(tabs)/home" asChild>
-          <IconButton accessibilityLabel="Back to home">
-            <ArrowLeft size={20} color={theme.text} />
-          </IconButton>
-        </Link>
+        <IconButton
+          accessibilityLabel="Back to home"
+          onPress={() =>
+            router.canGoBack() ? router.back() : router.replace("/(tabs)/home")
+          }
+        >
+          <ArrowLeft size={20} color={theme.text} />
+        </IconButton>
         <Text style={[styles.logo, { color: theme.text }]}>
           Best Fit Finder
         </Text>

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "expo-router";
+import { Link, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ArrowLeft, Send, Sparkles } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -20,6 +20,7 @@ type ChatTurn = {
 export default function StylistScreen() {
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const [draft, setDraft] = useState("straight denim jeans under $150");
   const body = useDemoStore((state) => state.bodyProfile);
   const style = useDemoStore((state) => state.styleProfile);
@@ -56,11 +57,14 @@ export default function StylistScreen() {
         ]}
       >
         <View style={styles.topbar}>
-          <Link href="/(tabs)/home" asChild>
-            <IconButton accessibilityLabel="Back to home">
-              <ArrowLeft size={20} color={theme.text} />
-            </IconButton>
-          </Link>
+          <IconButton
+            accessibilityLabel="Back to home"
+            onPress={() =>
+              router.canGoBack() ? router.back() : router.replace("/(tabs)/home")
+            }
+          >
+            <ArrowLeft size={20} color={theme.text} />
+          </IconButton>
           <Text style={[styles.logo, { color: theme.text }]}>Rober Stylist</Text>
         </View>
         <View style={[styles.hero, { backgroundColor: theme.bgWarm, borderColor: theme.border }]}>

@@ -198,7 +198,9 @@ export default function ProductDetailScreen() {
           <View style={[styles.overlayTop, { top: actionTopOffset }]}>
             <IconButton
               accessibilityLabel="Back to Rober home"
-              onPress={() => router.push("/home")}
+              onPress={() =>
+                router.canGoBack() ? router.back() : router.replace("/(tabs)/home")
+              }
             >
               <ArrowLeft size={20} color={theme.text} />
             </IconButton>

@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { ArrowLeft } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,6 +9,7 @@ import { useThemeTokens } from "../../theme/useThemeTokens";
 export default function GarmentReferenceScreen() {
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   return (
     <ScrollView
@@ -19,11 +20,16 @@ export default function GarmentReferenceScreen() {
       ]}
     >
       <View style={styles.topbar}>
-        <Link href="/(onboarding)/welcome" asChild>
-          <IconButton accessibilityLabel="Back to fit profile options">
-            <ArrowLeft size={20} color={theme.text} />
-          </IconButton>
-        </Link>
+        <IconButton
+          accessibilityLabel="Back to fit profile options"
+          onPress={() =>
+            router.canGoBack()
+              ? router.back()
+              : router.replace("/(onboarding)/welcome")
+          }
+        >
+          <ArrowLeft size={20} color={theme.text} />
+        </IconButton>
         <View style={{ flex: 1 }}>
           <Text style={[styles.logo, { color: theme.text }]}>Rober</Text>
           <Text style={[styles.tagline, { color: theme.textMuted }]}>

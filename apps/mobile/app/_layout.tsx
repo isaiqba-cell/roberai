@@ -6,7 +6,10 @@ import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { Platform, StyleSheet, View } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import {
+  SafeAreaInsetsContext,
+  SafeAreaProvider,
+} from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ThemeProvider, useThemePreference } from "../theme/ThemeProvider";
 import { initializeSentry } from "../lib/sentry";
@@ -63,7 +66,11 @@ function IPhonePreviewFrame({ children }: { children: ReactNode }) {
           <View style={styles.phoneShell}>
             <View pointerEvents="none" style={styles.dynamicIsland} />
             <View pointerEvents="none" style={styles.islandCamera} />
-            <View style={styles.phoneScreen}>{children}</View>
+            <View style={styles.phoneScreen}>
+              <SafeAreaInsetsContext.Provider value={webPreviewMetrics.insets}>
+                {children}
+              </SafeAreaInsetsContext.Provider>
+            </View>
           </View>
         </View>
       </View>
