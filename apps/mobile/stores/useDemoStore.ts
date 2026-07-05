@@ -1,10 +1,11 @@
 import { create } from "zustand";
-import { BodyProfile, FitPreference } from "@rober/fit-engine";
+import { BodyProfile, FitPreference, GarmentSpec } from "@rober/fit-engine";
 import {
   calculateCartTotals,
   CartTotals,
   defaultFavoriteJeansInput,
   resolveFavoriteJeans,
+  resolveGarmentReference,
 } from "@rober/api-client";
 
 export type StyleProfile = {
@@ -18,6 +19,8 @@ export type StyleProfile = {
   priceMax?: number;
   budgetLabel?: string;
 };
+
+export type MatchPath = "garment_to_garment" | "body_to_garment";
 
 export type KnownGoodItem = {
   id: string;
@@ -33,6 +36,9 @@ export type KnownGoodItem = {
     shoulderCm?: number;
     inseamCm?: number;
   };
+  canonicalSpec?: GarmentSpec;
+  resolvedFromCatalog?: boolean;
+  matchPath?: MatchPath;
 };
 
 type DemoUserState = {
@@ -84,6 +90,14 @@ export type DemoOrder = {
 };
 
 const demoFavoriteJeans = resolveFavoriteJeans(defaultFavoriteJeansInput);
+const demoGarmentReference = resolveGarmentReference({
+  brandSlug: defaultFavoriteJeansInput.brandSlug,
+  modelName: "501",
+  sizeLabel: defaultFavoriteJeansInput.sizeLabel,
+  ...(defaultFavoriteJeansInput.inseamIn !== undefined
+    ? { inseamIn: defaultFavoriteJeansInput.inseamIn }
+    : {}),
+});
 
 export const demoBodyProfile: BodyProfile = {
   heightCm: 178,
@@ -128,6 +142,9 @@ export const demoKnownGoodItems: KnownGoodItem[] = [
       hipCm: demoFavoriteJeans.hipCm,
       inseamCm: demoFavoriteJeans.inseamCm,
     },
+    canonicalSpec: demoGarmentReference.spec,
+    resolvedFromCatalog: demoGarmentReference.resolvedFromCatalog,
+    matchPath: "garment_to_garment",
   },
   {
     id: "known-regular-jeans",
@@ -141,6 +158,7 @@ export const demoKnownGoodItems: KnownGoodItem[] = [
       hipCm: 101,
       inseamCm: 81,
     },
+    matchPath: "body_to_garment",
   },
 ];
 

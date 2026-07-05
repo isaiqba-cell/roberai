@@ -73,3 +73,35 @@ export const FIT_BANDS = {
   medium: { min: 60, label: "Good fit - check notes", color: "#E0A526" },
   low: { min: 0, label: "Uncertain - see alternatives", color: "#D94F4F" }
 } as const;
+
+// Garment-to-garment matching (jeans/chinos/pants). A user's reference
+// garment (already known to fit) is compared directly against a candidate
+// garment's own construction measurements, rather than against a body.
+export type SilhouetteCut = "skinny" | "slim" | "straight" | "relaxed" | "baggy";
+
+export interface GarmentSpec {
+  waistCm?: number;
+  inseamCm?: number;
+  thighCm?: number;
+  riseCm?: number;
+  legOpeningCm?: number;
+  hemCm?: number;
+  kneeCm?: number;
+  stretchPct: number;
+  cut: SilhouetteCut;
+}
+
+export type GarmentMatchDescriptor = "great_fit" | "good_fit_check_notes" | "uncertain";
+
+export interface GarmentMatchResult {
+  confidence: number;
+  descriptor: GarmentMatchDescriptor;
+  dimensionScores: Record<string, number>;
+  explanation: string[];
+  silhouetteDelta: "skinnier" | "baggier" | "same";
+  dataQualityScore: number;
+}
+
+export interface GarmentMatchOptions {
+  category?: "jeans" | "chinos" | "pants";
+}

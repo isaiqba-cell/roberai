@@ -1,3 +1,4 @@
+import type { GarmentSpec, SilhouetteCut } from "@rober/fit-engine";
 import type {
   BrandRecord,
   ProductRecord,
@@ -133,6 +134,24 @@ export type JeansTranslationStyle = {
   bestLeviAnchor: "501" | "505" | "511" | "514" | "541" | "550";
   confidence: "high" | "medium";
   taxonomy: JeansFitTaxonomy;
+  spec: GarmentSpec;
+};
+
+export type GarmentReferenceInput = {
+  brandSlug: string;
+  modelName?: string;
+  sizeLabel: string;
+  inseamIn?: number;
+};
+
+export type GarmentReferenceResolution = {
+  brandName: string;
+  brandSlug: string;
+  modelName: string;
+  sizeLabel: string;
+  category: "jeans" | "chinos" | "pants";
+  spec: GarmentSpec;
+  resolvedFromCatalog: boolean;
 };
 
 export type JeansTranslationRecommendation = {
@@ -512,8 +531,9 @@ const jeansProductDefinitions = [
     gender: "men" as const,
     title: "Go Airweave 5-Pocket Slim Tapered",
     cut: "slim" as const,
+    subcategory: "chino" as const,
     fitTags: ["slim", "tapered", "stretch"],
-    styleTags: ["office casual", "five pocket", "stretch", "slim"],
+    styleTags: ["office casual", "five pocket", "stretch", "slim", "chino"],
     colors: ["rinse blue"],
     priceCents: 8900,
     stretchPct: 7,
@@ -522,6 +542,26 @@ const jeansProductDefinitions = [
       imagePath("basile-light.jpg"),
       imagePath("light-packshot.webp"),
       imagePath("straight-flat.jpeg"),
+    ],
+  },
+  {
+    id: "dockers-workday-classic-chino",
+    brandSlug: "dockers",
+    sourceId: "dockers-men-bottoms",
+    gender: "men" as const,
+    title: "Workday Classic Fit Chino",
+    cut: "regular" as const,
+    subcategory: "chino" as const,
+    fitTags: ["regular", "straight", "office casual"],
+    styleTags: ["office casual", "five pocket", "chino", "everyday"],
+    colors: ["khaki"],
+    priceCents: 7900,
+    stretchPct: 5,
+    imageUrl: imagePath("hollywood-light.jpg"),
+    galleryImageUrls: [
+      imagePath("hollywood-light.jpg"),
+      imagePath("light-packshot.webp"),
+      imagePath("basile-light.jpg"),
     ],
   },
   {
@@ -659,7 +699,7 @@ const jeansProductDefinitions = [
   },
 ];
 
-export const jeansTranslationStyles: JeansTranslationStyle[] = [
+const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
   {
     id: "levis-501-original",
     brandName: "Levi's",
@@ -1112,6 +1152,81 @@ export const jeansTranslationStyles: JeansTranslationStyle[] = [
   },
 ];
 
+// Numeric construction measurements (thigh/rise/leg opening/hem/knee/stretch)
+// derived from each style's qualitative taxonomy, so garment-to-garment
+// matching compares actual cm deltas rather than only taxonomy labels.
+const baselineThighCm = 59;
+const baselineKneeOffsetCm = 14;
+
+const riseBucketCm: Record<JeansRiseBucket, number> = {
+  "at-waist": 27,
+  "mid-rise": 25,
+  "slightly-below-waist": 23,
+  "low-rise": 21,
+  unknown: 25,
+};
+
+const hemBehaviorCm: Record<JeansLegBehavior, number> = {
+  straight: 19,
+  tapered: 16,
+  "slim-straight": 17,
+  "slim-tapered": 15.5,
+  "boot-friendly-straight": 21.5,
+  bootcut: 23,
+};
+
+const stretchProfileToPct: Record<JeansStretchProfile, number> = {
+  rigid: 1,
+  "low-stretch": 3,
+  "medium-stretch": 6,
+  "high-stretch": 10,
+  "performance-stretch": 8,
+};
+
+const fitFamilyCut: Record<JeansFitFamily, SilhouetteCut> = {
+  straight: "straight",
+  "regular-straight": "straight",
+  "relaxed-straight": "relaxed",
+  "slim-taper": "slim",
+  "athletic-taper": "straight",
+  bootcut: "straight",
+  "loose-baggy": "baggy",
+  "workwear-straight": "straight",
+};
+
+const roomLevelRank: Record<JeansRoomLevel, number> = {
+  slim: 1,
+  regular: 2,
+  "regular-plus": 3,
+  relaxed: 4,
+  loose: 5,
+};
+
+function deriveGarmentSpecFromTaxonomy(taxonomy: JeansFitTaxonomy): GarmentSpec {
+  const thighDelta = (roomLevelRank[taxonomy.thighRoom] - 2) * 2.4;
+  const thighCm = round(baselineThighCm + thighDelta, 1);
+  const hemCm = hemBehaviorCm[taxonomy.hemBehavior];
+  const legOpeningCm = round(
+    hemCm + (taxonomy.hemBehavior.includes("taper") ? 2.5 : 0.8),
+    1,
+  );
+  return {
+    thighCm,
+    riseCm: riseBucketCm[taxonomy.riseBucket],
+    legOpeningCm,
+    hemCm,
+    kneeCm: round(thighCm - baselineKneeOffsetCm, 1),
+    stretchPct: stretchProfileToPct[taxonomy.stretchProfile],
+    cut: fitFamilyCut[taxonomy.fitFamily],
+  };
+}
+
+export const jeansTranslationStyles: JeansTranslationStyle[] =
+  rawJeansTranslationStyles.map((style) => ({
+    ...style,
+    spec: deriveGarmentSpecFromTaxonomy(style.taxonomy),
+  }));
+
 export const defaultFavoriteJeansInput: FavoriteJeansInput = {
   brandSlug: "levis",
   sizeLabel: "32",
@@ -1147,6 +1262,78 @@ export function resolveFavoriteJeans(
     inseamCm,
     sourceUrl: source.sourceUrl,
   };
+}
+
+// Resolves "brand + model/style name + size" to a structured canonical
+// GarmentSpec, combining the real waist/inseam chart entry with the
+// matched style's derived construction measurements. Falls back to a
+// self-reported spec (and logs the gap for the admin ingestion queue)
+// when the specific brand/model/size isn't indexed yet.
+export function resolveGarmentReference(
+  input: GarmentReferenceInput,
+): GarmentReferenceResolution {
+  const parsedSize = parseJeansSizeInput(input.sizeLabel);
+  const inseamIn = input.inseamIn ?? parsedSize.inseamIn;
+  const entry = findEntry({
+    brandSlug: input.brandSlug,
+    sizeLabel: parsedSize.sizeLabel,
+    ...(inseamIn !== undefined ? { inseamIn } : {}),
+  });
+  const brandStyles = jeansTranslationStyles.filter(
+    (style) => style.brandSlug === input.brandSlug,
+  );
+  const style = input.modelName
+    ? (brandStyles.find((candidate) =>
+        normalizeModelName(candidate.styleName).includes(
+          normalizeModelName(input.modelName as string),
+        ),
+      ) ?? brandStyles[0])
+    : brandStyles[0];
+
+  if (!entry || !style) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[garment-reference-gap] No indexed chart for ${input.brandSlug} ${input.modelName ?? ""} ${input.sizeLabel}. Self-reported spec used; flagged for admin ingestion.`,
+    );
+    return {
+      brandName:
+        jeansBrands.find((brand) => brand.slug === input.brandSlug)?.name ??
+        input.brandSlug,
+      brandSlug: input.brandSlug,
+      modelName: input.modelName ?? "Self-reported",
+      sizeLabel: parsedSize.sizeLabel,
+      category: "jeans",
+      resolvedFromCatalog: false,
+      spec: {
+        ...(entry ? { waistCm: entry.waistCm } : {}),
+        ...(inseamIn !== undefined ? { inseamCm: round(inseamIn * inch) } : {}),
+        stretchPct: 2,
+        cut: "straight",
+      },
+    };
+  }
+
+  const inseamCm = inseamIn
+    ? round(inseamIn * inch)
+    : nearest(entry.inseamOptionsCm, 32 * inch);
+
+  return {
+    brandName: brandFor(style.brandSlug).name,
+    brandSlug: style.brandSlug,
+    modelName: style.styleName,
+    sizeLabel: parsedSize.sizeLabel,
+    category: style.taxonomy.category === "pants" ? "chinos" : "jeans",
+    resolvedFromCatalog: true,
+    spec: {
+      ...style.spec,
+      waistCm: entry.waistCm,
+      inseamCm,
+    },
+  };
+}
+
+function normalizeModelName(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
 export function findJeansFitMatches(
@@ -1237,15 +1424,21 @@ export function generateJeansCatalogProducts(): ProductRecord[] {
       (entry) => entry.sourceId === definition.sourceId,
     );
     const color = definition.colors[0] ?? "indigo";
+    const subcategory = "subcategory" in definition ? definition.subcategory : "jeans";
     const product: ProductRecord = {
       id: definition.id,
       merchantName: `${brand.name} Direct`,
       brand,
       title: definition.title,
-      description: `${source.sourceNote} Rober normalizes this jeans chart against your favorite pair and recommends the closest size across price points.`,
+      description: `${source.sourceNote} Rober normalizes this ${subcategory} chart against your favorite pair and recommends the closest size across price points.`,
       category: "bottoms",
-      subcategory: "jeans",
-      material: definition.stretchPct >= 6 ? "stretch denim" : "cotton denim",
+      subcategory,
+      material:
+        subcategory === "chino"
+          ? "cotton chino"
+          : definition.stretchPct >= 6
+            ? "stretch denim"
+            : "cotton denim",
       colors: definition.colors,
       styleTags: definition.styleTags,
       fitTags: definition.fitTags,
@@ -1260,6 +1453,7 @@ export function generateJeansCatalogProducts(): ProductRecord[] {
       galleryImageUrls: definition.galleryImageUrls,
       variants: buildJeansVariants(
         definition.id,
+        definition.brandSlug,
         entries,
         definition.priceCents,
         color,
@@ -1337,14 +1531,63 @@ function aeCurvyEntries(): JeansSizeChartEntry[] {
   );
 }
 
+const brandConstructionProfile: Record<
+  string,
+  { thighDeltaCm: number; riseBucket: JeansRiseBucket; legOpeningDeltaCm: number }
+> = {
+  levis: { thighDeltaCm: 0, riseBucket: "at-waist", legOpeningDeltaCm: 0 },
+  madewell: { thighDeltaCm: -1.2, riseBucket: "mid-rise", legOpeningDeltaCm: -0.8 },
+  lee: { thighDeltaCm: 1, riseBucket: "mid-rise", legOpeningDeltaCm: 0.3 },
+  wrangler: { thighDeltaCm: 2.6, riseBucket: "at-waist", legOpeningDeltaCm: 2.4 },
+  dickies: { thighDeltaCm: 1.8, riseBucket: "slightly-below-waist", legOpeningDeltaCm: 1.2 },
+  dockers: { thighDeltaCm: 0.4, riseBucket: "mid-rise", legOpeningDeltaCm: 0.6 },
+  "old-navy": { thighDeltaCm: 0.6, riseBucket: "mid-rise", legOpeningDeltaCm: 0.4 },
+  "american-eagle": { thighDeltaCm: 2.2, riseBucket: "low-rise", legOpeningDeltaCm: 1.6 },
+};
+
+const cutAdjustCm: Record<"slim" | "regular" | "relaxed" | "oversized", number> = {
+  slim: -2.4,
+  regular: 0,
+  relaxed: 2.2,
+  oversized: 4.2,
+};
+
+const cutToSilhouette: Record<"slim" | "regular" | "relaxed" | "oversized", SilhouetteCut> = {
+  slim: "slim",
+  regular: "straight",
+  relaxed: "relaxed",
+  oversized: "baggy",
+};
+
+function deriveCatalogGarmentSpec(
+  brandSlug: string,
+  cut: "slim" | "regular" | "relaxed" | "oversized",
+  stretchPct: number,
+): Omit<GarmentSpec, "waistCm" | "inseamCm"> {
+  const profile = brandConstructionProfile[brandSlug] ?? brandConstructionProfile.levis!;
+  const thighCm = round(baselineThighCm + profile.thighDeltaCm + cutAdjustCm[cut], 1);
+  const hemCm = round(19 + profile.legOpeningDeltaCm + cutAdjustCm[cut] * 0.35, 1);
+  return {
+    thighCm,
+    riseCm: riseBucketCm[profile.riseBucket],
+    legOpeningCm: round(hemCm + 0.8, 1),
+    hemCm,
+    kneeCm: round(thighCm - baselineKneeOffsetCm, 1),
+    stretchPct,
+    cut: cutToSilhouette[cut],
+  };
+}
+
 function buildJeansVariants(
   productId: string,
+  brandSlug: string,
   entries: JeansSizeChartEntry[],
   priceCents: number,
   color: string,
   cut: "slim" | "regular" | "relaxed" | "oversized",
   stretchPct: number,
 ): ProductVariantRecord[] {
+  const garmentBase = deriveCatalogGarmentSpec(brandSlug, cut, stretchPct);
   return entries.flatMap((entry, entryIndex) =>
     entry.inseamOptionsCm.map((inseamCm, inseamIndex) => {
       const inseamIn = Math.round(inseamCm / inch);
@@ -1368,6 +1611,11 @@ function buildJeansVariants(
           inseamCm,
           stretchPct,
           cut,
+        },
+        garmentSpec: {
+          ...garmentBase,
+          waistCm: entry.waistCm,
+          inseamCm,
         },
       };
     }),
@@ -1571,7 +1819,7 @@ const labelCopy: Record<JeansTranslationRecommendation["label"], string> = {
 
 export function parseJeansSizeInput(sizeLabel: string) {
   const normalized = sizeLabel.trim().toLowerCase().replace(/\s+/g, "");
-  const match = normalized.match(/^([a-z0-9.]+)(?:x(\d{2}))?$/);
+  const match = normalized.match(/^([0-9.]+)(?:x(\d{2}))?$/);
   return {
     sizeLabel: match?.[1]?.toUpperCase() ?? sizeLabel.trim(),
     ...(match?.[2] ? { inseamIn: Number(match[2]) } : {}),

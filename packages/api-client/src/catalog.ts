@@ -1,4 +1,4 @@
-import { CanonicalGarmentSpec, GarmentCut } from "@rober/fit-engine";
+import { CanonicalGarmentSpec, GarmentCut, GarmentSpec } from "@rober/fit-engine";
 import { generateJeansCatalogProducts, jeansBrands } from "./jeans";
 
 export type BrandRecord = {
@@ -21,6 +21,7 @@ export type ProductVariantRecord = {
   stock: number;
   priceCents: number;
   spec: CanonicalGarmentSpec;
+  garmentSpec?: GarmentSpec;
 };
 
 export type ProductRecord = {
