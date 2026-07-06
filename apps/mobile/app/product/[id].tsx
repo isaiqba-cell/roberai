@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { Image } from "expo-image";
 import {
+  Pressable,
   ScrollView,
   Share as NativeShare,
   Platform,
@@ -44,6 +45,9 @@ import { summarizeProductFit } from "../../lib/fitEngine";
 import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
+type InfoTab = "About" | "Reviews" | "Material" | "Brand";
+const infoTabs: InfoTab[] = ["About", "Reviews", "Material", "Brand"];
+
 export default function ProductDetailScreen() {
   const theme = useThemeTokens();
   const router = useRouter();
@@ -82,6 +86,8 @@ export default function ProductDetailScreen() {
   const [selectedVariantId, setSelectedVariantId] = useState(
     recommendedVariantId,
   );
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [activeTab, setActiveTab] = useState<InfoTab>("About");
   useEffect(() => {
     if (recommendedVariantId && !selectedVariantId) {
       setSelectedVariantId(recommendedVariantId);
@@ -190,7 +196,9 @@ export default function ProductDetailScreen() {
       >
         <View style={styles.imageWrap}>
           <Image
-            source={{ uri: galleryImages[0] ?? product.heroImageUrl }}
+            source={{
+              uri: galleryImages[activeImageIndex] ?? product.heroImageUrl,
+            }}
             style={styles.heroImage}
             contentFit="contain"
             transition={180}
@@ -231,11 +239,18 @@ export default function ProductDetailScreen() {
             style={[styles.thumbnailStrip, { backgroundColor: theme.surface }]}
           >
             {galleryImages.slice(0, 3).map((thumbnailUrl, index) => (
-              <View
+              <Pressable
                 key={`${thumbnailUrl}-${index}`}
+                accessibilityRole="button"
+                accessibilityLabel={`View product photo ${index + 1}`}
+                accessibilityState={{ selected: index === activeImageIndex }}
+                onPress={() => setActiveImageIndex(index)}
                 style={[
                   styles.thumbnailFrame,
-                  { borderColor: index === 0 ? theme.accent : theme.border },
+                  {
+                    borderColor:
+                      index === activeImageIndex ? theme.accent : theme.border,
+                  },
                 ]}
               >
                 <Image
@@ -243,7 +258,7 @@ export default function ProductDetailScreen() {
                   style={styles.thumbnailImage}
                   contentFit="contain"
                 />
-              </View>
+              </Pressable>
             ))}
           </View>
         </View>
@@ -292,7 +307,11 @@ export default function ProductDetailScreen() {
                 : "Size-chart normalized"}
             </Text>
             <Text style={[styles.fingerprintCopy, { color: theme.textMuted }]}>
-              If your Levi's 501 32x32 feels perfect, this will likely feel{" "}
+              If your{" "}
+              {favorite
+                ? `${favorite.brand} ${favorite.itemName} ${favorite.sizeLabel}`
+                : "anchor pair"}{" "}
+              feels perfect, this will likely feel{" "}
               {productTranslationStyle
                 ? `${productTranslationStyle.taxonomy.seatRoom} in the seat, ${productTranslationStyle.taxonomy.thighRoom} in the thigh, and ${productTranslationStyle.taxonomy.stretchProfile} through the fabric.`
                 : "closest in the recommended size, with confidence adjusted for missing chart data."}
@@ -324,33 +343,85 @@ export default function ProductDetailScreen() {
             ]}
           >
             <View style={styles.tabRow}>
-              <Text
-                style={[
-                  styles.tabTitle,
-                  { color: theme.text, borderBottomColor: theme.text },
-                ]}
-              >
-                About
-              </Text>
-              <Text style={[styles.tabLabel, { color: theme.textMuted }]}>
-                Reviews
-              </Text>
-              <Text style={[styles.tabLabel, { color: theme.textMuted }]}>
-                Material
-              </Text>
-              <Text style={[styles.tabLabel, { color: theme.textMuted }]}>
-                Brand
-              </Text>
+              {infoTabs.map((tab) => (
+                <Pressable
+                  key={tab}
+                  accessibilityRole="tab"
+                  accessibilityLabel={`${tab} tab`}
+                  accessibilityState={{ selected: activeTab === tab }}
+                  onPress={() => setActiveTab(tab)}
+                  style={[
+                    styles.tabButton,
+                    activeTab === tab
+                      ? { borderBottomColor: theme.text }
+                      : { borderBottomColor: "transparent" },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tabLabel,
+                      {
+                        color: activeTab === tab ? theme.text : theme.textMuted,
+                        fontWeight: activeTab === tab ? "900" : "800",
+                      },
+                    ]}
+                  >
+                    {tab}
+                  </Text>
+                </Pressable>
+              ))}
             </View>
-            <Text style={[styles.copy, { color: theme.textMuted }]}>
-              {product.description}
-            </Text>
-            <FabricStretchNote
-              stretchPct={selectedVariant?.spec.stretchPct ?? 0}
-            />
-            <SilhouetteNote
-              cut={selectedVariant?.spec.cut ?? product.fitTags[0] ?? "regular"}
-            />
+            {activeTab === "About" ? (
+              <>
+                <Text style={[styles.copy, { color: theme.textMuted }]}>
+                  {product.description}
+                </Text>
+                <FabricStretchNote
+                  stretchPct={selectedVariant?.spec.stretchPct ?? 0}
+                />
+                <SilhouetteNote
+                  cut={selectedVariant?.spec.cut ?? product.fitTags[0] ?? "regular"}
+                />
+              </>
+            ) : null}
+            {activeTab === "Reviews" ? (
+              <>
+                <Text style={[styles.copy, { color: theme.text }]}>
+                  {product.rating.toFixed(1)} average across{" "}
+                  {product.reviewCount} reviews.
+                </Text>
+                <Text style={[styles.copy, { color: theme.textMuted }]}>
+                  Most reviewers report this fits true to its size chart.
+                  Post-delivery fit feedback feeds back into Rober's match
+                  confidence for this style. Review counts are demo data.
+                </Text>
+              </>
+            ) : null}
+            {activeTab === "Material" ? (
+              <>
+                <Text style={[styles.copy, { color: theme.text }]}>
+                  {product.material.charAt(0).toUpperCase() +
+                    product.material.slice(1)}
+                  , {selectedVariant?.spec.stretchPct ?? 0}% stretch.
+                </Text>
+                <Text style={[styles.copy, { color: theme.textMuted }]}>
+                  Colors: {product.colors.join(", ")}. Machine wash cold,
+                  inside out; hang dry to preserve the fit measured in the
+                  size chart.
+                </Text>
+              </>
+            ) : null}
+            {activeTab === "Brand" ? (
+              <>
+                <Text style={[styles.copy, { color: theme.text }]}>
+                  {product.brand.name}
+                </Text>
+                <Text style={[styles.copy, { color: theme.textMuted }]}>
+                  {product.brand.positioning} Size-chart confidence:{" "}
+                  {product.brand.sizeChartConfidence.replace("_", " ")}.
+                </Text>
+              </>
+            ) : null}
           </View>
 
           <RecommendedSizeCard
@@ -367,8 +438,15 @@ export default function ProductDetailScreen() {
           <SectionHeader kicker="Alternatives" title="Similar with fit data" />
           <ProductRail
             products={closetInspiredProducts
+              .filter((item) => item.id !== product.id)
               .slice(0, 6)
-              .map((item, index) => toProductCard(item, 88 - index * 2))}
+              .map((item) =>
+                toProductCard(
+                  item,
+                  summarizeProductFit(item, bodyProfile, favoriteReferenceItem)
+                    .confidence,
+                ),
+              )}
           />
         </View>
       </ScrollView>
@@ -536,10 +614,8 @@ const styles = StyleSheet.create({
     gap: 22,
     alignItems: "center",
   },
-  tabTitle: {
-    fontSize: 15,
-    fontWeight: "900",
-    borderBottomWidth: 1,
+  tabButton: {
+    borderBottomWidth: 2,
     paddingBottom: 6,
   },
   tabLabel: {

@@ -30,6 +30,7 @@ export function ensureTryOnRender(input: {
   variantId: string;
   photoUri: string;
   garmentImageUrl: string;
+  garmentDescription?: string;
 }): TryOnRenderRecord {
   const state = useDemoStore.getState();
   const cached = findExistingRender(state.tryOnRenders, input.tryOnPhotoId, input.variantId);
@@ -38,7 +39,6 @@ export function ensureTryOnRender(input: {
   }
 
   const providerKind = resolveProviderKind();
-  const provider = createTryOnProvider(providerKind);
   const pending: TryOnRenderRecord = {
     id: `render-${input.tryOnPhotoId}-${input.variantId}`,
     userId: DEMO_USER_ID,
@@ -50,22 +50,47 @@ export function ensureTryOnRender(input: {
   };
   useDemoStore.getState().upsertTryOnRender(pending);
 
-  provider
-    .generate({
+  const settle = (result: { status: "ready" | "failed"; imageUrl?: string }) => {
+    useDemoStore.getState().upsertTryOnRender({
+      ...pending,
+      status: result.status,
+      ...(result.imageUrl ? { storagePath: result.imageUrl } : {}),
+    });
+  };
+  const fail = () => settle({ status: "failed" });
+
+  if (providerKind === "mock") {
+    createTryOnProvider("mock")
+      .generate({
+        photoUri: input.photoUri,
+        garmentImageUrl: input.garmentImageUrl,
+        variantId: input.variantId,
+      })
+      .then(settle)
+      .catch(fail);
+    return pending;
+  }
+
+  // Real providers run through the server-side API route so the Replicate/
+  // Hugging Face tokens never ship in the browser bundle.
+  fetch("/api/try-on", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({
       photoUri: input.photoUri,
       garmentImageUrl: input.garmentImageUrl,
-      variantId: input.variantId,
-    })
-    .then((result) => {
-      useDemoStore.getState().upsertTryOnRender({
-        ...pending,
-        status: result.status,
-        ...(result.imageUrl ? { storagePath: result.imageUrl } : {}),
-      });
-    })
-    .catch(() => {
-      useDemoStore.getState().upsertTryOnRender({ ...pending, status: "failed" });
-    });
+      garmentDescription: input.garmentDescription ?? "jeans",
+    }),
+  })
+    .then((response) => response.json())
+    .then((result: { status?: string; imageUrl?: string }) =>
+      settle(
+        result.status === "ready" && result.imageUrl
+          ? { status: "ready", imageUrl: result.imageUrl }
+          : { status: "failed" },
+      ),
+    )
+    .catch(fail);
 
   return pending;
 }

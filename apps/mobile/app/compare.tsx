@@ -141,6 +141,7 @@ export default function CompareScreen() {
         variantId: entry.variantId,
         photoUri: activeTryOnPhoto.storagePath,
         garmentImageUrl: entry.product.heroImageUrl,
+        garmentDescription: `${entry.product.brand.name} ${entry.product.title}`,
       });
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps

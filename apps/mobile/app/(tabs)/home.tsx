@@ -114,23 +114,58 @@ export default function HomeScreen() {
         ]}
       >
         <Text style={[styles.passportKicker, { color: theme.accent }]}>
-          FIT PASSPORT
+          YOUR FIT, TRANSLATED
         </Text>
         <Text style={[styles.passportTitle, { color: theme.text }]}>
           {favorite
-            ? `You wear ${favorite.brand} ${favorite.itemName}, ${favorite.sizeLabel}`
-            : "Add a reference garment to build your fit passport"}
+            ? `${favorite.brand} ${favorite.itemName} · ${favorite.sizeLabel}`
+            : "Add a reference pair to unlock matches"}
         </Text>
-        <View style={[styles.passportRows, { borderColor: theme.border }]}>
-          {passportCategories.map((row, index) => (
-            <PassportRow
+        {anchorSpec ? (
+          <View style={styles.dimensionChips}>
+            {[
+              ["Waist", anchorSpec.waistCm],
+              ["Thigh", anchorSpec.thighCm],
+              ["Rise", anchorSpec.riseCm],
+              ["Inseam", anchorSpec.inseamCm],
+            ]
+              .filter((pair): pair is [string, number] => pair[1] !== undefined)
+              .map(([label, value]) => (
+                <View
+                  key={label}
+                  style={[
+                    styles.dimensionChip,
+                    {
+                      backgroundColor: theme.surfaceWarm,
+                      borderColor: theme.border,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.dimensionChipLabel, { color: theme.textMuted }]}
+                  >
+                    {label}
+                  </Text>
+                  <Text style={[styles.dimensionChipValue, { color: theme.text }]}>
+                    {value}cm
+                  </Text>
+                </View>
+              ))}
+          </View>
+        ) : null}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.passportCardRail}
+        >
+          {passportCategories.map((row) => (
+            <PassportMatchCard
               key={row.entry.product.id}
               label={row.label}
               entry={row.entry}
-              showDivider={index > 0}
             />
           ))}
-        </View>
+        </ScrollView>
       </View>
 
       {heroProduct ? (
@@ -310,40 +345,55 @@ function InlineHeader({
   );
 }
 
-function PassportRow({
+function PassportMatchCard({
   label,
   entry,
-  showDivider,
 }: {
   label: string;
   entry: GarmentCardCategory["entry"];
-  showDivider?: boolean;
 }) {
   const theme = useThemeTokens();
   return (
-    <View
-      style={[
-        styles.passportRow,
-        showDivider ? { borderTopColor: theme.border, borderTopWidth: 1 } : null,
-      ]}
-    >
-      <View style={{ flex: 1 }}>
-        <Text style={[styles.passportLabel, { color: theme.textMuted }]}>
-          {label}
+    <Link href={`/product/${entry.product.id}`} asChild>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={`${label}: ${entry.card.brand} ${entry.product.title}, ${entry.result.confidence} percent fit`}
+        style={({ pressed }) => [
+          styles.passportCard,
+          {
+            backgroundColor: theme.surfaceRaised,
+            borderColor: theme.border,
+            opacity: pressed ? 0.85 : 1,
+          },
+        ]}
+      >
+        <View style={styles.passportCardImageWrap}>
+          <Image
+            source={{ uri: entry.card.imageUrl }}
+            style={styles.passportCardImage}
+            contentFit="contain"
+            transition={150}
+          />
+          <View style={[styles.passportCardFit, { backgroundColor: theme.accent }]}>
+            <Text style={styles.passportCardFitText}>
+              {entry.result.confidence}%
+            </Text>
+          </View>
+        </View>
+        <Text style={[styles.passportCardLabel, { color: theme.accent }]}>
+          {label.toUpperCase()}
         </Text>
-        <Text style={[styles.passportRowTitle, { color: theme.text }]}>
+        <Text
+          numberOfLines={2}
+          style={[styles.passportCardTitle, { color: theme.text }]}
+        >
           {entry.card.brand} {entry.product.title}
         </Text>
-      </View>
-      <View style={styles.passportMetrics}>
-        <Text style={[styles.passportPrice, { color: theme.text }]}>
-          {formatCurrency(entry.product.priceCents)}
+        <Text style={[styles.passportCardPrice, { color: theme.textMuted }]}>
+          {formatCurrency(entry.product.priceCents)} · size {entry.sizeLabel}
         </Text>
-        <Text style={[styles.passportFit, { color: theme.accent }]}>
-          {entry.result.confidence}% fit
-        </Text>
-      </View>
-    </View>
+      </Pressable>
+    </Link>
   );
 }
 
@@ -386,41 +436,79 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     lineHeight: 25,
   },
-  passportRows: {
-    borderTopWidth: 1,
-    marginTop: 4,
-  },
-  passportRow: {
-    minHeight: 50,
+  dimensionChips: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    paddingVertical: 7,
+    flexWrap: "wrap",
+    gap: 8,
   },
-  passportLabel: {
-    fontSize: 11,
+  dimensionChip: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    alignItems: "center",
+    gap: 1,
+  },
+  dimensionChipLabel: {
+    fontSize: 9,
     fontWeight: "900",
     textTransform: "uppercase",
+    letterSpacing: 0.5,
   },
-  passportRowTitle: {
-    marginTop: 3,
+  dimensionChipValue: {
     fontSize: 13,
     fontWeight: "900",
   },
-  passportMetrics: {
-    width: 74,
-    alignItems: "flex-end",
-    gap: 3,
+  passportCardRail: {
+    gap: 10,
+    paddingTop: 4,
   },
-  passportPrice: {
-    fontSize: 12,
-    fontWeight: "900",
-    textAlign: "right",
+  passportCard: {
+    width: 152,
+    borderWidth: 1,
+    borderRadius: 18,
+    padding: 10,
+    gap: 4,
   },
-  passportFit: {
+  passportCardImageWrap: {
+    height: 96,
+    borderRadius: 12,
+    overflow: "hidden",
+    backgroundColor: "#F8FAFC",
+    position: "relative",
+  },
+  passportCardImage: {
+    width: "100%",
+    height: "100%",
+  },
+  passportCardFit: {
+    position: "absolute",
+    top: 6,
+    right: 6,
+    borderRadius: 999,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  passportCardFitText: {
+    color: "#FFFFFF",
     fontSize: 10,
     fontWeight: "900",
-    textAlign: "right",
+  },
+  passportCardLabel: {
+    marginTop: 4,
+    fontSize: 9,
+    fontWeight: "900",
+    letterSpacing: 0.6,
+  },
+  passportCardTitle: {
+    fontSize: 12,
+    fontWeight: "800",
+    lineHeight: 16,
+    minHeight: 32,
+  },
+  passportCardPrice: {
+    fontSize: 11,
+    fontWeight: "800",
   },
   logo: {
     fontSize: 34,

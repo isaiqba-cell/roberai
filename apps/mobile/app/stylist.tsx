@@ -3,6 +3,7 @@ import { Link, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ArrowLeft, Send, Sparkles } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { formatCurrency } from "@rober/api-client";
 import { AppButton, Chip, IconButton, SectionHeader } from "../components/primitives";
 import { FitExplanationCard } from "../components/fit";
 import { ProductRail } from "../components/product";
@@ -41,12 +42,49 @@ export default function StylistScreen() {
       return;
     }
     const response = getGroundedStylistResponse({ query, body, style, favoriteItems, wishlistIds });
+    const assistantId = `assistant-${Date.now()}`;
     setTurns((current) => [
       ...current,
       { id: `user-${Date.now()}`, role: "user", text: query },
-      { id: `assistant-${Date.now()}`, role: "assistant", text: response.text, response }
+      { id: assistantId, role: "assistant", text: response.text, response }
     ]);
     setDraft("");
+
+    // Products stay grounded in the fit engine either way; when the
+    // server-side OpenAI route is configured, it rewrites only the reply
+    // copy around those same candidates. On any failure the deterministic
+    // text above simply stands.
+    if (response.products.length) {
+      const anchor = favoriteItems[0];
+      fetch("/api/stylist", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          query,
+          anchor: anchor
+            ? `${anchor.brand} ${anchor.itemName} ${anchor.sizeLabel}`
+            : undefined,
+          candidates: response.products.map((product) => ({
+            brand: product.product.brand.name,
+            title: product.product.title,
+            price: formatCurrency(product.product.priceCents),
+            fitConfidence: product.confidence,
+            recommendedSize: product.recommendedSize,
+          })),
+        }),
+      })
+        .then((aiResponse) => (aiResponse.ok ? aiResponse.json() : Promise.reject()))
+        .then(({ text }: { text?: string }) => {
+          if (text) {
+            setTurns((current) =>
+              current.map((turn) =>
+                turn.id === assistantId ? { ...turn, text } : turn,
+              ),
+            );
+          }
+        })
+        .catch(() => undefined);
+    }
   };
 
   return (
