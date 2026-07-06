@@ -1,0 +1,5 @@
+# Keep personal reference photos out of version control by default.
+*.jpg
+*.jpeg
+*.png
+*.webp

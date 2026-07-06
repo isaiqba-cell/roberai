@@ -100,6 +100,25 @@ export type DemoOrder = {
   totals: CartTotals;
 };
 
+// Optional demo reference photo: set EXPO_PUBLIC_DEMO_TRYON_PHOTO_URI (e.g.
+// /images/try-on/demo-user.jpg after dropping the file in
+// apps/mobile/public/images/try-on/) to pre-seed the demo account with an
+// already-consented, active try-on photo — the same state a real user
+// reaches after completing the consent + upload flow. Real users still go
+// through the full consent gate; this only shortcuts the scripted demo path.
+const demoTryOnPhotoUri = process.env.EXPO_PUBLIC_DEMO_TRYON_PHOTO_URI;
+const demoTryOnPhotos: TryOnPhotoRecord[] = demoTryOnPhotoUri
+  ? [
+      {
+        id: "try-on-photo-demo-user",
+        userId: DEMO_USER_ID,
+        storagePath: demoTryOnPhotoUri,
+        status: "active",
+        createdAt: "2026-07-06T00:00:00.000Z",
+      },
+    ]
+  : [];
+
 const demoFavoriteJeans = resolveFavoriteJeans(defaultFavoriteJeansInput);
 const demoGarmentReference = resolveGarmentReference({
   brandSlug: defaultFavoriteJeansInput.brandSlug,
@@ -216,8 +235,8 @@ export const useDemoStore = create<DemoUserState>((set) => ({
       ),
     },
   ],
-  tryOnConsentAccepted: false,
-  tryOnPhotos: [],
+  tryOnConsentAccepted: demoTryOnPhotos.length > 0,
+  tryOnPhotos: demoTryOnPhotos,
   tryOnRenders: [],
   setGuestMode: (guestMode) => set({ guestMode }),
   updateBodyProfile: (profile) =>
