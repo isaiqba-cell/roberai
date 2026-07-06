@@ -72,25 +72,38 @@ export function ensureTryOnRender(input: {
   }
 
   // Real providers run through the server-side API route so the Replicate/
-  // Hugging Face tokens never ship in the browser bundle.
-  fetch("/api/try-on", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({
-      photoUri: input.photoUri,
-      garmentImageUrl: input.garmentImageUrl,
-      garmentDescription: input.garmentDescription ?? "jeans",
-    }),
-  })
-    .then((response) => response.json())
-    .then((result: { status?: string; imageUrl?: string }) =>
-      settle(
-        result.status === "ready" && result.imageUrl
-          ? { status: "ready", imageUrl: result.imageUrl }
-          : { status: "failed" },
-      ),
-    )
-    .catch(fail);
+  // Hugging Face tokens never ship in the browser bundle. POST starts the
+  // job and returns immediately; we then poll until it resolves (cold GPU
+  // boots can take minutes, so the budget is generous — the UI shows a
+  // skeleton the whole time and falls back gracefully on failure).
+  const pollUntilSettled = async () => {
+    const startResponse = await fetch("/api/try-on", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        photoUri: input.photoUri,
+        garmentImageUrl: input.garmentImageUrl,
+        garmentDescription: input.garmentDescription ?? "jeans",
+      }),
+    });
+    let result = (await startResponse.json()) as {
+      status?: string;
+      imageUrl?: string;
+      id?: string;
+    };
+    const deadline = Date.now() + 5 * 60 * 1000;
+    while (result.status === "pending" && result.id && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+      const pollResponse = await fetch(`/api/try-on?id=${result.id}`);
+      result = await pollResponse.json();
+    }
+    settle(
+      result.status === "ready" && result.imageUrl
+        ? { status: "ready", imageUrl: result.imageUrl }
+        : { status: "failed" },
+    );
+  };
+  pollUntilSettled().catch(fail);
 
   return pending;
 }

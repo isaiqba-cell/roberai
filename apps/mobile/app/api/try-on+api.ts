@@ -1,9 +1,13 @@
 // Server-side try-on route: REPLICATE_API_TOKEN never reaches the browser.
 // Runs the open-source IDM-VTON model on Replicate against the user's
-// reference photo and the candidate garment image. Relative asset paths
-// (e.g. /images/try-on/demo-user.jpg) are resolved against the request
-// origin so they work through a Cloudflare tunnel, where Replicate can
-// fetch them.
+// reference photo and the candidate garment image.
+//
+// Async job pattern: POST creates the prediction and returns immediately
+// with its id (Metro's dev server times out long-blocking requests, and
+// cold GPU boots can take minutes); the client polls GET ?id=... until the
+// render is ready or failed. Relative asset paths (e.g.
+// /images/try-on/demo-user.jpg) are resolved against the request origin so
+// Replicate can fetch them through a Cloudflare tunnel.
 const IDM_VTON_MODEL = "cuuupid/idm-vton";
 let cachedVersionId: string | undefined;
 
@@ -34,6 +38,31 @@ function absoluteUrl(pathOrUrl: string, requestUrl: string): string {
   return `${origin}${pathOrUrl.startsWith("/") ? "" : "/"}${pathOrUrl}`;
 }
 
+function mapPrediction(prediction: {
+  id?: string;
+  status?: string;
+  output?: string | string[];
+  error?: string;
+}) {
+  if (prediction.status === "succeeded") {
+    const output = Array.isArray(prediction.output)
+      ? prediction.output[0]
+      : prediction.output;
+    if (typeof output === "string") {
+      return { status: "ready" as const, imageUrl: output, id: prediction.id };
+    }
+    return { status: "failed" as const, error: "no_output", id: prediction.id };
+  }
+  if (prediction.status === "failed" || prediction.status === "canceled") {
+    return {
+      status: "failed" as const,
+      error: prediction.error ?? `prediction_${prediction.status}`,
+      id: prediction.id,
+    };
+  }
+  return { status: "pending" as const, id: prediction.id };
+}
+
 export async function POST(request: Request): Promise<Response> {
   const apiToken = process.env.REPLICATE_API_TOKEN;
   if (!apiToken) {
@@ -62,7 +91,6 @@ export async function POST(request: Request): Promise<Response> {
     headers: {
       "content-type": "application/json",
       authorization: `Token ${apiToken}`,
-      Prefer: "wait=60",
     },
     body: JSON.stringify({
       version: versionId,
@@ -81,41 +109,28 @@ export async function POST(request: Request): Promise<Response> {
       { status: 502 },
     );
   }
+  const prediction = await createResponse.json();
+  return Response.json(mapPrediction(prediction));
+}
 
-  let prediction = (await createResponse.json()) as {
-    status?: string;
-    output?: string | string[];
-    error?: string;
-    urls?: { get?: string };
-  };
-
-  // Prefer: wait blocks up to 60s; poll a little longer for cold starts
-  // before giving up so the client can fall back gracefully.
-  const startedAt = Date.now();
-  while (
-    prediction.status !== "succeeded" &&
-    prediction.status !== "failed" &&
-    prediction.status !== "canceled" &&
-    prediction.urls?.get &&
-    Date.now() - startedAt < 45_000
-  ) {
-    await new Promise((resolve) => setTimeout(resolve, 2500));
-    const pollResponse = await fetch(prediction.urls.get, {
-      headers: { authorization: `Token ${apiToken}` },
-    });
-    prediction = await pollResponse.json();
+export async function GET(request: Request): Promise<Response> {
+  const apiToken = process.env.REPLICATE_API_TOKEN;
+  if (!apiToken) {
+    return Response.json({ status: "failed", error: "no_token" }, { status: 503 });
   }
-
-  if (prediction.status === "succeeded") {
-    const output = Array.isArray(prediction.output)
-      ? prediction.output[0]
-      : prediction.output;
-    if (typeof output === "string") {
-      return Response.json({ status: "ready", imageUrl: output });
-    }
+  const id = new URL(request.url).searchParams.get("id");
+  if (!id) {
+    return Response.json({ status: "failed", error: "bad_request" }, { status: 400 });
   }
-  return Response.json({
-    status: "failed",
-    error: prediction.error ?? `prediction_${prediction.status ?? "unknown"}`,
+  const response = await fetch(`https://api.replicate.com/v1/predictions/${id}`, {
+    headers: { authorization: `Token ${apiToken}` },
   });
+  if (!response.ok) {
+    return Response.json(
+      { status: "failed", error: `replicate_${response.status}` },
+      { status: 502 },
+    );
+  }
+  const prediction = await response.json();
+  return Response.json(mapPrediction(prediction));
 }
