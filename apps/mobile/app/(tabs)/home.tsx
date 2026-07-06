@@ -67,6 +67,10 @@ export default function HomeScreen() {
   const passportCategories = anchorSpec
     ? pickGarmentCardCategories(anchorSpec, garmentMatches)
     : [];
+  const matchConfidenceByProduct = new Map(
+    garmentMatches.map((match) => [match.product.id, match.result.confidence]),
+  );
+  const anchorConfidence = passportCategories[0]?.entry.result.confidence;
   const arrivalCards = jeansProducts
     .slice(0, 4)
     .map((product) =>
@@ -94,7 +98,10 @@ export default function HomeScreen() {
               <Search size={22} color={theme.text} />
             </IconButton>
           </Link>
-          <IconButton accessibilityLabel="Notifications">
+          <IconButton
+            accessibilityLabel="Notifications and order updates"
+            onPress={() => router.push("/orders")}
+          >
             <Bell size={21} color={theme.text} />
           </IconButton>
         </View>
@@ -143,9 +150,9 @@ export default function HomeScreen() {
           <View style={styles.heroCopyBlock}>
             <Text style={styles.heroTitle}>Find jeans that fit</Text>
             <Text style={styles.heroSubtitle}>
-              Calibrated from your {demoFavoriteJeans.brandName}{" "}
-              {demoFavoriteJeans.sizeLabel}x
-              {Math.round(demoFavoriteJeans.inseamCm / 2.54)} baseline.
+              {favorite
+                ? `Calibrated from your ${favorite.brand} ${favorite.sizeLabel} baseline.`
+                : "Add a reference pair to calibrate your matches."}
             </Text>
           </View>
           <Link href="/discover" asChild>
@@ -219,14 +226,17 @@ export default function HomeScreen() {
           { backgroundColor: theme.surface, borderColor: theme.border },
         ]}
       >
-        <FitConfidenceRing confidence={88} />
+        <FitConfidenceRing confidence={anchorConfidence ?? 88} />
         <View style={{ flex: 1 }}>
           <Text style={[styles.summaryTitle, { color: theme.text }]}>
-            Favorite jeans profile is active
+            {favorite
+              ? `${favorite.brand} ${favorite.sizeLabel} anchor is active`
+              : "Add a reference pair to activate matching"}
           </Text>
           <Text style={[styles.summaryCopy, { color: theme.textMuted }]}>
-            Waist {demoFavoriteJeans.waistCm}cm, hip {demoFavoriteJeans.hipCm}
-            cm, inseam {demoFavoriteJeans.inseamCm}cm from official chart data.
+            {anchorSpec
+              ? `Waist ${anchorSpec.waistCm}cm, thigh ${anchorSpec.thighCm}cm, inseam ${anchorSpec.inseamCm}cm from official chart data. Ring shows your best available match.`
+              : `Waist ${demoFavoriteJeans.waistCm}cm, hip ${demoFavoriteJeans.hipCm}cm, inseam ${demoFavoriteJeans.inseamCm}cm from official chart data.`}
           </Text>
         </View>
       </View>
@@ -252,7 +262,9 @@ export default function HomeScreen() {
       <ProductRail
         products={closetInspiredProducts
           .slice(0, 8)
-          .map((product, index) => toProductCard(product, 89 - index))}
+          .map((product) =>
+            toProductCard(product, matchConfidenceByProduct.get(product.id)),
+          )}
       />
       <View style={{ height: 12 }} />
     </ScrollView>
@@ -508,7 +520,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   productSection: {
-    marginTop: 150,
+    marginTop: 6,
   },
   gridCell: {
     width: "48%",

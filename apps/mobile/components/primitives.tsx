@@ -1,6 +1,7 @@
 import { PropsWithChildren, ReactNode } from "react";
 import {
   ActivityIndicator,
+  GestureResponderEvent,
   Modal as RNModal,
   Pressable,
   ScrollView,
@@ -27,7 +28,7 @@ type PressableBase = {
     selected?: boolean;
   };
   disabled?: boolean;
-  onPress?: () => void;
+  onPress?: (event: GestureResponderEvent) => void;
 };
 
 export function AppButton({

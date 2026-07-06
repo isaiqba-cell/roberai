@@ -20,7 +20,9 @@ const iPhoneWidth = 393;
 const iPhoneHeight = 852;
 const webPreviewMetrics = {
   frame: { x: 0, y: 0, width: iPhoneWidth, height: iPhoneHeight },
-  insets: { top: 54, left: 0, right: 0, bottom: 28 },
+  // Bottom inset stays small: the web phone frame has no home-indicator
+  // strip, so a large fake inset reads as dead space under the tab dock.
+  insets: { top: 54, left: 0, right: 0, bottom: 10 },
 };
 
 function RootNavigator() {

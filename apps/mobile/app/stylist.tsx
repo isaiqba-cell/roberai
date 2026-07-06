@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
 import { ArrowLeft, Send, Sparkles } from "lucide-react-native";
@@ -21,6 +21,7 @@ export default function StylistScreen() {
   const theme = useThemeTokens();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const chatScrollRef = useRef<ScrollView>(null);
   const [draft, setDraft] = useState("straight denim jeans under $150");
   const body = useDemoStore((state) => state.bodyProfile);
   const style = useDemoStore((state) => state.styleProfile);
@@ -51,9 +52,13 @@ export default function StylistScreen() {
   return (
     <View style={[styles.screen, { backgroundColor: theme.bgCanvas }]}>
       <ScrollView
+        ref={chatScrollRef}
+        onContentSizeChange={() =>
+          chatScrollRef.current?.scrollToEnd({ animated: true })
+        }
         contentContainerStyle={[
           styles.content,
-          { paddingTop: insets.top + 30, paddingBottom: insets.bottom + 128 },
+          { paddingTop: insets.top + 30, paddingBottom: insets.bottom + 150 },
         ]}
       >
         <View style={styles.topbar}>
@@ -155,18 +160,18 @@ const styles = StyleSheet.create({
   },
   hero: {
     borderWidth: 1,
-    borderRadius: 28,
-    padding: 20,
-    gap: 10
+    borderRadius: 24,
+    padding: 16,
+    gap: 8
   },
   title: {
-    fontSize: 30,
+    fontSize: 21,
     fontWeight: "900",
-    lineHeight: 33
+    lineHeight: 25
   },
   copy: {
-    fontSize: 14,
-    lineHeight: 21
+    fontSize: 13,
+    lineHeight: 19
   },
   bubble: {
     borderWidth: 1,

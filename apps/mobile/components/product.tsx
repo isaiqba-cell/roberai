@@ -6,6 +6,7 @@ import { Heart } from "lucide-react-native";
 import { FlashList } from "@shopify/flash-list";
 import { Price, IconButton } from "./primitives";
 import { FitConfidenceBadge, FitScorePill } from "./fit";
+import { useDemoStore } from "../stores/useDemoStore";
 import { useThemeTokens } from "../theme/useThemeTokens";
 
 export type ProductCardModel = {
@@ -34,6 +35,10 @@ export function ProductCard({
   imageOverlay?: ReactNode;
 }) {
   const theme = useThemeTokens();
+  const saved = useDemoStore((state) =>
+    state.savedProductIds.includes(product.id),
+  );
+  const toggleSavedProduct = useDemoStore((state) => state.toggleSavedProduct);
   return (
     <Link href={`/product/${product.id}`} asChild>
       <Pressable
@@ -62,10 +67,24 @@ export function ProductCard({
           )}
           <View style={styles.heartWrap}>
             <IconButton
-              accessibilityLabel={`Save ${product.title}`}
+              accessibilityLabel={
+                saved ? `Remove ${product.title} from saved` : `Save ${product.title}`
+              }
+              accessibilityState={{ selected: saved }}
+              onPress={(event) => {
+                // Keep the save toggle from bubbling into the parent
+                // product Link and navigating to the PDP.
+                event.stopPropagation();
+                event.preventDefault();
+                toggleSavedProduct(product.id);
+              }}
               style={styles.heartButton}
             >
-              <Heart size={18} color={theme.text} />
+              <Heart
+                size={18}
+                color={saved ? theme.accent : theme.text}
+                fill={saved ? theme.accent : "transparent"}
+              />
             </IconButton>
           </View>
         </View>
