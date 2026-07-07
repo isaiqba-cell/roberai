@@ -8,20 +8,22 @@ import { useThemeTokens } from "../theme/useThemeTokens";
 
 export function getFitBand(confidence: number) {
   if (confidence >= 85) {
-    return { label: "Great fit", color: "#2F9E64" };
+    return { label: "Great fit", shortLabel: "Great fit", color: "#2F9E64" };
   }
   if (confidence >= 60) {
-    return { label: "Good fit - check notes", color: "#E0A526" };
+    return { label: "Good fit - check notes", shortLabel: "Good fit", color: "#E0A526" };
   }
-  return { label: "Uncertain - see alternatives", color: "#D94F4F" };
+  return { label: "Uncertain - see alternatives", shortLabel: "Low match", color: "#D94F4F" };
 }
 
+// Compact single-line chip for product cards — uses the short band label so
+// it never wraps inside a narrow grid cell.
 export function FitConfidenceBadge({ confidence }: { confidence: number }) {
   const band = getFitBand(confidence);
   return (
     <View style={[styles.badge, { backgroundColor: band.color }]}>
-      <Text style={styles.badgeText}>
-        {confidence}% {band.label}
+      <Text numberOfLines={1} style={styles.badgeText}>
+        {confidence}% · {band.shortLabel}
       </Text>
     </View>
   );
