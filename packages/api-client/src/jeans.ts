@@ -39,6 +39,7 @@ export type FavoriteJeansInput = {
 export type FavoriteJeansProfile = {
   brandName: string;
   brandSlug: string;
+  gender: JeansGender;
   sizeLabel: string;
   waistCm: number;
   hipCm: number;
@@ -148,6 +149,7 @@ export type GarmentReferenceInput = {
 export type GarmentReferenceResolution = {
   brandName: string;
   brandSlug: string;
+  gender: JeansGender;
   modelName: string;
   sizeLabel: string;
   category: "jeans" | "chinos" | "pants";
@@ -467,7 +469,27 @@ export const jeansSizeChartEntries: JeansSizeChartEntry[] = [
   ]),
 ];
 
-const jeansProductDefinitions = [
+type JeansCatalogCut = "slim" | "regular" | "relaxed" | "oversized";
+
+type JeansProductDefinition = {
+  id: string;
+  brandSlug: string;
+  sourceId: string;
+  gender: JeansGender;
+  title: string;
+  cut: JeansCatalogCut;
+  subcategory?: "jeans" | "chino";
+  fitTags: string[];
+  styleTags: string[];
+  colors: string[];
+  priceCents: number;
+  stretchPct: number;
+  imageUrl: string;
+  galleryImageUrls: string[];
+  catalogOrigin?: "seeded" | "normalized_demo";
+};
+
+const seedJeansProductDefinitions: JeansProductDefinition[] = [
   {
     id: "levis-501-original",
     brandSlug: "levis",
@@ -698,6 +720,208 @@ const jeansProductDefinitions = [
       imagePath("basile-light.jpg"),
     ],
   },
+];
+
+// The original source-backed product records above make the reference
+// journey credible. This expanded index gives the investor demo enough real
+// choice to demonstrate search, fit ranking, price ranges, and size-level
+// availability without presenting synthetic items as live retailer stock.
+const indexedJeansArchetypes: Array<{
+  slug: string;
+  title: string;
+  cut: JeansCatalogCut;
+  fitTags: string[];
+  styleTags: string[];
+  stretchPct: number;
+  priceOffsetCents: number;
+}> = [
+  {
+    slug: "classic-straight",
+    title: "Classic Straight Jean",
+    cut: "regular",
+    fitTags: ["straight", "heritage", "rigid"],
+    styleTags: ["denim", "straight", "heritage", "everyday"],
+    stretchPct: 1,
+    priceOffsetCents: 0,
+  },
+  {
+    slug: "everyday-straight",
+    title: "Everyday Straight Jean",
+    cut: "regular",
+    fitTags: ["straight", "regular"],
+    styleTags: ["denim", "straight", "everyday", "classic"],
+    stretchPct: 2,
+    priceOffsetCents: 900,
+  },
+  {
+    slug: "slim-taper",
+    title: "Slim Taper Jean",
+    cut: "slim",
+    fitTags: ["slim", "tapered"],
+    styleTags: ["denim", "slim", "taper", "modern"],
+    stretchPct: 3,
+    priceOffsetCents: 1600,
+  },
+  {
+    slug: "athletic-taper",
+    title: "Athletic Taper Jean",
+    cut: "slim",
+    fitTags: ["athletic", "tapered", "stretch"],
+    styleTags: ["denim", "athletic", "taper", "stretch"],
+    stretchPct: 6,
+    priceOffsetCents: 2500,
+  },
+  {
+    slug: "relaxed-90s",
+    title: "Relaxed '90s Jean",
+    cut: "relaxed",
+    fitTags: ["relaxed", "straight"],
+    styleTags: ["denim", "relaxed", "heritage", "90s"],
+    stretchPct: 1,
+    priceOffsetCents: 1300,
+  },
+  {
+    slug: "easy-straight",
+    title: "Easy Straight Jean",
+    cut: "relaxed",
+    fitTags: ["relaxed", "stretch"],
+    styleTags: ["denim", "relaxed", "stretch", "everyday"],
+    stretchPct: 7,
+    priceOffsetCents: 1800,
+  },
+  {
+    slug: "wide-leg",
+    title: "Wide Leg Jean",
+    cut: "oversized",
+    fitTags: ["wide", "loose"],
+    styleTags: ["denim", "wide leg", "loose", "fashion"],
+    stretchPct: 1,
+    priceOffsetCents: 2200,
+  },
+  {
+    slug: "workwear-relaxed",
+    title: "Workwear Relaxed Jean",
+    cut: "relaxed",
+    fitTags: ["relaxed", "workwear", "straight"],
+    styleTags: ["denim", "workwear", "utility", "relaxed"],
+    stretchPct: 2,
+    priceOffsetCents: 700,
+  },
+  {
+    slug: "boot-ready",
+    title: "Boot Ready Straight Jean",
+    cut: "regular",
+    fitTags: ["straight", "bootcut"],
+    styleTags: ["denim", "bootcut", "western", "straight"],
+    stretchPct: 2,
+    priceOffsetCents: 1500,
+  },
+  {
+    slug: "curve-straight",
+    title: "Curve Straight Jean",
+    cut: "relaxed",
+    fitTags: ["curvy", "straight", "stretch"],
+    styleTags: ["denim", "curvy", "straight", "stretch"],
+    stretchPct: 8,
+    priceOffsetCents: 2100,
+  },
+  {
+    slug: "high-rise-straight",
+    title: "High Rise Straight Jean",
+    cut: "regular",
+    fitTags: ["high rise", "straight"],
+    styleTags: ["denim", "high rise", "straight", "classic"],
+    stretchPct: 3,
+    priceOffsetCents: 2400,
+  },
+  {
+    slug: "flex-five-pocket",
+    title: "Flex Five-Pocket Jean",
+    cut: "regular",
+    fitTags: ["regular", "stretch"],
+    styleTags: ["denim", "five pocket", "stretch", "everyday"],
+    stretchPct: 9,
+    priceOffsetCents: 2900,
+  },
+];
+
+const indexedImagePaths = [
+  imagePath("dark-slide.webp"),
+  imagePath("light-packshot.webp"),
+  imagePath("straight-flat.jpeg"),
+  imagePath("basile-light.jpg"),
+  imagePath("straight-crop.jpeg"),
+  imagePath("hollywood-light.jpg"),
+  imagePath("agolde-straight.jpg"),
+  imagePath("apc-elisabeth.webp"),
+  imagePath("vintage-hanger.jpg"),
+];
+
+const basePriceByBrandSlug: Record<string, number> = {
+  levis: 9800,
+  madewell: 13200,
+  lee: 7900,
+  wrangler: 6900,
+  dickies: 5900,
+  dockers: 8400,
+  "old-navy": 4999,
+  "american-eagle": 5995,
+};
+
+function buildExpandedJeansProductDefinitions(): JeansProductDefinition[] {
+  return jeansSizeChartSources.flatMap((source, sourceIndex) =>
+    indexedJeansArchetypes.map((archetype, archetypeIndex) => {
+      const imageIndex = (sourceIndex * 3 + archetypeIndex) % indexedImagePaths.length;
+      const imageUrl = indexedImagePaths[imageIndex] ?? indexedImagePaths[0]!;
+      const galleryImageUrls = [
+        imageUrl,
+        indexedImagePaths[(imageIndex + 3) % indexedImagePaths.length]!,
+        indexedImagePaths[(imageIndex + 6) % indexedImagePaths.length]!,
+      ];
+      const basePrice = basePriceByBrandSlug[source.brandSlug] ?? 7900;
+      const priceCents = Math.max(
+        3999,
+        basePrice + archetype.priceOffsetCents + (sourceIndex % 3) * 250,
+      );
+      const sizeSpecificTags =
+        source.gender === "women" && archetype.slug === "curve-straight"
+          ? ["curvy", "waist-to-hip"]
+          : source.gender === "men" && archetype.slug === "athletic-taper"
+            ? ["athletic", "seat-thigh room"]
+            : [];
+
+      return {
+        id: `index-${source.id}-${archetype.slug}`,
+        brandSlug: source.brandSlug,
+        sourceId: source.id,
+        gender: source.gender,
+        title: archetype.title,
+        cut: archetype.cut,
+        fitTags: [...archetype.fitTags, ...sizeSpecificTags],
+        styleTags: [...archetype.styleTags, ...sizeSpecificTags, "indexed"],
+        colors: [
+          [
+            "raw indigo",
+            "dark rinse",
+            "mid blue",
+            "vintage light",
+            "washed black",
+            "ecru",
+          ][(sourceIndex + archetypeIndex) % 6] ?? "indigo",
+        ],
+        priceCents,
+        stretchPct: archetype.stretchPct,
+        imageUrl,
+        galleryImageUrls,
+        catalogOrigin: "normalized_demo",
+      };
+    }),
+  );
+}
+
+const jeansProductDefinitions: JeansProductDefinition[] = [
+  ...seedJeansProductDefinitions,
+  ...buildExpandedJeansProductDefinitions(),
 ];
 
 const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
@@ -1257,6 +1481,7 @@ export function resolveFavoriteJeans(
   return {
     brandName: brand.name,
     brandSlug: entry.brandSlug,
+    gender: entry.gender,
     sizeLabel: entry.sizeLabel,
     waistCm: entry.waistCm,
     hipCm: entry.hipCm,
@@ -1301,6 +1526,7 @@ export function resolveGarmentReference(
         jeansBrands.find((brand) => brand.slug === input.brandSlug)?.name ??
         input.brandSlug,
       brandSlug: input.brandSlug,
+      gender: entry?.gender ?? "men",
       modelName: input.modelName ?? "Self-reported",
       sizeLabel: parsedSize.sizeLabel,
       category: input.category ?? "jeans",
@@ -1321,6 +1547,7 @@ export function resolveGarmentReference(
   return {
     brandName: brandFor(style.brandSlug).name,
     brandSlug: style.brandSlug,
+    gender: entry.gender,
     modelName: style.styleName,
     sizeLabel: parsedSize.sizeLabel,
     category: style.taxonomy.category === "pants" ? "chinos" : "jeans",
@@ -1341,7 +1568,9 @@ export function findJeansFitMatches(
   input: FavoriteJeansInput = defaultFavoriteJeansInput,
 ): JeansFitMatch[] {
   const favorite = resolveFavoriteJeans(input);
-  const products = generateJeansCatalogProducts();
+  const products = generateJeansCatalogProducts().filter(
+    (product) => product.gender === favorite.gender,
+  );
 
   return products
     .flatMap((product) =>
@@ -1417,8 +1646,23 @@ export function translateFavoriteJeansFit(
   return { anchor, recommendedSize, recommendations };
 }
 
+let generatedJeansCatalog: ProductRecord[] | undefined;
+
+export type JeansIndexStats = {
+  chartSources: number;
+  benchmarkBrands: number;
+  productStyles: number;
+  fitReadyVariants: number;
+  priceFloorCents: number;
+  priceCeilingCents: number;
+};
+
 export function generateJeansCatalogProducts(): ProductRecord[] {
-  return jeansProductDefinitions.map((definition, index) => {
+  if (generatedJeansCatalog) {
+    return generatedJeansCatalog;
+  }
+
+  generatedJeansCatalog = jeansProductDefinitions.map((definition, index) => {
     const brand = brandFor(definition.brandSlug);
     const source = sourceFor(definition.sourceId);
     const entries = jeansSizeChartEntries.filter(
@@ -1431,7 +1675,10 @@ export function generateJeansCatalogProducts(): ProductRecord[] {
       merchantName: `${brand.name} Direct`,
       brand,
       title: definition.title,
-      description: `${source.sourceNote} Rober normalizes this ${subcategory} chart against your favorite pair and recommends the closest size across price points.`,
+      description:
+        definition.catalogOrigin === "normalized_demo"
+          ? `Fit-index demo inventory normalized from the ${source.brandName} size chart and Rober's construction model. This illustrative listing demonstrates cross-brand size translation and is not live retailer inventory.`
+          : `${source.sourceNote} Rober normalizes this ${subcategory} chart against your favorite pair and recommends the closest size across price points.`,
       category: "bottoms",
       subcategory,
       material:
@@ -1462,15 +1709,36 @@ export function generateJeansCatalogProducts(): ProductRecord[] {
         definition.stretchPct,
       ),
       createdAt: `${scrapedAt}T00:00:00.000Z`,
+      gender: definition.gender,
       sizeChartSourceUrl: source.sourceUrl,
       sizeChartSourceName: source.id,
       sourceDataQuality:
+        definition.catalogOrigin === "normalized_demo" ||
         definition.brandSlug === "american-eagle"
           ? "fit_model_normalized"
           : "scraped_official",
     };
     return product;
   });
+
+  return generatedJeansCatalog;
+}
+
+export function getJeansIndexStats(): JeansIndexStats {
+  const products = generateJeansCatalogProducts();
+  const prices = products.map((product) => product.priceCents);
+  return {
+    chartSources: jeansSizeChartSources.length,
+    benchmarkBrands: new Set(products.map((product) => product.brand.slug)).size,
+    productStyles: products.length,
+    fitReadyVariants: products.reduce(
+      (total, product) =>
+        total + product.variants.filter((variant) => variant.stock > 0).length,
+      0,
+    ),
+    priceFloorCents: Math.min(...prices),
+    priceCeilingCents: Math.max(...prices),
+  };
 }
 
 function womenEntries(

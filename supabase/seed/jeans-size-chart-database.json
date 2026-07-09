@@ -1,12 +1,22 @@
 {
-  "generatedAt": "2026-07-05T05:54:00.159Z",
+  "generatedAt": "2026-07-09T21:54:39.268Z",
+  "disclosure": "Demo fit index combines public size-chart benchmark inputs with illustrative, normalized non-live product listings. It does not imply retailer partnerships or live inventory.",
   "sourceCount": 10,
   "normalizedSizeRows": 101,
-  "productCount": 11,
-  "variantCount": 444,
+  "productCount": 132,
+  "variantCount": 5332,
+  "fitIndex": {
+    "chartSources": 10,
+    "benchmarkBrands": 8,
+    "productStyles": 132,
+    "fitReadyVariants": 5200,
+    "priceFloorCents": 4999,
+    "priceCeilingCents": 16600
+  },
   "favoriteBaseline": {
     "brandName": "Levi's",
     "brandSlug": "levis",
+    "gender": "men",
     "sizeLabel": "32",
     "waistCm": 81.5,
     "hipCm": 97,
@@ -14,6 +24,111 @@
     "sourceUrl": "https://www.levi.com/US/en_US/features/men-jeans-guide"
   },
   "topMatches": [
+    {
+      "brandName": "Dickies",
+      "brandSlug": "dickies",
+      "sizeLabel": "32x32",
+      "sizeToBuy": "32x32",
+      "waistCm": 82,
+      "hipCm": 98,
+      "inseamCm": 81,
+      "fitScore": 100,
+      "priceCents": 7500,
+      "productId": "index-dickies-men-jeans-slim-taper",
+      "productTitle": "Slim Taper Jean",
+      "sourceUrl": "https://www.dickies.com/size-chart",
+      "note": "Dickies 32x32 is 0.5cm from your favorite waist."
+    },
+    {
+      "brandName": "Dickies",
+      "brandSlug": "dickies",
+      "sizeLabel": "32x32",
+      "sizeToBuy": "32x32",
+      "waistCm": 82,
+      "hipCm": 98,
+      "inseamCm": 81,
+      "fitScore": 100,
+      "priceCents": 7700,
+      "productId": "index-dickies-men-jeans-easy-straight",
+      "productTitle": "Easy Straight Jean",
+      "sourceUrl": "https://www.dickies.com/size-chart",
+      "note": "Dickies 32x32 is 0.5cm from your favorite waist."
+    },
+    {
+      "brandName": "Dockers",
+      "brandSlug": "dockers",
+      "sizeLabel": "32x32",
+      "sizeToBuy": "32x32",
+      "waistCm": 82,
+      "hipCm": 97,
+      "inseamCm": 81,
+      "fitScore": 100,
+      "priceCents": 7900,
+      "productId": "dockers-workday-classic-chino",
+      "productTitle": "Workday Classic Fit Chino",
+      "sourceUrl": "https://us.dockers.com/pages/size-chart",
+      "note": "Dockers 32x32 is 0.5cm from your favorite waist."
+    },
+    {
+      "brandName": "Dickies",
+      "brandSlug": "dickies",
+      "sizeLabel": "32x32",
+      "sizeToBuy": "32x32",
+      "waistCm": 82,
+      "hipCm": 98,
+      "inseamCm": 81,
+      "fitScore": 100,
+      "priceCents": 8000,
+      "productId": "index-dickies-men-jeans-curve-straight",
+      "productTitle": "Curve Straight Jean",
+      "sourceUrl": "https://www.dickies.com/size-chart",
+      "note": "Dickies 32x32 is 0.5cm from your favorite waist."
+    },
+    {
+      "brandName": "Dickies",
+      "brandSlug": "dickies",
+      "sizeLabel": "32x32",
+      "sizeToBuy": "32x32",
+      "waistCm": 82,
+      "hipCm": 98,
+      "inseamCm": 81,
+      "fitScore": 100,
+      "priceCents": 8300,
+      "productId": "index-dickies-men-jeans-high-rise-straight",
+      "productTitle": "High Rise Straight Jean",
+      "sourceUrl": "https://www.dickies.com/size-chart",
+      "note": "Dickies 32x32 is 0.5cm from your favorite waist."
+    },
+    {
+      "brandName": "Dickies",
+      "brandSlug": "dickies",
+      "sizeLabel": "32x32",
+      "sizeToBuy": "32x32",
+      "waistCm": 82,
+      "hipCm": 98,
+      "inseamCm": 81,
+      "fitScore": 100,
+      "priceCents": 8400,
+      "productId": "index-dickies-men-jeans-athletic-taper",
+      "productTitle": "Athletic Taper Jean",
+      "sourceUrl": "https://www.dickies.com/size-chart",
+      "note": "Dickies 32x32 is 0.5cm from your favorite waist."
+    },
+    {
+      "brandName": "Dickies",
+      "brandSlug": "dickies",
+      "sizeLabel": "32x32",
+      "sizeToBuy": "32x32",
+      "waistCm": 82,
+      "hipCm": 98,
+      "inseamCm": 81,
+      "fitScore": 100,
+      "priceCents": 8800,
+      "productId": "index-dickies-men-jeans-flex-five-pocket",
+      "productTitle": "Flex Five-Pocket Jean",
+      "sourceUrl": "https://www.dickies.com/size-chart",
+      "note": "Dickies 32x32 is 0.5cm from your favorite waist."
+    },
     {
       "brandName": "Dockers",
       "brandSlug": "dockers",
@@ -30,34 +145,19 @@
       "note": "Dockers 32x32 is 0.5cm from your favorite waist."
     },
     {
-      "brandName": "Levi's",
-      "brandSlug": "levis",
+      "brandName": "Range Standard",
+      "brandSlug": "wrangler",
       "sizeLabel": "32x32",
       "sizeToBuy": "32x32",
-      "waistCm": 82,
-      "hipCm": 98,
-      "inseamCm": 81,
-      "fitScore": 100,
-      "priceCents": 9800,
-      "productId": "levis-511-slim",
-      "productTitle": "511 Slim Jean",
-      "sourceUrl": "https://www.levi.com/US/en_US/features/men-jeans-guide",
-      "note": "Levi's 32x32 is 0.5cm from your favorite waist."
-    },
-    {
-      "brandName": "Marlow Denim",
-      "brandSlug": "madewell",
-      "sizeLabel": "32x32",
-      "sizeToBuy": "32x32",
-      "waistCm": 81,
+      "waistCm": 83,
       "hipCm": 97,
       "inseamCm": 81,
       "fitScore": 100,
-      "priceCents": 12800,
-      "productId": "madewell-everywear-mens-straight",
-      "productTitle": "Everywear Straight Jean",
-      "sourceUrl": "https://www.madewell.com/Mens-Bottoms-SizeChart.html",
-      "note": "Marlow Denim 32x32 is 0.5cm from your favorite waist."
+      "priceCents": 9200,
+      "productId": "index-wrangler-men-jeans-easy-straight",
+      "productTitle": "Easy Straight Jean",
+      "sourceUrl": "https://eu.wrangler.com/uk-en/WRG-SIZECHART-BOTTOMS-MEN.html",
+      "note": "Range Standard 32x32 is 1.5cm from your favorite waist."
     },
     {
       "brandName": "Loom & Line",
@@ -67,102 +167,12 @@
       "waistCm": 82,
       "hipCm": 97,
       "inseamCm": 81,
-      "fitScore": 99,
-      "priceCents": 9200,
-      "productId": "lee-daren-regular-straight",
-      "productTitle": "Daren Regular Straight Jean",
+      "fitScore": 100,
+      "priceCents": 9500,
+      "productId": "index-lee-men-jeans-slim-taper",
+      "productTitle": "Slim Taper Jean",
       "sourceUrl": "https://eu.lee.com/uk-en/size-chart.html",
       "note": "Loom & Line 32x32 is 0.5cm from your favorite waist."
-    },
-    {
-      "brandName": "Dickies",
-      "brandSlug": "dickies",
-      "sizeLabel": "32x32",
-      "sizeToBuy": "32x32",
-      "waistCm": 82,
-      "hipCm": 98,
-      "inseamCm": 81,
-      "fitScore": 98,
-      "priceCents": 5999,
-      "productId": "dickies-relaxed-carpenter",
-      "productTitle": "Relaxed Fit Carpenter Jean",
-      "sourceUrl": "https://www.dickies.com/size-chart",
-      "note": "Dickies 32x32 is 0.5cm from your favorite waist."
-    },
-    {
-      "brandName": "Levi's",
-      "brandSlug": "levis",
-      "sizeLabel": "32x32",
-      "sizeToBuy": "32x32",
-      "waistCm": 82,
-      "hipCm": 98,
-      "inseamCm": 81,
-      "fitScore": 98,
-      "priceCents": 9800,
-      "productId": "levis-501-original",
-      "productTitle": "501 Original Fit Jean",
-      "sourceUrl": "https://www.levi.com/US/en_US/features/men-jeans-guide",
-      "note": "Levi's 32x32 is 0.5cm from your favorite waist."
-    },
-    {
-      "brandName": "Dockers",
-      "brandSlug": "dockers",
-      "sizeLabel": "32x30",
-      "sizeToBuy": "32x30",
-      "waistCm": 82,
-      "hipCm": 97,
-      "inseamCm": 76,
-      "fitScore": 96,
-      "priceCents": 8900,
-      "productId": "dockers-airweave-slim-taper",
-      "productTitle": "Go Airweave 5-Pocket Slim Tapered",
-      "sourceUrl": "https://us.dockers.com/pages/size-chart",
-      "note": "Dockers 32x30 is 0.5cm from your favorite waist."
-    },
-    {
-      "brandName": "Dockers",
-      "brandSlug": "dockers",
-      "sizeLabel": "32x34",
-      "sizeToBuy": "32x34",
-      "waistCm": 82,
-      "hipCm": 97,
-      "inseamCm": 86,
-      "fitScore": 96,
-      "priceCents": 8900,
-      "productId": "dockers-airweave-slim-taper",
-      "productTitle": "Go Airweave 5-Pocket Slim Tapered",
-      "sourceUrl": "https://us.dockers.com/pages/size-chart",
-      "note": "Dockers 32x34 is 0.5cm from your favorite waist."
-    },
-    {
-      "brandName": "Range Standard",
-      "brandSlug": "wrangler",
-      "sizeLabel": "32x32",
-      "sizeToBuy": "32x32",
-      "waistCm": 83,
-      "hipCm": 97,
-      "inseamCm": 81,
-      "fitScore": 95,
-      "priceCents": 6900,
-      "productId": "wrangler-cowboy-cut-straight",
-      "productTitle": "Cowboy Cut Straight Jean",
-      "sourceUrl": "https://eu.wrangler.com/uk-en/WRG-SIZECHART-BOTTOMS-MEN.html",
-      "note": "Range Standard 32x32 is 1.5cm from your favorite waist."
-    },
-    {
-      "brandName": "Dockers",
-      "brandSlug": "dockers",
-      "sizeLabel": "33x32",
-      "sizeToBuy": "33x32",
-      "waistCm": 84,
-      "hipCm": 99,
-      "inseamCm": 81,
-      "fitScore": 94,
-      "priceCents": 8900,
-      "productId": "dockers-airweave-slim-taper",
-      "productTitle": "Go Airweave 5-Pocket Slim Tapered",
-      "sourceUrl": "https://us.dockers.com/pages/size-chart",
-      "note": "Dockers 33x32 is 2.5cm from your favorite waist."
     }
   ],
   "fitTranslationGraph": {
@@ -189,6 +199,15 @@
         "constructionProfile": "heritage-denim",
         "bootCompatibility": "some",
         "styleNotes": "Classic straight anchor with structured denim feel."
+      },
+      "spec": {
+        "thighCm": 59,
+        "riseCm": 27,
+        "legOpeningCm": 19.8,
+        "hemCm": 19,
+        "kneeCm": 45,
+        "stretchPct": 1,
+        "cut": "straight"
       }
     },
     "styleCount": 18,
@@ -217,6 +236,15 @@
             "constructionProfile": "heritage-denim",
             "bootCompatibility": "some",
             "styleNotes": "Strong 501 analog when the user wants 100% cotton structure."
+          },
+          "spec": {
+            "thighCm": 59,
+            "riseCm": 25,
+            "legOpeningCm": 19.8,
+            "hemCm": 19,
+            "kneeCm": 45,
+            "stretchPct": 1,
+            "cut": "straight"
           }
         },
         "label": "closest-match",
@@ -232,10 +260,10 @@
       },
       {
         "style": {
-          "id": "wrangler-cowboy-cut-original",
-          "brandName": "Wrangler",
+          "id": "range-trail-original",
+          "brandName": "Range Standard",
           "brandSlug": "wrangler",
-          "styleName": "Cowboy Cut Original Fit",
+          "styleName": "Range Trail Original Fit",
           "officialSignal": "Sits at waist, easy through seat/thigh/knee, fits over boots.",
           "priceBand": "$",
           "priceCents": 6900,
@@ -254,6 +282,15 @@
             "constructionProfile": "workwear-denim",
             "bootCompatibility": "yes",
             "styleNotes": "Closest heritage/workwear analog when a 501 user wears boots."
+          },
+          "spec": {
+            "thighCm": 61.4,
+            "riseCm": 27,
+            "legOpeningCm": 22.3,
+            "hemCm": 21.5,
+            "kneeCm": 47.4,
+            "stretchPct": 1,
+            "cut": "straight"
           }
         },
         "label": "better-for-boots",
@@ -265,7 +302,7 @@
         "legOpeningScore": 84,
         "constructionScore": 84,
         "recommendedSize": "32x32",
-        "explanation": "Better over boots: Cowboy Cut Original Fit maps from your 501 Original through straight, regular-plus seat, regular-plus thigh, boot-friendly-straight hem, and rigid fabric."
+        "explanation": "Better over boots: Range Trail Original Fit maps from your 501 Original through straight, regular-plus seat, regular-plus thigh, boot-friendly-straight hem, and rigid fabric."
       },
       {
         "style": {
@@ -291,6 +328,15 @@
             "constructionProfile": "everyday-denim",
             "bootCompatibility": "some",
             "styleNotes": "Modern straight option close to a 501 silhouette."
+          },
+          "spec": {
+            "thighCm": 59,
+            "riseCm": 25,
+            "legOpeningCm": 19.8,
+            "hemCm": 19,
+            "kneeCm": 45,
+            "stretchPct": 3,
+            "cut": "straight"
           }
         },
         "label": "closest-match",
@@ -328,6 +374,15 @@
             "constructionProfile": "everyday-denim",
             "bootCompatibility": "some",
             "styleNotes": "Roomier straight alternative for users who like 501 but want more ease."
+          },
+          "spec": {
+            "thighCm": 61.4,
+            "riseCm": 27,
+            "legOpeningCm": 19.8,
+            "hemCm": 19,
+            "kneeCm": 47.4,
+            "stretchPct": 3,
+            "cut": "straight"
           }
         },
         "label": "safer-roomier-option",
@@ -365,6 +420,15 @@
             "constructionProfile": "workwear-denim",
             "bootCompatibility": "some",
             "styleNotes": "Budget workwear alternative to a clean modern straight."
+          },
+          "spec": {
+            "thighCm": 59,
+            "riseCm": 25,
+            "legOpeningCm": 19.8,
+            "hemCm": 19,
+            "kneeCm": 45,
+            "stretchPct": 6,
+            "cut": "straight"
           }
         },
         "label": "more-stretch",
@@ -380,10 +444,10 @@
       },
       {
         "style": {
-          "id": "wrangler-cowboy-cut-regular",
-          "brandName": "Wrangler",
+          "id": "range-trail-regular",
+          "brandName": "Range Standard",
           "brandSlug": "wrangler",
-          "styleName": "Cowboy Cut Regular Fit",
+          "styleName": "Range Trail Regular Fit",
           "officialSignal": "Regular through seat and thigh, sits at waist, fits over boots.",
           "priceBand": "$",
           "priceCents": 6900,
@@ -402,6 +466,15 @@
             "constructionProfile": "workwear-denim",
             "bootCompatibility": "yes",
             "styleNotes": "Roomier straight option with western boot compatibility."
+          },
+          "spec": {
+            "thighCm": 61.4,
+            "riseCm": 27,
+            "legOpeningCm": 22.3,
+            "hemCm": 21.5,
+            "kneeCm": 47.4,
+            "stretchPct": 3,
+            "cut": "straight"
           }
         },
         "label": "better-for-boots",
@@ -413,7 +486,7 @@
         "legOpeningScore": 84,
         "constructionScore": 84,
         "recommendedSize": "32x32",
-        "explanation": "Better over boots: Cowboy Cut Regular Fit maps from your 501 Original through regular-straight, regular-plus seat, regular-plus thigh, boot-friendly-straight hem, and low-stretch fabric."
+        "explanation": "Better over boots: Range Trail Regular Fit maps from your 501 Original through regular-straight, regular-plus seat, regular-plus thigh, boot-friendly-straight hem, and low-stretch fabric."
       },
       {
         "style": {
@@ -439,6 +512,15 @@
             "constructionProfile": "non-denim-5-pocket",
             "bootCompatibility": "some",
             "styleNotes": "Cleaner 514-like option when denim is too casual."
+          },
+          "spec": {
+            "thighCm": 59,
+            "riseCm": 25,
+            "legOpeningCm": 19.8,
+            "hemCm": 19,
+            "kneeCm": 45,
+            "stretchPct": 6,
+            "cut": "straight"
           }
         },
         "label": "more-stretch",
@@ -476,6 +558,15 @@
             "constructionProfile": "non-denim-5-pocket",
             "bootCompatibility": "some",
             "styleNotes": "Office-casual analog for users who like 505/514 ease."
+          },
+          "spec": {
+            "thighCm": 61.4,
+            "riseCm": 25,
+            "legOpeningCm": 19.8,
+            "hemCm": 19,
+            "kneeCm": 47.4,
+            "stretchPct": 6,
+            "cut": "straight"
           }
         },
         "label": "more-stretch",
@@ -513,6 +604,15 @@
             "constructionProfile": "performance-denim",
             "bootCompatibility": "some",
             "styleNotes": "Best if the user likes the 501/505 shape but wants more stretch."
+          },
+          "spec": {
+            "thighCm": 59,
+            "riseCm": 25,
+            "legOpeningCm": 19.8,
+            "hemCm": 19,
+            "kneeCm": 45,
+            "stretchPct": 8,
+            "cut": "straight"
           }
         },
         "label": "more-stretch",
@@ -550,6 +650,15 @@
             "constructionProfile": "workwear-denim",
             "bootCompatibility": "some",
             "styleNotes": "Workwear-safe option if thighs usually feel tight."
+          },
+          "spec": {
+            "thighCm": 63.8,
+            "riseCm": 23,
+            "legOpeningCm": 19.8,
+            "hemCm": 19,
+            "kneeCm": 49.8,
+            "stretchPct": 1,
+            "cut": "straight"
           }
         },
         "label": "safer-roomier-option",
@@ -587,6 +696,15 @@
             "constructionProfile": "heritage-denim",
             "bootCompatibility": "some",
             "styleNotes": "Roomier straight alternative for comfort-first users."
+          },
+          "spec": {
+            "thighCm": 63.8,
+            "riseCm": 27,
+            "legOpeningCm": 19.8,
+            "hemCm": 19,
+            "kneeCm": 49.8,
+            "stretchPct": 3,
+            "cut": "relaxed"
           }
         },
         "label": "safer-roomier-option",
@@ -624,6 +742,15 @@
             "constructionProfile": "workwear-denim",
             "bootCompatibility": "no",
             "styleNotes": "Workwear slim progression when 501 feels too wide below the knee."
+          },
+          "spec": {
+            "thighCm": 59,
+            "riseCm": 25,
+            "legOpeningCm": 17.8,
+            "hemCm": 17,
+            "kneeCm": 45,
+            "stretchPct": 6,
+            "cut": "slim"
           }
         },
         "label": "more-stretch",

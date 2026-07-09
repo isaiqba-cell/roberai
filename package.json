@@ -23,6 +23,7 @@
     "supabase:migrate": "echo \"Run: supabase db reset --local or supabase migration up --linked after configuring Supabase CLI\""
   },
   "devDependencies": {
+    "@expo/cli": "^57.0.6",
     "@types/jest": "30.0.0",
     "@types/node": "26.1.0",
     "eslint": "10.6.0",

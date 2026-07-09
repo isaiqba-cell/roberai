@@ -1,5 +1,9 @@
 import { CanonicalGarmentSpec, GarmentCut, GarmentSpec } from "@rober/fit-engine";
-import { generateJeansCatalogProducts, jeansBrands } from "./jeans";
+import {
+  generateJeansCatalogProducts,
+  jeansBrands,
+  type JeansGender,
+} from "./jeans";
 
 export type BrandRecord = {
   id: string;
@@ -45,6 +49,7 @@ export type ProductRecord = {
   reviewCount: number;
   variants: ProductVariantRecord[];
   createdAt: string;
+  gender?: JeansGender;
   sizeChartSourceUrl?: string;
   sizeChartSourceName?: string;
   sourceDataQuality?:

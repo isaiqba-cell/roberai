@@ -18,7 +18,7 @@ import {
   getJeansTranslationStyle,
   translateFavoriteJeansFit,
 } from "@rober/api-client";
-import { computeFitScore } from "@rober/fit-engine";
+import { computeFitScore, matchGarments } from "@rober/fit-engine";
 import {
   AppButton,
   IconButton,
@@ -42,6 +42,7 @@ import {
   toProductCard,
 } from "../../lib/catalog";
 import { summarizeProductFit } from "../../lib/fitEngine";
+import { computeGarmentMatches } from "../../lib/garmentCompare";
 import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
@@ -72,12 +73,31 @@ export default function ProductDetailScreen() {
         : undefined,
     [favorite],
   );
-  const fit = useMemo(
+  const garmentMatch = useMemo(
     () =>
-      product
-        ? summarizeProductFit(product, bodyProfile, favoriteReferenceItem)
+      product && favorite?.canonicalSpec
+        ? computeGarmentMatches(favorite.canonicalSpec, [product])[0]
         : undefined,
-    [bodyProfile, favoriteReferenceItem, product],
+    [favorite?.canonicalSpec, product],
+  );
+  const fit = useMemo(
+    () => {
+      if (!product) {
+        return undefined;
+      }
+      if (garmentMatch) {
+        return {
+          product,
+          card: garmentMatch.card,
+          confidence: garmentMatch.result.confidence,
+          recommendedSize: garmentMatch.sizeLabel,
+          explanation: garmentMatch.result.explanation,
+          dimensionScores: garmentMatch.result.dimensionScores,
+        };
+      }
+      return summarizeProductFit(product, bodyProfile, favoriteReferenceItem);
+    },
+    [bodyProfile, favoriteReferenceItem, garmentMatch, product],
   );
   const recommendedVariantId =
     fit?.product.variants.find(
@@ -111,20 +131,31 @@ export default function ProductDetailScreen() {
   }
 
   const selectedFit = selectedVariant
-    ? computeFitScore(bodyProfile, selectedVariant.spec, {
-        category: product.category,
-        sizeLabel: selectedVariant.sizeLabel,
-        ...(favoriteReferenceItem ? { favoriteReferenceItem } : {}),
-      })
+    ? favorite?.canonicalSpec && selectedVariant.garmentSpec
+      ? matchGarments(
+          favorite.canonicalSpec,
+          selectedVariant.garmentSpec,
+          { category: product.subcategory === "chino" ? "chinos" : "jeans" },
+        )
+      : computeFitScore(bodyProfile, selectedVariant.spec, {
+          category: product.category,
+          sizeLabel: selectedVariant.sizeLabel,
+          ...(favoriteReferenceItem ? { favoriteReferenceItem } : {}),
+        })
     : undefined;
   const variantScores = product.variants.map((variant, index) => ({
     variant,
     index,
-    score: computeFitScore(bodyProfile, variant.spec, {
-      category: product.category,
-      sizeLabel: variant.sizeLabel,
-      ...(favoriteReferenceItem ? { favoriteReferenceItem } : {}),
-    }),
+    score:
+      favorite?.canonicalSpec && variant.garmentSpec
+        ? matchGarments(favorite.canonicalSpec, variant.garmentSpec, {
+            category: product.subcategory === "chino" ? "chinos" : "jeans",
+          })
+        : computeFitScore(bodyProfile, variant.spec, {
+            category: product.category,
+            sizeLabel: variant.sizeLabel,
+            ...(favoriteReferenceItem ? { favoriteReferenceItem } : {}),
+          }),
   }));
   const orderedVariantScores = variantScores.slice().sort((a, b) => {
     if (a.variant.id === recommendedVariantId) {

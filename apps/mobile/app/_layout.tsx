@@ -4,7 +4,7 @@ import "react-native-reanimated";
 import { ReactNode } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, useWindowDimensions, View } from "react-native";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   SafeAreaInsetsContext,
@@ -31,17 +31,37 @@ function RootNavigator() {
   return (
     <IPhonePreviewFrame>
       <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: "ios_from_right",
+        }}
+      />
     </IPhonePreviewFrame>
   );
 }
 
 function IPhonePreviewFrame({ children }: { children: ReactNode }) {
+  const { height, width } = useWindowDimensions();
+
   if (Platform.OS !== "web") {
     return <>{children}</>;
   }
 
-  const scale = 0.78;
+  // A phone-sized browser gets the app edge-to-edge. Desktop previews keep a
+  // proportionate iPhone frame, sized from the available viewport instead of
+  // a fixed tiny scale.
+  if (width <= 600) {
+    return <>{children}</>;
+  }
+
+  const scale = Math.min(
+    1,
+    Math.max(
+      0.58,
+      Math.min((height - 84) / iPhoneHeight, (width - 160) / iPhoneWidth),
+    ),
+  );
 
   return (
     <View style={styles.webStage}>

@@ -1,5 +1,6 @@
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { Link } from "expo-router";
+import { getJeansIndexStats } from "@rober/api-client";
 import { AppButton, SectionHeader } from "../components/primitives";
 import { FitConfidenceRing } from "../components/fit";
 import { useDemoStore } from "../stores/useDemoStore";
@@ -23,6 +24,15 @@ const feedback = [
   { label: "Too large", value: 14, color: "#E0A526" }
 ];
 
+const indexStats = getJeansIndexStats();
+
+const coverage = [
+  { label: "Public chart inputs", value: String(indexStats.chartSources), detail: "Benchmark size-chart sources" },
+  { label: "Normalized jean styles", value: String(indexStats.productStyles), detail: "Illustrative demo inventory" },
+  { label: "Fit-ready size options", value: indexStats.fitReadyVariants.toLocaleString("en-US"), detail: "In-stock size and inseam variants" },
+  { label: "Benchmark brands", value: String(indexStats.benchmarkBrands), detail: "Cross-brand fit translation" }
+];
+
 export default function InvestorDemoScreen() {
   const theme = useThemeTokens();
   const orders = useDemoStore((state) => state.orders);
@@ -39,12 +49,23 @@ export default function InvestorDemoScreen() {
       <View style={styles.heroRow}>
         <View style={{ flex: 1 }}>
           <Text style={[styles.kicker, { color: theme.accent }]}>INVESTOR DASHBOARD</Text>
-          <Text style={[styles.title, { color: theme.text }]}>Rober matches garment construction, not guesses from a body.</Text>
+          <Text style={[styles.title, { color: theme.text }]}>A pair a shopper trusts becomes usable fit data.</Text>
           <Text style={[styles.copy, { color: theme.textMuted }]}>
-            Anchor-based matching addresses the root cause of size mismatch, garment construction, cutting consumer time-to-perfect-fit and reducing reverse-logistics/return costs for retail brand partners. The demo tracks onboarding, compare usage, fit-informed checkout, and post-delivery feedback without logging raw body measurements.
+            Rober normalizes a known-good garment against a cross-brand fit index, then recommends a size and explains the construction match. The demo tracks onboarding, comparison, fit-informed checkout, and post-delivery feedback without exposing raw body measurements in analytics.
           </Text>
         </View>
         <FitConfidenceRing confidence={86} size={92} />
+      </View>
+
+      <SectionHeader kicker="Index coverage" title="A demo with real choice" />
+      <View style={styles.metricGrid}>
+        {coverage.map((metric) => (
+          <View key={metric.label} style={[styles.metricCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+            <Text style={[styles.metricValue, { color: theme.text }]}>{metric.value}</Text>
+            <Text style={[styles.metricLabel, { color: theme.text }]}>{metric.label}</Text>
+            <Text style={[styles.metricDetail, { color: theme.textMuted }]}>{metric.detail}</Text>
+          </View>
+        ))}
       </View>
 
       <SectionHeader kicker="Impact" title="Synthetic metrics" />

@@ -29,6 +29,7 @@ export type MatchPath = "garment_to_garment" | "body_to_garment";
 export type KnownGoodItem = {
   id: string;
   brand: string;
+  gender?: "men" | "women";
   category: string;
   itemName: string;
   sizeLabel: string;
@@ -162,6 +163,7 @@ export const demoKnownGoodItems: KnownGoodItem[] = [
   {
     id: "known-favorite-jeans",
     brand: demoFavoriteJeans.brandName,
+    gender: demoGarmentReference.gender,
     category: "bottoms",
     itemName: "501 Original Fit Jean",
     sizeLabel: `${demoFavoriteJeans.sizeLabel}x${Math.round(demoFavoriteJeans.inseamCm / 2.54)}`,
@@ -179,6 +181,7 @@ export const demoKnownGoodItems: KnownGoodItem[] = [
   {
     id: "known-regular-jeans",
     brand: "Loom & Line",
+    gender: "men",
     category: "bottoms",
     itemName: "Regular straight jeans",
     sizeLabel: "32x32",

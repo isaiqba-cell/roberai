@@ -112,6 +112,28 @@ export function sortByPrice(summaries: GarmentMatchSummary[]) {
   return summaries.slice().sort((a, b) => a.product.priceCents - b.product.priceCents);
 }
 
+// The generated demo index intentionally has many cuts per benchmark brand.
+// Surface the strongest option from each brand before returning to additional
+// cuts, so the first comparison rail demonstrates actual cross-brand choice.
+export function diversifyGarmentMatches(
+  summaries: GarmentMatchSummary[],
+): GarmentMatchSummary[] {
+  const seenBrands = new Set<string>();
+  const distinctBrands: GarmentMatchSummary[] = [];
+  const remaining: GarmentMatchSummary[] = [];
+
+  summaries.forEach((summary) => {
+    if (seenBrands.has(summary.product.brand.slug)) {
+      remaining.push(summary);
+      return;
+    }
+    seenBrands.add(summary.product.brand.slug);
+    distinctBrands.push(summary);
+  });
+
+  return [...distinctBrands, ...remaining];
+}
+
 export type GarmentCardCategory = {
   label: string;
   entry: GarmentMatchSummary;

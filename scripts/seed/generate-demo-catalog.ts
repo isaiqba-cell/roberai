@@ -8,11 +8,12 @@ mkdirSync(seedDir, { recursive: true });
 
 const payload = {
   generatedAt: new Date().toISOString(),
-  disclosure: "Synthetic fictional catalog for ROBER AI investor demo. No real retailer trademarks or scraped catalog data.",
+  disclosure:
+    "Demo fit inventory uses public size-chart benchmark inputs with illustrative normalized listings. It is not live retailer inventory and does not imply retailer partnerships.",
   brands: getDemoBrands(),
   products: generateDemoCatalog()
 };
 
 const output = resolve(seedDir, "demo-catalog.json");
 writeFileSync(output, `${JSON.stringify(payload, null, 2)}\n`);
-console.log(`Wrote ${payload.products.length} products across ${payload.brands.length} fictional brands to ${output}`);
+console.log(`Wrote ${payload.products.length} products across ${payload.brands.length} benchmark brands to ${output}`);

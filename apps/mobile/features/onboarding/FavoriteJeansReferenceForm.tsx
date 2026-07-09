@@ -78,6 +78,7 @@ export function FavoriteJeansReferenceForm() {
     addKnownGoodItem({
       id: `known-jeans-${brandSlug}-${parsedSize.sizeLabel}`,
       brand: resolution.brandName,
+      gender: resolution.gender,
       category: "bottoms",
       itemName: resolution.modelName,
       sizeLabel: fullSizeLabel,

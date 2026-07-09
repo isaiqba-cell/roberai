@@ -39,6 +39,6 @@ html, body, #root {
 }
 #root * {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-  letter-spacing: -0.01em;
+  letter-spacing: 0;
 }
 `;

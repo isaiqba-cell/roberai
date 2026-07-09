@@ -3,8 +3,12 @@ import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { Database, Ruler, Sparkles } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getJeansIndexStats } from "@rober/api-client";
 import { IconButton } from "../../components/primitives";
+import { Reveal } from "../../components/motion";
 import { useThemeTokens } from "../../theme/useThemeTokens";
+
+const indexStats = getJeansIndexStats();
 
 export default function WelcomeScreen() {
   const theme = useThemeTokens();
@@ -23,47 +27,63 @@ export default function WelcomeScreen() {
         <View>
           <Text style={[styles.logo, { color: theme.text }]}>Rober</Text>
           <Text style={[styles.tagline, { color: theme.textMuted }]}>
-            Jeans that fit like your favorite pair
+            Your denim fit index
           </Text>
         </View>
-        <IconButton accessibilityLabel="Fit profile database">
+        <IconButton
+          accessibilityLabel="Browse the jeans fit index"
+          onPress={() => router.push("/discover")}
+        >
           <Database size={21} color={theme.text} />
         </IconButton>
       </View>
 
-      <View
-        style={[
-          styles.hero,
-          { backgroundColor: theme.bgWarm, borderColor: theme.border },
-        ]}
-      >
-        <Text style={[styles.kicker, { color: theme.accent }]}>
-          MATCH YOUR FIT ANCHOR
-        </Text>
-        <Text style={[styles.title, { color: theme.text }]}>
-          What's a pair that fits you perfectly?
-        </Text>
-        <Text style={[styles.copy, { color: theme.textMuted }]}>
-          We match your favorite pair's actual construction, thigh, inseam,
-          and rise, against every other brand's size chart. Body measurements
-          are optional and only needed if you don't have a reference pair yet.
-        </Text>
-      </View>
+      <Reveal delay={70}>
+        <View
+          style={[
+            styles.hero,
+            { backgroundColor: theme.bgWarm, borderColor: theme.border },
+          ]}
+        >
+          <Text style={[styles.kicker, { color: theme.accent }]}>
+            START WITH WHAT ALREADY FITS
+          </Text>
+          <Text style={[styles.title, { color: theme.text }]}>
+            What's your favorite pair of jeans?
+          </Text>
+          <Text style={[styles.copy, { color: theme.textMuted }]}>
+            Add the brand, style, and size. Rober turns that pair into a fit
+            reference for the entire index.
+          </Text>
+          <View style={styles.indexProof}>
+            <Text style={[styles.indexProofText, { color: theme.text }]}>
+              {indexStats.productStyles} jean styles
+            </Text>
+            <View style={[styles.proofDot, { backgroundColor: theme.accent }]} />
+            <Text style={[styles.indexProofText, { color: theme.text }]}>
+              {formatCompact(indexStats.fitReadyVariants)} size options
+            </Text>
+          </View>
+        </View>
+      </Reveal>
 
-      <View style={styles.pathGrid}>
-        <PathCard
-          title="I have a favorite pair of jeans"
-          body="Enter brand, model/style, size, and one fit note. We match its actual waist, inseam, thigh, and rise from indexed size-chart data."
-          icon={<Sparkles size={22} color={theme.accent} />}
-          onPress={() => router.push("/(onboarding)/garment-reference")}
-        />
-        <PathCard
-          title="Prefer not to enter a reference item? Measure instead"
-          body="Use bigger stepper controls for waist, hip, and inseam. Height, chest, and shoulder stay optional."
-          icon={<Ruler size={22} color={theme.accent} />}
-          onPress={() => router.push("/(onboarding)/body-profile")}
-        />
-      </View>
+      <Reveal delay={130}>
+        <View style={styles.pathGrid}>
+          <PathCard
+            title="Add my favorite jeans"
+            body="Brand, model, and size are enough to create your fit passport."
+            icon={<Sparkles size={22} color="#FFFFFF" />}
+            primary
+            onPress={() => router.push("/(onboarding)/garment-reference")}
+          />
+          <PathCard
+            title="I don't have a reference pair"
+            body="Build a fit starting from waist, hip, and inseam instead."
+            icon={<Ruler size={21} color={theme.accent} />}
+            onPress={() => router.push("/(onboarding)/body-profile")}
+          />
+        </View>
+      </Reveal>
     </ScrollView>
   );
 }
@@ -72,11 +92,13 @@ function PathCard({
   title,
   body,
   icon,
+  primary,
   onPress,
 }: {
   title: string;
   body: string;
   icon: ReactNode;
+  primary?: boolean;
   onPress: () => void;
 }) {
   const theme = useThemeTokens();
@@ -88,17 +110,22 @@ function PathCard({
       style={({ pressed }) => [
         styles.pathCard,
         {
-          backgroundColor: theme.surface,
-          borderColor: theme.border,
+          backgroundColor: primary ? theme.ink : theme.surface,
+          borderColor: primary ? theme.ink : theme.border,
           opacity: pressed ? 0.82 : 1,
         },
       ]}
     >
-      <View style={[styles.iconBubble, { backgroundColor: theme.surfaceWarm }]}>
+      <View
+        style={[
+          styles.iconBubble,
+          { backgroundColor: primary ? theme.accent : theme.surfaceWarm },
+        ]}
+      >
         {icon}
       </View>
-      <Text style={[styles.pathTitle, { color: theme.text }]}>{title}</Text>
-      <Text style={[styles.pathCopy, { color: theme.textMuted }]}>{body}</Text>
+      <Text style={[styles.pathTitle, { color: primary ? "#FFFFFF" : theme.text }]}>{title}</Text>
+      <Text style={[styles.pathCopy, { color: primary ? "rgba(255,255,255,0.76)" : theme.textMuted }]}>{body}</Text>
     </Pressable>
   );
 }
@@ -146,11 +173,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 21,
   },
+  indexProof: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginTop: 2,
+  },
+  indexProofText: {
+    fontSize: 11,
+    fontWeight: "900",
+  },
+  proofDot: {
+    width: 4,
+    height: 4,
+    borderRadius: 999,
+  },
   pathGrid: {
     gap: 14,
   },
   pathCard: {
-    minHeight: 172,
+    minHeight: 138,
     borderWidth: 1,
     borderRadius: 26,
     padding: 18,
@@ -173,3 +215,7 @@ const styles = StyleSheet.create({
     lineHeight: 19,
   },
 });
+
+function formatCompact(value: number) {
+  return value < 1000 ? String(value) : `${(value / 1000).toFixed(1)}k`;
+}
