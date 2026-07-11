@@ -14,34 +14,26 @@ export function Reveal({
   delay?: number;
   style?: StyleProp<ViewStyle>;
 }>) {
-  const opacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(12)).current;
+  // Content stays fully opaque at all times — the entrance is a subtle
+  // upward slide only. This guarantees a screen never renders blank while an
+  // opacity animation is pending (a real risk on react-native-web, where a
+  // stalled animation frame would otherwise leave everything invisible).
+  const translateY = useRef(new Animated.Value(10)).current;
 
   useEffect(() => {
-    const animation = Animated.parallel([
-      Animated.timing(opacity, {
-        toValue: 1,
-        duration: 280,
-        delay,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 360,
-        delay,
-        easing: Easing.out(Easing.cubic),
-        useNativeDriver: false,
-      }),
-    ]);
+    const animation = Animated.timing(translateY, {
+      toValue: 0,
+      duration: 320,
+      delay: Math.min(delay, 220),
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    });
     animation.start();
     return () => animation.stop();
-  }, [delay, opacity, translateY]);
+  }, [delay, translateY]);
 
   return (
-    <Animated.View
-      style={[style, { opacity, transform: [{ translateY }] }]}
-    >
+    <Animated.View style={[style, { transform: [{ translateY }] }]}>
       {children}
     </Animated.View>
   );

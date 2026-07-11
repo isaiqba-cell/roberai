@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link } from "expo-router";
 import { Image } from "expo-image";
 import { Pressable, StyleSheet, Text, View } from "react-native";
@@ -39,6 +39,12 @@ export function ProductCard({
     state.savedProductIds.includes(product.id),
   );
   const toggleSavedProduct = useDemoStore((state) => state.toggleSavedProduct);
+  // Dropped/failed image fetches (common through tunnel demos) fall back to
+  // a bundled packshot instead of the browser's broken-image glyph.
+  const [imageFailed, setImageFailed] = useState(false);
+  const imageUri = imageFailed
+    ? "/images/jeans/dark-slide.webp"
+    : (overrideImageUrl ?? product.imageUrl);
   return (
     <Link href={`/product/${product.id}`} asChild>
       <Pressable
@@ -57,10 +63,12 @@ export function ProductCard({
         <View style={styles.imageWrap}>
           {imageOverlay ?? (
             <Image
-              source={{ uri: overrideImageUrl ?? product.imageUrl }}
+              source={{ uri: imageUri }}
               style={styles.image}
               contentFit="contain"
               transition={180}
+              cachePolicy="memory-disk"
+              onError={() => setImageFailed(true)}
               placeholder={{ blurhash: "L6PZfSi_.AyE_3t7t7R**0o#DgR4" }}
               accessibilityLabel={`${product.title} product image`}
             />

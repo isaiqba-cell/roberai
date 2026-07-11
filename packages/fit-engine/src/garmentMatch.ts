@@ -19,7 +19,10 @@ const numericDimensionWeights: Record<GarmentDimension, number> = {
   knee: 0.02
 };
 
-const cutWeight = 0.04;
+// Silhouette carries real weight: a slim taper is not a 97% match to a
+// straight anchor even when raw waist/inseam line up, and the visible score
+// spread is what makes the skinnier/baggier control legible to the user.
+const cutWeight = 0.12;
 
 const dimensionTolerance: Record<GarmentDimension, number> = {
   waist: 2.2,
@@ -76,7 +79,7 @@ export function matchGarments(
   });
 
   const cutDistance = Math.abs(cutRank[anchor.cut] - cutRank[candidate.cut]);
-  dimensionScores.cut = Math.max(30, 100 - cutDistance * 16);
+  dimensionScores.cut = Math.max(20, 100 - cutDistance * 24);
 
   const weighted = weightedGarmentAverage(dimensionScores);
   const quality = garmentDataQualityScore(presentCount);

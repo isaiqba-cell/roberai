@@ -72,7 +72,11 @@ export function computeGarmentMatches(
         imageUrl: product.heroImageUrl,
         fitConfidence: best.result.confidence,
         recommendedSize: best.variant.sizeLabel,
-        explanation: best.result.explanation[0] ?? "Compared against your anchor garment.",
+        explanation: matchReason(
+          anchorSpec,
+          best.variant.garmentSpec as GarmentSpec,
+          best.result,
+        ),
       };
       return {
         product,
@@ -87,18 +91,61 @@ export function computeGarmentMatches(
     .sort((a, b) => b.result.confidence - a.result.confidence);
 }
 
-// Silhouette re-ranking: reorders candidates by closeness to a target cut
-// while keeping a waist/inseam-closeness floor so a baggy-leaning slider
-// never surfaces a garment that plainly doesn't fit.
+// One-line, human "why" for every card. Silhouette direction leads (it's
+// the axis the user controls), backed by the biggest concrete dimension
+// delta so the score never stands alone.
+export function matchReason(
+  anchor: GarmentSpec,
+  candidate: GarmentSpec,
+  result: GarmentMatchResult,
+): string {
+  const thighDelta =
+    candidate.thighCm !== undefined && anchor.thighCm !== undefined
+      ? candidate.thighCm - anchor.thighCm
+      : undefined;
+  const inseamDelta =
+    candidate.inseamCm !== undefined && anchor.inseamCm !== undefined
+      ? candidate.inseamCm - anchor.inseamCm
+      : undefined;
+  const inseamNote =
+    inseamDelta !== undefined && Math.abs(inseamDelta) < 1.5
+      ? "same length"
+      : inseamDelta !== undefined
+        ? `${inseamDelta > 0 ? "+" : ""}${Math.round(inseamDelta)} cm length`
+        : undefined;
+
+  if (result.silhouetteDelta === "same") {
+    const thighNote =
+      thighDelta !== undefined && Math.abs(thighDelta) <= 1.5
+        ? "thigh within 1 cm"
+        : "same silhouette";
+    return `Cut like your pair · ${inseamNote ?? thighNote}`;
+  }
+  const direction = result.silhouetteDelta === "baggier" ? "Roomier" : "Slimmer";
+  const thighNote =
+    thighDelta !== undefined && Math.abs(thighDelta) >= 1
+      ? `${thighDelta > 0 ? "+" : ""}${Math.round(thighDelta)} cm thigh`
+      : undefined;
+  return [`${direction} than your pair`, thighNote ?? inseamNote]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+// Silhouette re-ranking with direction respected: candidates more than one
+// cut-step away from the target are dropped entirely (a "baggier" request
+// must never answer with a slim taper), then closest-cut wins, then
+// confidence. Falls back to the loose ordering if strict filtering leaves
+// too few options to compare.
 export function rerankBySilhouette(
   summaries: GarmentMatchSummary[],
   targetCut: SilhouetteCut,
   confidenceFloor = 40,
 ): GarmentMatchSummary[] {
-  return summaries
-    .filter((entry) => entry.result.confidence >= confidenceFloor)
-    .slice()
-    .sort((a, b) => {
+  const eligible = summaries.filter(
+    (entry) => entry.result.confidence >= confidenceFloor,
+  );
+  const byDistance = (entries: GarmentMatchSummary[]) =>
+    entries.slice().sort((a, b) => {
       const distanceA = Math.abs(silhouetteCutRank[a.spec.cut] - silhouetteCutRank[targetCut]);
       const distanceB = Math.abs(silhouetteCutRank[b.spec.cut] - silhouetteCutRank[targetCut]);
       if (distanceA !== distanceB) {
@@ -106,6 +153,12 @@ export function rerankBySilhouette(
       }
       return b.result.confidence - a.result.confidence;
     });
+
+  const strict = eligible.filter(
+    (entry) =>
+      Math.abs(silhouetteCutRank[entry.spec.cut] - silhouetteCutRank[targetCut]) <= 1,
+  );
+  return byDistance(strict.length >= 3 ? strict : eligible);
 }
 
 export function sortByPrice(summaries: GarmentMatchSummary[]) {

@@ -845,17 +845,34 @@ const indexedJeansArchetypes: Array<{
   },
 ];
 
-const indexedImagePaths = [
-  imagePath("dark-slide.webp"),
-  imagePath("light-packshot.webp"),
-  imagePath("straight-flat.jpeg"),
-  imagePath("basile-light.jpg"),
-  imagePath("straight-crop.jpeg"),
-  imagePath("hollywood-light.jpg"),
-  imagePath("agolde-straight.jpg"),
-  imagePath("apc-elisabeth.webp"),
-  imagePath("vintage-hanger.jpg"),
-];
+// Packshots grouped by the silhouette they actually show, so a slim taper
+// never renders with a wide-leg photo. Pools verified visually against the
+// files in apps/mobile/public/images/jeans.
+const indexedImagesByCut: Record<
+  "slim" | "regular" | "relaxed" | "oversized",
+  string[]
+> = {
+  slim: [
+    imagePath("straight-crop.jpeg"),
+    imagePath("basile-light.jpg"),
+    imagePath("agolde-straight.jpg"),
+  ],
+  regular: [
+    imagePath("dark-slide.webp"),
+    imagePath("straight-flat.jpeg"),
+    imagePath("hollywood-light.jpg"),
+  ],
+  relaxed: [
+    imagePath("vintage-hanger.jpg"),
+    imagePath("light-packshot.webp"),
+    imagePath("hollywood-light.jpg"),
+  ],
+  oversized: [
+    imagePath("apc-elisabeth.webp"),
+    imagePath("vintage-hanger.jpg"),
+    imagePath("light-packshot.webp"),
+  ],
+};
 
 const basePriceByBrandSlug: Record<string, number> = {
   levis: 9800,
@@ -871,12 +888,13 @@ const basePriceByBrandSlug: Record<string, number> = {
 function buildExpandedJeansProductDefinitions(): JeansProductDefinition[] {
   return jeansSizeChartSources.flatMap((source, sourceIndex) =>
     indexedJeansArchetypes.map((archetype, archetypeIndex) => {
-      const imageIndex = (sourceIndex * 3 + archetypeIndex) % indexedImagePaths.length;
-      const imageUrl = indexedImagePaths[imageIndex] ?? indexedImagePaths[0]!;
+      const cutPool = indexedImagesByCut[archetype.cut];
+      const imageIndex = (sourceIndex + archetypeIndex) % cutPool.length;
+      const imageUrl = cutPool[imageIndex] ?? cutPool[0]!;
       const galleryImageUrls = [
         imageUrl,
-        indexedImagePaths[(imageIndex + 3) % indexedImagePaths.length]!,
-        indexedImagePaths[(imageIndex + 6) % indexedImagePaths.length]!,
+        cutPool[(imageIndex + 1) % cutPool.length]!,
+        cutPool[(imageIndex + 2) % cutPool.length]!,
       ];
       const basePrice = basePriceByBrandSlug[source.brandSlug] ?? 7900;
       const priceCents = Math.max(
@@ -1814,11 +1832,15 @@ const brandConstructionProfile: Record<
   "american-eagle": { thighDeltaCm: 2.2, riseBucket: "low-rise", legOpeningDeltaCm: 1.6 },
 };
 
+// Construction deltas are deliberately wide — real silhouettes differ by
+// several cm through the thigh, and the score spread between a straight
+// match (90s) and a slim/wide alternative (60s-70s) is what the whole
+// product communicates.
 const cutAdjustCm: Record<"slim" | "regular" | "relaxed" | "oversized", number> = {
-  slim: -2.4,
+  slim: -4.2,
   regular: 0,
-  relaxed: 2.2,
-  oversized: 4.2,
+  relaxed: 3.4,
+  oversized: 6.6,
 };
 
 const cutToSilhouette: Record<"slim" | "regular" | "relaxed" | "oversized", SilhouetteCut> = {
@@ -1835,7 +1857,7 @@ function deriveCatalogGarmentSpec(
 ): Omit<GarmentSpec, "waistCm" | "inseamCm"> {
   const profile = brandConstructionProfile[brandSlug] ?? brandConstructionProfile.levis!;
   const thighCm = round(baselineThighCm + profile.thighDeltaCm + cutAdjustCm[cut], 1);
-  const hemCm = round(19 + profile.legOpeningDeltaCm + cutAdjustCm[cut] * 0.35, 1);
+  const hemCm = round(19 + profile.legOpeningDeltaCm + cutAdjustCm[cut] * 0.8, 1);
   return {
     thighCm,
     riseCm: riseBucketCm[profile.riseBucket],
