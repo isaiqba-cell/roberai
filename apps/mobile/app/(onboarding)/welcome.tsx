@@ -1,7 +1,6 @@
-import { ReactNode } from "react";
 import { useRouter } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
-import { Database, Ruler, Sparkles } from "lucide-react-native";
+import { ArrowRight, Database, Sparkles } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { getJeansIndexStats } from "@rober/api-client";
 import { IconButton } from "../../components/primitives";
@@ -68,65 +67,31 @@ export default function WelcomeScreen() {
       </Reveal>
 
       <Reveal delay={130}>
-        <View style={styles.pathGrid}>
-          <PathCard
-            title="Add my favorite jeans"
-            body="Brand, model, and size are enough to create your fit passport."
-            icon={<Sparkles size={22} color="#FFFFFF" />}
-            primary
-            onPress={() => router.push("/(onboarding)/garment-reference")}
-          />
-          <PathCard
-            title="I don't have a reference pair"
-            body="Build a fit starting from waist, hip, and inseam instead."
-            icon={<Ruler size={21} color={theme.accent} />}
-            onPress={() => router.push("/(onboarding)/body-profile")}
-          />
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Add my favorite jeans"
+          onPress={() => router.push("/(onboarding)/garment-reference")}
+          style={({ pressed }) => [
+            styles.pathCard,
+            { backgroundColor: theme.ink, opacity: pressed ? 0.82 : 1 },
+          ]}
+        >
+          <View style={[styles.iconBubble, { backgroundColor: theme.accent }]}>
+            <Sparkles size={22} color="#FFFFFF" />
+          </View>
+          <Text style={[styles.pathTitle, { color: "#FFFFFF" }]}>
+            Add my favorite jeans
+          </Text>
+          <Text style={[styles.pathCopy, { color: "rgba(255,255,255,0.76)" }]}>
+            Brand, model, and size are all it takes. We handle the fit.
+          </Text>
+          <View style={styles.pathCta}>
+            <Text style={styles.pathCtaText}>GET STARTED</Text>
+            <ArrowRight size={17} color="#FFFFFF" />
+          </View>
+        </Pressable>
       </Reveal>
     </ScrollView>
-  );
-}
-
-function PathCard({
-  title,
-  body,
-  icon,
-  primary,
-  onPress,
-}: {
-  title: string;
-  body: string;
-  icon: ReactNode;
-  primary?: boolean;
-  onPress: () => void;
-}) {
-  const theme = useThemeTokens();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={title}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.pathCard,
-        {
-          backgroundColor: primary ? theme.ink : theme.surface,
-          borderColor: primary ? theme.ink : theme.border,
-          opacity: pressed ? 0.82 : 1,
-        },
-      ]}
-    >
-      <View
-        style={[
-          styles.iconBubble,
-          { backgroundColor: primary ? theme.accent : theme.surfaceWarm },
-        ]}
-      >
-        {icon}
-      </View>
-      <Text style={[styles.pathTitle, { color: primary ? "#FFFFFF" : theme.text }]}>{title}</Text>
-      <Text style={[styles.pathCopy, { color: primary ? "rgba(255,255,255,0.76)" : theme.textMuted }]}>{body}</Text>
-    </Pressable>
   );
 }
 
@@ -188,15 +153,23 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 999,
   },
-  pathGrid: {
-    gap: 14,
-  },
   pathCard: {
     minHeight: 138,
-    borderWidth: 1,
     borderRadius: 26,
-    padding: 18,
+    padding: 20,
     gap: 10,
+  },
+  pathCta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    marginTop: 4,
+  },
+  pathCtaText: {
+    color: "#FFFFFF",
+    fontSize: 13,
+    fontWeight: "900",
+    letterSpacing: 0.6,
   },
   iconBubble: {
     width: 44,

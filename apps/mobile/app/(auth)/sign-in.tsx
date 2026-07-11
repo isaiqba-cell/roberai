@@ -28,7 +28,7 @@ export default function SignInScreen() {
       <AppButton
         onPress={() => {
           setGuestMode(false);
-          router.push("/(onboarding)/body-profile");
+          router.push("/(onboarding)/garment-reference");
         }}
       >
         Send email OTP

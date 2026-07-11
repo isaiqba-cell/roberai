@@ -6,23 +6,29 @@ import { SimilarToFavoriteItemChip } from "../../components/fit";
 import { TryOnPhotoManager } from "../../features/tryOn/TryOnPhotoManager";
 import { mockNotificationPayload, requestNotificationPermission, routeFromNotificationPayload } from "../../services/notifications";
 import { authenticateSensitiveAccess } from "../../services/localAuthentication";
+import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 
 export default function ProfileScreen() {
   const theme = useThemeTokens();
+  const favorite = useDemoStore((state) => state.knownGoodItems[0]);
   const [status, setStatus] = useState("Notifications and biometric unlock are ready for demo.");
   return (
     <ScrollView style={[styles.screen, { backgroundColor: theme.bgCanvas }]} contentContainerStyle={styles.content}>
       <SectionHeader kicker="Account" title="Fit profile" action={<ThemeToggle />} />
       <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-        <Text style={[styles.title, { color: theme.text }]}>Demo Shopper</Text>
+        <Text style={[styles.title, { color: theme.text }]}>Your reference pair</Text>
         <Text style={[styles.copy, { color: theme.textMuted }]}>
-          Height 178 cm, chest 101 cm, waist 84 cm, hip 98 cm, shoulder 46 cm. Measurements stay out of analytics.
+          {favorite
+            ? `${favorite.brand} ${favorite.itemName} · ${favorite.sizeLabel}. Every match is calibrated against this pair.`
+            : "Add a favorite pair to calibrate your matches across brands."}
         </Text>
-        <SimilarToFavoriteItemChip label="Favorite straight jeans" />
+        <SimilarToFavoriteItemChip label={favorite ? favorite.itemName : "No reference pair yet"} />
       </View>
-      <Link href="/(onboarding)/body-profile" asChild>
-        <AppButton variant="secondary">Edit body profile</AppButton>
+      <Link href="/(onboarding)/garment-reference" asChild>
+        <AppButton variant="secondary">
+          {favorite ? "Change my reference pair" : "Add my reference pair"}
+        </AppButton>
       </Link>
       <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
         <Text style={[styles.title, { color: theme.text }]}>Try it on</Text>
