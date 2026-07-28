@@ -36,12 +36,12 @@ test("playground controls work by keyboard", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Close panel" })).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog", { name: "Fit detail" })).toBeHidden();
+  await expect(dialogTrigger).toBeFocused();
 
   const sheetTrigger = lightShowcase.getByRole("button", {
     name: "Open sheet",
   });
-  await sheetTrigger.focus();
-  await page.keyboard.press("Enter");
+  await sheetTrigger.press("Enter");
   await expect(
     page.getByRole("dialog", { name: "Refine matches" }),
   ).toBeVisible();
@@ -63,9 +63,7 @@ test("desktop account menu works by keyboard", async ({ page }) => {
   await page.keyboard.press("Enter");
   await expect(page.getByRole("menu")).toBeVisible();
   await page.keyboard.press("Home");
-  await expect(
-    page.getByRole("menuitem", { name: "Fit profile" }),
-  ).toBeFocused();
+  await expect(page.getByRole("menuitem", { name: "Sign in" })).toBeFocused();
   await page.keyboard.press("ArrowDown");
   await expect(
     page.getByRole("menuitem", { name: "Design playground" }),

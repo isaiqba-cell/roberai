@@ -3,6 +3,7 @@ import { Heart, Ruler } from "lucide-react";
 import Link from "next/link";
 
 import { AccountMenu } from "@/components/layout/account-menu";
+import { CatalogStatusBadge } from "@/components/layout/catalog-status-badge";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 
@@ -11,13 +12,7 @@ const navLinks = [
   { href: "/saved", label: "Saved", icon: Heart },
 ];
 
-export function SiteShell({
-  children,
-  runtimeMode,
-}: {
-  children: ReactNode;
-  runtimeMode: "live" | "seed";
-}) {
+export function SiteShell({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background text-foreground">
       <a
@@ -77,13 +72,7 @@ export function SiteShell({
             </p>
           </div>
           <div className="flex items-center gap-5">
-            <span className="inline-flex items-center gap-2">
-              <span
-                className="size-2 rounded-full bg-fit-high"
-                aria-hidden="true"
-              />
-              {runtimeMode === "seed" ? "Seed catalog" : "Live catalog"}
-            </span>
+            <CatalogStatusBadge />
             <Link className="hover:text-foreground" href="/playground">
               Playground
             </Link>

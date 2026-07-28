@@ -35,7 +35,9 @@ npm run seed         # Generate demo catalog artifact
 npm run seed:jeans   # Generate jeans size-chart database artifact
 ```
 
-Supabase migrations live in `supabase/migrations`. Configure the Supabase CLI, then run the command printed by `npm run supabase:migrate`.
+Supabase migrations live in `supabase/migrations`. Authenticate and link the
+Supabase CLI once, then apply every pending migration with
+`npm run supabase:migrate`.
 
 ## Demo Routes
 
@@ -87,6 +89,23 @@ Apply locally after configuring the Supabase CLI:
 ```bash
 npm run supabase:migrate
 ```
+
+For the hosted web MVP, authenticate with `npx supabase login`, link the
+project once with `npx supabase link --project-ref <project-ref>`, then run:
+
+```bash
+npm run supabase:migrate
+npm run seed:web
+npm run test:stage2:live
+```
+
+The Stage 2 gate verifies that email and Google sign-in are enabled, RLS blocks
+cross-account access while exposing only published catalog records, and a real
+browser can complete magic-link sign-in, merge guest anchors exactly once,
+update a profile, and sign out. Google must be configured as a Web OAuth client
+in Supabase Auth. Its authorized redirect URI is the project's
+`https://<project-ref>.supabase.co/auth/v1/callback`; OAuth secrets belong in
+the provider dashboards and must never be committed.
 
 Edge function stubs live in `supabase/functions/*` and are designed to be replaced with service-role implementations as credentials are added.
 

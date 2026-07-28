@@ -27,7 +27,7 @@ export default function RootLayout({
     >
       <body>
         <Providers>
-          <SiteShell runtimeMode={webEnvironment.mode}>
+          <SiteShell>
             <PageTransition>{children}</PageTransition>
           </SiteShell>
         </Providers>

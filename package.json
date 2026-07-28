@@ -17,13 +17,21 @@
     "audit:high": "node scripts/security/audit-web-production.mjs",
     "export:web": "npm --workspace @rober/mobile run export:web",
     "lint": "npm run lint --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run typecheck:workspaces && npm run typecheck:scripts",
+    "typecheck:workspaces": "npm run typecheck --workspaces --if-present",
+    "typecheck:scripts": "tsc --project scripts/tsconfig.json",
     "test": "npm run test --workspaces --if-present",
     "test:e2e": "maestro test apps/mobile/maestro/onboarding-to-checkout.yaml",
+    "test:auth:live": "tsx scripts/supabase/verify-auth-browser.ts",
+    "test:auth:providers": "tsx scripts/supabase/verify-auth-providers.ts",
+    "test:rls": "tsx scripts/supabase/verify-rls.ts",
+    "test:stage2:live": "npm run test:auth:providers && npm run test:rls && npm run test:auth:live",
     "seed": "tsx scripts/seed/generate-demo-catalog.ts",
     "seed:jeans": "tsx scripts/seed/generate-jeans-size-chart-database.ts",
+    "seed:web": "tsx scripts/seed/seed-supabase-web.ts",
+    "seed:web:dry": "tsx scripts/seed/seed-supabase-web.ts --dry-run",
     "seed:try-ons": "tsx scripts/seed/pregenerate-try-ons.ts",
-    "supabase:migrate": "echo \"Run: supabase db reset --local or supabase migration up --linked after configuring Supabase CLI\""
+    "supabase:migrate": "npx supabase db push --linked --include-all --yes"
   },
   "devDependencies": {
     "@expo/cli": "^57.0.6",
