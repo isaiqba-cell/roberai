@@ -1,8 +1,21 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { isAdminRequestPath } from "@/lib/admin/path";
+
 import { publicSupabaseConfig } from "./config";
 import type { Database } from "./database.types";
+
+function hiddenRouteResponse() {
+  return new NextResponse("Not Found", {
+    status: 404,
+    headers: {
+      "Cache-Control": "private, no-store",
+      "Content-Type": "text/plain; charset=utf-8",
+      "X-Robots-Tag": "noindex, nofollow",
+    },
+  });
+}
 
 export async function refreshSupabaseSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -33,6 +46,15 @@ export async function refreshSupabaseSession(request: NextRequest) {
     },
   );
 
-  await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (isAdminRequestPath(request.nextUrl.pathname)) {
+    if (!user) return hiddenRouteResponse();
+    const { data: isAdmin, error } = await supabase.rpc("is_admin");
+    if (error || !isAdmin) return hiddenRouteResponse();
+  }
+
   return response;
 }

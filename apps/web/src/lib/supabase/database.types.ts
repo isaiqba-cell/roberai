@@ -523,6 +523,34 @@ export type Database = {
         };
         Relationships: [];
       };
+      audit_log: {
+        Row: {
+          id: string;
+          actor_user_id: string | null;
+          action: string;
+          target_table: string;
+          target_id: string;
+          before_json: Json | null;
+          after_json: Json | null;
+          metadata_json: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_user_id?: string | null;
+          action: string;
+          target_table: string;
+          target_id: string;
+          before_json?: Json | null;
+          after_json?: Json | null;
+          metadata_json?: Json;
+          created_at?: string;
+        };
+        Update: {
+          metadata_json?: Json;
+        };
+        Relationships: [];
+      };
       ingestion_domain_blocks: {
         Row: {
           domain: string;
@@ -609,6 +637,31 @@ export type Database = {
       takedown_size_chart_source: {
         Args: { p_source_id: string; p_reason: string };
         Returns: boolean;
+      };
+      admin_review_size_chart_source: {
+        Args: {
+          p_source_id: string;
+          p_decision: "approve" | "reject";
+          p_rows?: Json;
+          p_reason?: string | null;
+        };
+        Returns: Json;
+      };
+      admin_retry_ingestion_job: {
+        Args: { p_job_id: string };
+        Returns: Json;
+      };
+      admin_enqueue_ingestion: {
+        Args: {
+          p_brand_name: string;
+          p_model_name: string;
+          p_source_url?: string | null;
+        };
+        Returns: Json;
+      };
+      admin_takedown_size_chart_source: {
+        Args: { p_source_id: string; p_reason: string };
+        Returns: Json;
       };
     };
     Enums: Record<string, never>;
