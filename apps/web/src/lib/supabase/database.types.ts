@@ -118,6 +118,25 @@ export type Database = {
         };
         Relationships: [];
       };
+      saved_items: {
+        Row: {
+          user_id: string;
+          product_id: string;
+          variant_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          user_id: string;
+          product_id: string;
+          variant_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          variant_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       brands: {
         Row: {
           id: string;
@@ -482,6 +501,25 @@ export type Database = {
           fetched_at?: string | null;
           metadata_json?: Json;
           updated_at?: string;
+        };
+        Relationships: [];
+      };
+      analytics_events: {
+        Row: {
+          id: number;
+          user_id: string | null;
+          event_name: string;
+          properties: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          user_id?: string | null;
+          event_name: string;
+          properties?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          properties?: Json | null;
         };
         Relationships: [];
       };

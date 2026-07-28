@@ -12,6 +12,7 @@ type SliderProps = {
   max?: number;
   step?: number;
   onValueChange?: (value: number[]) => void;
+  onValueCommit?: (value: number[]) => void;
   valueLabel?: string;
   className?: string;
 };
@@ -23,6 +24,7 @@ export function Slider({
   max = 100,
   min = 0,
   onValueChange,
+  onValueCommit,
   step = 1,
   value,
   valueLabel,
@@ -44,6 +46,7 @@ export function Slider({
         {...(defaultValue ? { defaultValue } : {})}
         {...(value ? { value } : {})}
         {...(onValueChange ? { onValueChange } : {})}
+        {...(onValueCommit ? { onValueCommit } : {})}
       >
         <SliderPrimitive.Track className="relative h-1.5 grow overflow-hidden rounded-pill bg-muted">
           <SliderPrimitive.Range className="absolute h-full bg-primary" />

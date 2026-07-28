@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { MatchesExperience } from "@/components/matches/matches-experience";
 import {
   readGuestAnchors,
   writeGuestAnchors,
   type GuestAnchor,
 } from "@/lib/guest-anchors";
-import { garmentSpecSchema } from "@/lib/reference/types";
+import { garmentSpecSchema, normalizeGarmentSpec } from "@/lib/reference/types";
 import type { Json } from "@/lib/supabase/database.types";
 
 export type AccountAnchor = {
@@ -271,6 +272,26 @@ export function AnchorMemory({
           ))}
         </dl>
       </section>
+
+      {parsedSpec.success ? (
+        <MatchesExperience
+          key={activeAnchor.id}
+          anchor={normalizeGarmentSpec(parsedSpec.data)}
+          anchorLabel={`${activeAnchor.brandName} ${activeAnchor.styleName} ${activeAnchor.taggedSize}`}
+        />
+      ) : (
+        <EmptyState
+          className="mt-10"
+          icon={<Ruler aria-hidden="true" className="size-5" />}
+          title="This reference needs measurements"
+          description="Re-open the reference flow so Rober can resolve the garment measurements before matching."
+          action={
+            <Button asChild>
+              <Link href="/onboarding?step=brand">Resolve reference pair</Link>
+            </Button>
+          }
+        />
+      )}
     </div>
   );
 }

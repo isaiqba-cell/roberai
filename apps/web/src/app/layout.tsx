@@ -18,7 +18,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: ReactNode }>) {
+  panel,
+}: Readonly<{ children: ReactNode; panel?: ReactNode }>) {
   return (
     <html
       lang="en"
@@ -29,6 +30,7 @@ export default function RootLayout({
         <Providers>
           <SiteShell>
             <PageTransition>{children}</PageTransition>
+            {panel}
           </SiteShell>
         </Providers>
       </body>

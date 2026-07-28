@@ -1,5 +1,5 @@
 import { parseJeansSizeInput } from "@rober/api-client";
-import type { SilhouetteCut } from "@rober/fit-engine";
+import type { GarmentSpec, SilhouetteCut } from "@rober/fit-engine";
 import { z } from "zod";
 
 export const garmentSpecSchema = z.object({
@@ -78,4 +78,27 @@ export function isSilhouetteCut(value: unknown): value is SilhouetteCut {
   return ["skinny", "slim", "straight", "relaxed", "baggy"].includes(
     String(value),
   );
+}
+
+export function normalizeGarmentSpec(
+  value: z.infer<typeof garmentSpecSchema>,
+): GarmentSpec {
+  const spec: GarmentSpec = {
+    stretchPct: value.stretchPct,
+    cut: value.cut,
+  };
+  const dimensions = [
+    "waistCm",
+    "inseamCm",
+    "thighCm",
+    "riseCm",
+    "legOpeningCm",
+    "hemCm",
+    "kneeCm",
+  ] as const;
+  dimensions.forEach((dimension) => {
+    const measurement = value[dimension];
+    if (measurement !== undefined) spec[dimension] = measurement;
+  });
+  return spec;
 }
