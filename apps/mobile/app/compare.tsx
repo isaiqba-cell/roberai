@@ -22,7 +22,7 @@ import {
   rerankBySilhouette,
   silhouetteCutFromSlider,
   sortByPrice,
-} from "../lib/garmentCompare";
+} from "@rober/matching";
 import { demoCatalog } from "../lib/catalog";
 import { ensureTryOnRender } from "../lib/tryOn";
 import { useDemoStore } from "../stores/useDemoStore";

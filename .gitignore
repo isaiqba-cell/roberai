@@ -3,8 +3,11 @@ node_modules/
 dist/
 build/
 coverage/
+.next/
+.vercel/
 .DS_Store
 *.log
+*.tsbuildinfo
 .env
 .env.*
 !.env.example

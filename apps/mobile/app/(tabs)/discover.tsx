@@ -10,7 +10,10 @@ import { ProductCard } from "../../components/product";
 import { Reveal } from "../../components/motion";
 import { useDemoRefresh } from "../../hooks/useDemoRefresh";
 import { demoBrands, searchCatalog, toProductCard } from "../../lib/catalog";
-import { computeGarmentMatches, diversifyGarmentMatches } from "../../lib/garmentCompare";
+import {
+  computeGarmentMatches,
+  diversifyGarmentMatches,
+} from "@rober/matching";
 import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 

@@ -10,7 +10,7 @@ import { demoCatalog } from "../../lib/catalog";
 import {
   computeGarmentMatches,
   diversifyGarmentMatches,
-} from "../../lib/garmentCompare";
+} from "@rober/matching";
 import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 

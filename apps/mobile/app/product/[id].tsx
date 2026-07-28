@@ -42,7 +42,7 @@ import {
   toProductCard,
 } from "../../lib/catalog";
 import { summarizeProductFit } from "../../lib/fitEngine";
-import { computeGarmentMatches } from "../../lib/garmentCompare";
+import { computeGarmentMatches } from "@rober/matching";
 import { useDemoStore } from "../../stores/useDemoStore";
 import { useThemeTokens } from "../../theme/useThemeTokens";
 

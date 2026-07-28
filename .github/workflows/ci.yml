@@ -6,9 +6,32 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
-  verify:
+  secrets:
+    name: Secret scan
     runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+
+  verify:
+    name: Verify workspaces
+    runs-on: ubuntu-latest
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
+      SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
+      SERPER_API_KEY: ci-placeholder-serper-key
+      OPENAI_API_KEY: ci-placeholder-openai-key
+      SENTRY_DSN: https://public@example.ingest.sentry.io/1
+      NEXT_PUBLIC_POSTHOG_KEY: ci-placeholder-posthog-key
+      CRON_SECRET: ci-placeholder-cron-secret
+      ADMIN_EMAILS: ci@example.com
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -16,6 +39,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - run: npm run audit:high
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
+      - run: npm run web:build
