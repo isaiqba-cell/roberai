@@ -225,6 +225,40 @@ export type Database = {
         };
         Relationships: [];
       };
+      garment_reference_catalog: {
+        Row: {
+          id: string;
+          brand_slug: string;
+          model_name: string;
+          size_label: string;
+          category: "jeans" | "chinos" | "pants";
+          canonical_spec: Json;
+          status: PublicationStatus;
+          origin: CatalogOrigin;
+          size_chart_source_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          brand_slug: string;
+          model_name: string;
+          size_label: string;
+          category?: "jeans" | "chinos" | "pants";
+          canonical_spec: Json;
+          status?: PublicationStatus;
+          origin?: CatalogOrigin;
+          size_chart_source_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          model_name?: string;
+          canonical_spec?: Json;
+          status?: PublicationStatus;
+          origin?: CatalogOrigin;
+          size_chart_source_id?: string | null;
+        };
+        Relationships: [];
+      };
       products: {
         Row: {
           id: string;
@@ -384,6 +418,10 @@ export type Database = {
       merge_guest_anchors: {
         Args: { p_anchors: Json };
         Returns: string[];
+      };
+      set_active_anchor: {
+        Args: { p_anchor_id: string };
+        Returns: boolean;
       };
     };
     Enums: Record<string, never>;

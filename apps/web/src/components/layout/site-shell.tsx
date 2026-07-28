@@ -17,7 +17,7 @@ export function SiteShell({ children }: { children: ReactNode }) {
     <div className="min-h-screen bg-background text-foreground">
       <a
         href="#main-content"
-        className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-md bg-primary px-4 py-3 font-sans text-sm font-bold text-primary-foreground transition-transform focus:translate-y-0"
+        className="fixed left-4 top-4 z-[100] -translate-y-24 rounded-md bg-primary px-4 py-3 font-sans text-sm font-bold text-primary-foreground transition-transform focus-visible:translate-y-0"
       >
         Skip to content
       </a>

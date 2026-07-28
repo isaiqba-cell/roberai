@@ -74,18 +74,10 @@ export type JeansFitFamily =
   | "workwear-straight";
 
 export type JeansRiseBucket =
-  | "at-waist"
-  | "mid-rise"
-  | "slightly-below-waist"
-  | "low-rise"
-  | "unknown";
+  "at-waist" | "mid-rise" | "slightly-below-waist" | "low-rise" | "unknown";
 
 export type JeansRoomLevel =
-  | "slim"
-  | "regular"
-  | "regular-plus"
-  | "relaxed"
-  | "loose";
+  "slim" | "regular" | "regular-plus" | "relaxed" | "loose";
 
 export type JeansLegBehavior =
   | "straight"
@@ -257,8 +249,7 @@ export const jeansSizeChartSources: JeansSizeChartSource[] = [
     brandName: "Levi's",
     brandSlug: "levis",
     gender: "men",
-    sourceUrl:
-      "https://www.levi.com/US/en_US/features/men-jeans-guide",
+    sourceUrl: "https://www.levi.com/US/en_US/features/men-jeans-guide",
     scrapedAt,
     sourceNote:
       "Official Levi's men's jeans guide used as the anchor fit family map for 501, 505, 511, 514, 541, and 550.",
@@ -990,7 +981,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
       stretchProfile: "low-stretch",
       constructionProfile: "everyday-denim",
       bootCompatibility: "some",
-      styleNotes: "Roomier straight alternative for users who like 501 but want more ease.",
+      styleNotes:
+        "Roomier straight alternative for users who like 501 but want more ease.",
     },
   },
   {
@@ -1015,7 +1007,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
       stretchProfile: "medium-stretch",
       constructionProfile: "everyday-denim",
       bootCompatibility: "no",
-      styleNotes: "Cleaner slim progression when a straight fit feels too boxy.",
+      styleNotes:
+        "Cleaner slim progression when a straight fit feels too boxy.",
     },
   },
   {
@@ -1065,7 +1058,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
       stretchProfile: "medium-stretch",
       constructionProfile: "performance-denim",
       bootCompatibility: "no",
-      styleNotes: "Safer when straight jeans are tight through athletic thighs.",
+      styleNotes:
+        "Safer when straight jeans are tight through athletic thighs.",
     },
   },
   {
@@ -1098,7 +1092,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
     brandName: "Range Standard",
     brandSlug: "wrangler",
     styleName: "Range Trail Original Fit",
-    officialSignal: "Sits at waist, easy through seat/thigh/knee, fits over boots.",
+    officialSignal:
+      "Sits at waist, easy through seat/thigh/knee, fits over boots.",
     priceBand: "$",
     priceCents: 6900,
     bestLeviAnchor: "501",
@@ -1115,7 +1110,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
       stretchProfile: "rigid",
       constructionProfile: "workwear-denim",
       bootCompatibility: "yes",
-      styleNotes: "Closest heritage/workwear analog when a 501 user wears boots.",
+      styleNotes:
+        "Closest heritage/workwear analog when a 501 user wears boots.",
     },
   },
   {
@@ -1123,7 +1119,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
     brandName: "Range Standard",
     brandSlug: "wrangler",
     styleName: "Range Trail Regular Fit",
-    officialSignal: "Regular through seat and thigh, sits at waist, fits over boots.",
+    officialSignal:
+      "Regular through seat and thigh, sits at waist, fits over boots.",
     priceBand: "$",
     priceCents: 6900,
     bestLeviAnchor: "505",
@@ -1190,7 +1187,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
       stretchProfile: "rigid",
       constructionProfile: "heritage-denim",
       bootCompatibility: "some",
-      styleNotes: "Strong 501 analog when the user wants 100% cotton structure.",
+      styleNotes:
+        "Strong 501 analog when the user wants 100% cotton structure.",
     },
   },
   {
@@ -1215,7 +1213,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
       stretchProfile: "performance-stretch",
       constructionProfile: "performance-denim",
       bootCompatibility: "some",
-      styleNotes: "Best if the user likes the 501/505 shape but wants more stretch.",
+      styleNotes:
+        "Best if the user likes the 501/505 shape but wants more stretch.",
     },
   },
   {
@@ -1223,7 +1222,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
     brandName: "Dickies",
     brandSlug: "dickies",
     styleName: "Relaxed Fit Carpenter Jeans",
-    officialSignal: "Relaxed through seat and thighs, straight leg, slightly below waist.",
+    officialSignal:
+      "Relaxed through seat and thighs, straight leg, slightly below waist.",
     priceBand: "$",
     priceCents: 5999,
     bestLeviAnchor: "550",
@@ -1248,7 +1248,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
     brandName: "Dickies",
     brandSlug: "dickies",
     styleName: "FLEX Regular Fit 5-Pocket Jeans",
-    officialSignal: "Regular utility silhouette with stretch-friendly construction.",
+    officialSignal:
+      "Regular utility silhouette with stretch-friendly construction.",
     priceBand: "$",
     priceCents: 5499,
     bestLeviAnchor: "514",
@@ -1290,7 +1291,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
       stretchProfile: "medium-stretch",
       constructionProfile: "workwear-denim",
       bootCompatibility: "no",
-      styleNotes: "Workwear slim progression when 501 feels too wide below the knee.",
+      styleNotes:
+        "Workwear slim progression when 501 feels too wide below the knee.",
     },
   },
   {
@@ -1323,7 +1325,8 @@ const rawJeansTranslationStyles: Omit<JeansTranslationStyle, "spec">[] = [
     brandName: "Dockers",
     brandSlug: "dockers",
     styleName: "Workday Classic Fit",
-    officialSignal: "Straight opening with generous room through hip and thigh.",
+    officialSignal:
+      "Straight opening with generous room through hip and thigh.",
     priceBand: "$$",
     priceCents: 7900,
     bestLeviAnchor: "505",
@@ -1445,7 +1448,9 @@ const roomLevelRank: Record<JeansRoomLevel, number> = {
   loose: 5,
 };
 
-function deriveGarmentSpecFromTaxonomy(taxonomy: JeansFitTaxonomy): GarmentSpec {
+function deriveGarmentSpecFromTaxonomy(
+  taxonomy: JeansFitTaxonomy,
+): GarmentSpec {
   const thighDelta = (roomLevelRank[taxonomy.thighRoom] - 2) * 2.4;
   const thighCm = round(baselineThighCm + thighDelta, 1);
   const hemCm = hemBehaviorCm[taxonomy.hemBehavior];
@@ -1486,7 +1491,8 @@ export function resolveFavoriteJeans(
     sizeLabel: parsedSize.sizeLabel,
     ...(normalizedInseam !== undefined ? { inseamIn: normalizedInseam } : {}),
   };
-  const entry = findEntry(normalizedInput) ?? findEntry(defaultFavoriteJeansInput);
+  const entry =
+    findEntry(normalizedInput) ?? findEntry(defaultFavoriteJeansInput);
   if (!entry) {
     throw new Error("No favorite jeans entry available");
   }
@@ -1636,9 +1642,7 @@ export function getJeansTranslationStyle(styleId: string) {
   return jeansTranslationStyles.find((style) => style.id === styleId);
 }
 
-export function translateFavoriteJeansFit(
-  input: JeansTranslationInput = {},
-): {
+export function translateFavoriteJeansFit(input: JeansTranslationInput = {}): {
   anchor: JeansTranslationStyle;
   recommendedSize: string;
   recommendations: JeansTranslationRecommendation[];
@@ -1687,7 +1691,8 @@ export function generateJeansCatalogProducts(): ProductRecord[] {
       (entry) => entry.sourceId === definition.sourceId,
     );
     const color = definition.colors[0] ?? "indigo";
-    const subcategory = "subcategory" in definition ? definition.subcategory : "jeans";
+    const subcategory =
+      "subcategory" in definition ? definition.subcategory : "jeans";
     const product: ProductRecord = {
       id: definition.id,
       merchantName: `${brand.name} Direct`,
@@ -1747,7 +1752,8 @@ export function getJeansIndexStats(): JeansIndexStats {
   const prices = products.map((product) => product.priceCents);
   return {
     chartSources: jeansSizeChartSources.length,
-    benchmarkBrands: new Set(products.map((product) => product.brand.slug)).size,
+    benchmarkBrands: new Set(products.map((product) => product.brand.slug))
+      .size,
     productStyles: products.length,
     fitReadyVariants: products.reduce(
       (total, product) =>
@@ -1820,30 +1826,64 @@ function aeCurvyEntries(): JeansSizeChartEntry[] {
 
 const brandConstructionProfile: Record<
   string,
-  { thighDeltaCm: number; riseBucket: JeansRiseBucket; legOpeningDeltaCm: number }
+  {
+    thighDeltaCm: number;
+    riseBucket: JeansRiseBucket;
+    legOpeningDeltaCm: number;
+  }
 > = {
   levis: { thighDeltaCm: 0, riseBucket: "at-waist", legOpeningDeltaCm: 0 },
-  madewell: { thighDeltaCm: -1.2, riseBucket: "mid-rise", legOpeningDeltaCm: -0.8 },
+  madewell: {
+    thighDeltaCm: -1.2,
+    riseBucket: "mid-rise",
+    legOpeningDeltaCm: -0.8,
+  },
   lee: { thighDeltaCm: 1, riseBucket: "mid-rise", legOpeningDeltaCm: 0.3 },
-  wrangler: { thighDeltaCm: 2.6, riseBucket: "at-waist", legOpeningDeltaCm: 2.4 },
-  dickies: { thighDeltaCm: 1.8, riseBucket: "slightly-below-waist", legOpeningDeltaCm: 1.2 },
-  dockers: { thighDeltaCm: 0.4, riseBucket: "mid-rise", legOpeningDeltaCm: 0.6 },
-  "old-navy": { thighDeltaCm: 0.6, riseBucket: "mid-rise", legOpeningDeltaCm: 0.4 },
-  "american-eagle": { thighDeltaCm: 2.2, riseBucket: "low-rise", legOpeningDeltaCm: 1.6 },
+  wrangler: {
+    thighDeltaCm: 2.6,
+    riseBucket: "at-waist",
+    legOpeningDeltaCm: 2.4,
+  },
+  dickies: {
+    thighDeltaCm: 1.8,
+    riseBucket: "slightly-below-waist",
+    legOpeningDeltaCm: 1.2,
+  },
+  dockers: {
+    thighDeltaCm: 0.4,
+    riseBucket: "mid-rise",
+    legOpeningDeltaCm: 0.6,
+  },
+  "old-navy": {
+    thighDeltaCm: 0.6,
+    riseBucket: "mid-rise",
+    legOpeningDeltaCm: 0.4,
+  },
+  "american-eagle": {
+    thighDeltaCm: 2.2,
+    riseBucket: "low-rise",
+    legOpeningDeltaCm: 1.6,
+  },
 };
 
 // Construction deltas are deliberately wide — real silhouettes differ by
 // several cm through the thigh, and the score spread between a straight
 // match (90s) and a slim/wide alternative (60s-70s) is what the whole
 // product communicates.
-const cutAdjustCm: Record<"slim" | "regular" | "relaxed" | "oversized", number> = {
+const cutAdjustCm: Record<
+  "slim" | "regular" | "relaxed" | "oversized",
+  number
+> = {
   slim: -4.2,
   regular: 0,
   relaxed: 3.4,
   oversized: 6.6,
 };
 
-const cutToSilhouette: Record<"slim" | "regular" | "relaxed" | "oversized", SilhouetteCut> = {
+const cutToSilhouette: Record<
+  "slim" | "regular" | "relaxed" | "oversized",
+  SilhouetteCut
+> = {
   slim: "slim",
   regular: "straight",
   relaxed: "relaxed",
@@ -1855,9 +1895,16 @@ function deriveCatalogGarmentSpec(
   cut: "slim" | "regular" | "relaxed" | "oversized",
   stretchPct: number,
 ): Omit<GarmentSpec, "waistCm" | "inseamCm"> {
-  const profile = brandConstructionProfile[brandSlug] ?? brandConstructionProfile.levis!;
-  const thighCm = round(baselineThighCm + profile.thighDeltaCm + cutAdjustCm[cut], 1);
-  const hemCm = round(19 + profile.legOpeningDeltaCm + cutAdjustCm[cut] * 0.8, 1);
+  const profile =
+    brandConstructionProfile[brandSlug] ?? brandConstructionProfile.levis!;
+  const thighCm = round(
+    baselineThighCm + profile.thighDeltaCm + cutAdjustCm[cut],
+    1,
+  );
+  const hemCm = round(
+    19 + profile.legOpeningDeltaCm + cutAdjustCm[cut] * 0.8,
+    1,
+  );
   return {
     thighCm,
     riseCm: riseBucketCm[profile.riseBucket],
@@ -2109,10 +2156,14 @@ const labelCopy: Record<JeansTranslationRecommendation["label"], string> = {
 };
 
 export function parseJeansSizeInput(sizeLabel: string) {
-  const normalized = sizeLabel.trim().toLowerCase().replace(/\s+/g, "");
-  const match = normalized.match(/^([0-9.]+)(?:x(\d{2}))?$/);
+  const normalized = sizeLabel
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, "")
+    .replace(/[×/]/g, "X");
+  const match = normalized.match(/^W?(\d+(?:\.\d+)?)(?:(?:X|L)L?(\d{2}))?$/);
   return {
-    sizeLabel: match?.[1]?.toUpperCase() ?? sizeLabel.trim(),
+    sizeLabel: match?.[1] ?? sizeLabel.trim().toUpperCase(),
     ...(match?.[2] ? { inseamIn: Number(match[2]) } : {}),
   };
 }

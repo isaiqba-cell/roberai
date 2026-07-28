@@ -174,10 +174,52 @@ async function main() {
     const mergedAnchor = ownAnchors.data.find(
       ({ client_anchor_id }) => client_anchor_id === clientAnchorId,
     );
+    const secondaryAnchor = ownAnchors.data.find(
+      ({ client_anchor_id }) => client_anchor_id === secondaryAnchorId,
+    );
     assert(mergedAnchor, "Merged anchor could not be found by its client ID.");
+    assert(
+      secondaryAnchor,
+      "Secondary anchor could not be found by its client ID.",
+    );
     assert(
       mergedAnchor.tagged_size === "32x34",
       "Repeated guest-anchor merge did not update the existing row.",
+    );
+
+    const switchOwnAnchor = await accountA.client.rpc("set_active_anchor", {
+      p_anchor_id: secondaryAnchor.id,
+    });
+    assert(
+      !switchOwnAnchor.error && switchOwnAnchor.data === true,
+      "Owner could not switch the active anchor.",
+    );
+    const anchorsAfterSwitch = await accountA.client
+      .from("user_anchor_items")
+      .select("id, active")
+      .in("id", [mergedAnchor.id, secondaryAnchor.id]);
+    assert(
+      !anchorsAfterSwitch.error &&
+        anchorsAfterSwitch.data.filter(({ active }) => active).length === 1 &&
+        anchorsAfterSwitch.data.find(({ id }) => id === secondaryAnchor.id)
+          ?.active === true,
+      "Active-anchor switch did not leave exactly the requested pair active.",
+    );
+
+    const anonymousSwitch = await anonymous.rpc("set_active_anchor", {
+      p_anchor_id: secondaryAnchor.id,
+    });
+    assert(
+      Boolean(anonymousSwitch.error),
+      "Anonymous users can invoke the active-anchor RPC.",
+    );
+
+    const crossAnchorSwitch = await accountB.client.rpc("set_active_anchor", {
+      p_anchor_id: secondaryAnchor.id,
+    });
+    assert(
+      Boolean(crossAnchorSwitch.error),
+      "RLS allowed another user to activate an anchor.",
     );
 
     const crossProfileRead = await accountB.client
@@ -289,6 +331,9 @@ async function main() {
     );
     process.stdout.write(
       "Guest merge verified: anonymous use is rejected and retries are idempotent.\n",
+    );
+    process.stdout.write(
+      "Anchor switching verified: owners can switch and cross-user calls are rejected.\n",
     );
     process.stdout.write("RLS verified: cross-user profiles are private.\n");
     process.stdout.write(

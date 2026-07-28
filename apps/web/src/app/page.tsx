@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Check, Ruler } from "lucide-react";
+import { Check, Ruler } from "lucide-react";
 
 import { Reveal, RevealGroup, RevealItem } from "@/components/motion/reveal";
+import { AnchorStart } from "@/components/onboarding/anchor-start";
 import { Button } from "@/components/ui/button";
-import { ConfidenceBadge } from "@/components/ui/confidence-badge";
+import { getReferenceBrands } from "@/lib/reference/server";
 
 const denimImages = [
   {
@@ -21,7 +22,9 @@ const denimImages = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const brands = await getReferenceBrands();
+
   return (
     <div className="mx-auto max-w-shell px-5 py-12 lg:px-8 lg:py-16">
       <Reveal>
@@ -34,7 +37,9 @@ export default function HomePage() {
               Start with the jeans you already trust.
             </h1>
           </div>
-          <ConfidenceBadge confidence={96} />
+          <p className="font-sans text-sm text-muted-foreground">
+            {brands.length} reference brands indexed
+          </p>
         </div>
       </Reveal>
 
@@ -50,13 +55,10 @@ export default function HomePage() {
             Brand, style, and tagged size are enough to establish a fit anchor.
             Rober uses that garment as the baseline for every recommendation.
           </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild>
-              <Link href="/matches">
-                View matches
-                <ArrowRight aria-hidden="true" />
-              </Link>
-            </Button>
+          <div className="mt-8">
+            <AnchorStart brands={brands} />
+          </div>
+          <div className="mt-5 flex flex-wrap gap-3">
             <Button asChild variant="outline">
               <Link href="/playground">View system</Link>
             </Button>
