@@ -8,6 +8,26 @@ export type Json =
 
 type PublicationStatus = "published" | "needs_review" | "rejected";
 type CatalogOrigin = "seeded" | "scraped" | "manual";
+type SourceKind = "official" | "retailer" | "editorial" | "unknown";
+type MeasurementBasis = "garment" | "body" | "unknown";
+type MeasurementUnit = "cm" | "in" | "mixed" | "unknown";
+type JobStatus =
+  "pending" | "processing" | "completed" | "failed" | "cancelled";
+type JobRow = {
+  id: string;
+  type: string;
+  payload: Json;
+  status: JobStatus;
+  attempts: number;
+  max_attempts: number;
+  run_after: string;
+  last_error: string | null;
+  locked_at: string | null;
+  locked_by: string | null;
+  dedupe_key: string | null;
+  created_at: string;
+  updated_at: string;
+};
 
 export type Database = {
   public: {
@@ -136,6 +156,8 @@ export type Database = {
           model_name: string | null;
           category: string;
           source_url: string;
+          source_domain: string;
+          source_kind: SourceKind;
           raw_snapshot_path: string | null;
           fetch_method: "seed" | "http" | "manual";
           parse_method: "seed" | "deterministic" | "llm" | "manual";
@@ -143,7 +165,15 @@ export type Database = {
           status: PublicationStatus;
           content_hash: string;
           fetched_at: string;
+          last_seen_at: string;
           origin: CatalogOrigin;
+          measurement_basis: MeasurementBasis;
+          detected_unit: MeasurementUnit;
+          needs_review: boolean;
+          version: number;
+          supersedes_source_id: string | null;
+          takedown_at: string | null;
+          takedown_reason: string | null;
           metadata_json: Json;
           created_at: string;
           updated_at: string;
@@ -154,6 +184,8 @@ export type Database = {
           model_name?: string | null;
           category?: string;
           source_url: string;
+          source_domain?: string;
+          source_kind?: SourceKind;
           raw_snapshot_path?: string | null;
           fetch_method: "seed" | "http" | "manual";
           parse_method: "seed" | "deterministic" | "llm" | "manual";
@@ -161,7 +193,15 @@ export type Database = {
           status?: PublicationStatus;
           content_hash: string;
           fetched_at: string;
+          last_seen_at?: string;
           origin?: CatalogOrigin;
+          measurement_basis?: MeasurementBasis;
+          detected_unit?: MeasurementUnit;
+          needs_review?: boolean;
+          version?: number;
+          supersedes_source_id?: string | null;
+          takedown_at?: string | null;
+          takedown_reason?: string | null;
           metadata_json?: Json;
           created_at?: string;
           updated_at?: string;
@@ -170,6 +210,13 @@ export type Database = {
           status?: PublicationStatus;
           confidence?: number;
           raw_snapshot_path?: string | null;
+          source_kind?: SourceKind;
+          measurement_basis?: MeasurementBasis;
+          detected_unit?: MeasurementUnit;
+          needs_review?: boolean;
+          last_seen_at?: string;
+          takedown_at?: string | null;
+          takedown_reason?: string | null;
           metadata_json?: Json;
           updated_at?: string;
         };
@@ -371,39 +418,125 @@ export type Database = {
         };
         Relationships: [];
       };
-      jobs: {
+      retailer_links: {
         Row: {
           id: string;
-          type: string;
-          payload: Json;
-          status:
-            "pending" | "processing" | "completed" | "failed" | "cancelled";
-          attempts: number;
-          max_attempts: number;
-          run_after: string;
-          last_error: string | null;
+          product_id: string | null;
+          style_id: string | null;
+          merchant_name: string;
+          retailer_domain: string;
+          url_template: string;
+          source_url: string | null;
+          status: PublicationStatus;
+          origin: CatalogOrigin;
+          utm_defaults: Json;
+          size_chart_source_id: string | null;
+          canonical_url: string | null;
+          price_cents: number | null;
+          currency: string;
+          confidence: number;
+          content_hash: string | null;
+          fetched_at: string | null;
+          metadata_json: Json;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
-          type: string;
-          payload?: Json;
-          status?:
-            "pending" | "processing" | "completed" | "failed" | "cancelled";
-          attempts?: number;
-          max_attempts?: number;
-          run_after?: string;
-          last_error?: string | null;
+          product_id?: string | null;
+          style_id?: string | null;
+          merchant_name: string;
+          retailer_domain: string;
+          url_template: string;
+          source_url?: string | null;
+          status?: PublicationStatus;
+          origin?: CatalogOrigin;
+          utm_defaults?: Json;
+          size_chart_source_id?: string | null;
+          canonical_url?: string | null;
+          price_cents?: number | null;
+          currency?: string;
+          confidence?: number;
+          content_hash?: string | null;
+          fetched_at?: string | null;
+          metadata_json?: Json;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
-          status?:
-            "pending" | "processing" | "completed" | "failed" | "cancelled";
+          product_id?: string | null;
+          style_id?: string | null;
+          merchant_name?: string;
+          retailer_domain?: string;
+          url_template?: string;
+          source_url?: string | null;
+          status?: PublicationStatus;
+          origin?: CatalogOrigin;
+          utm_defaults?: Json;
+          size_chart_source_id?: string | null;
+          canonical_url?: string | null;
+          price_cents?: number | null;
+          currency?: string;
+          confidence?: number;
+          content_hash?: string | null;
+          fetched_at?: string | null;
+          metadata_json?: Json;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      ingestion_domain_blocks: {
+        Row: {
+          domain: string;
+          reason: string;
+          source_id: string | null;
+          blocked_by: string | null;
+          blocked_at: string;
+          metadata_json: Json;
+        };
+        Insert: {
+          domain: string;
+          reason: string;
+          source_id?: string | null;
+          blocked_by?: string | null;
+          blocked_at?: string;
+          metadata_json?: Json;
+        };
+        Update: {
+          reason?: string;
+          source_id?: string | null;
+          blocked_by?: string | null;
+          blocked_at?: string;
+          metadata_json?: Json;
+        };
+        Relationships: [];
+      };
+      jobs: {
+        Row: JobRow;
+        Insert: {
+          id?: string;
+          type: string;
+          payload?: Json;
+          status?: JobStatus;
+          attempts?: number;
+          max_attempts?: number;
+          run_after?: string;
+          last_error?: string | null;
+          locked_at?: string | null;
+          locked_by?: string | null;
+          dedupe_key?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          status?: JobStatus;
           attempts?: number;
           run_after?: string;
           last_error?: string | null;
+          locked_at?: string | null;
+          locked_by?: string | null;
+          dedupe_key?: string | null;
+          payload?: Json;
           updated_at?: string;
         };
         Relationships: [];
@@ -421,6 +554,22 @@ export type Database = {
       };
       set_active_anchor: {
         Args: { p_anchor_id: string };
+        Returns: boolean;
+      };
+      claim_ingestion_jobs: {
+        Args: { p_worker_id: string; p_limit?: number };
+        Returns: JobRow[];
+      };
+      enqueue_weekly_chart_refreshes: {
+        Args: { p_limit?: number };
+        Returns: number;
+      };
+      publish_size_chart_extraction: {
+        Args: { p_source: Json; p_rows: Json };
+        Returns: string;
+      };
+      takedown_size_chart_source: {
+        Args: { p_source_id: string; p_reason: string };
         Returns: boolean;
       };
     };

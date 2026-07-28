@@ -25,6 +25,7 @@
     "test:auth:live": "tsx scripts/supabase/verify-auth-browser.ts",
     "test:auth:providers": "tsx scripts/supabase/verify-auth-providers.ts",
     "test:rls": "tsx scripts/supabase/verify-rls.ts",
+    "test:ingestion:live": "tsx scripts/supabase/verify-ingestion.ts",
     "test:stage2:live": "npm run test:auth:providers && npm run test:rls && npm run test:auth:live",
     "seed": "tsx scripts/seed/generate-demo-catalog.ts",
     "seed:jeans": "tsx scripts/seed/generate-jeans-size-chart-database.ts",
