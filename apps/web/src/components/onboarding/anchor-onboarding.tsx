@@ -71,6 +71,8 @@ export function AnchorOnboarding({
   const [resolving, setResolving] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [customModelMode, setCustomModelMode] = useState(false);
+  const [customSizeMode, setCustomSizeMode] = useState(false);
   const resetHandled = useRef(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -156,6 +158,18 @@ export function AnchorOnboarding({
     [draft?.modelName, models],
   );
   const sizes = selectedModel?.sizes ?? [];
+  const showCustomModel =
+    customModelMode ||
+    Boolean(
+      draft?.modelName && models.length > 0 && selectedModel === undefined,
+    );
+  const showCustomSize =
+    customSizeMode ||
+    Boolean(
+      draft?.sizeLabel &&
+        sizes.length > 0 &&
+        !sizes.includes(draft.sizeLabel),
+    );
 
   async function resolvePair(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -357,55 +371,144 @@ export function AnchorOnboarding({
               <div className="grid gap-6 sm:grid-cols-2">
                 <label className="block font-sans text-sm font-bold">
                   Model
-                  <input
-                    list="reference-models"
-                    value={draft.modelName}
-                    onChange={(event) =>
-                      updateDraft({
-                        ...draft,
-                        modelName: event.target.value,
-                        sizeLabel: "",
-                        resolution: undefined,
-                      })
-                    }
-                    placeholder={
-                      models.length
-                        ? "Choose or type a model"
-                        : "e.g. Regular Fit"
-                    }
-                    autoComplete="off"
-                    required
-                    className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 font-sans text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                  <datalist id="reference-models">
-                    {models.map((model) => (
-                      <option key={model.name} value={model.name} />
-                    ))}
-                  </datalist>
+                  {modelsLoading ? (
+                    <Skeleton className="mt-2 h-12 w-full" />
+                  ) : models.length ? (
+                    <>
+                      <select
+                        aria-label="Favorite jeans model"
+                        value={
+                          showCustomModel ? "__other" : draft.modelName
+                        }
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          const custom = value === "__other";
+                          setCustomModelMode(custom);
+                          setCustomSizeMode(false);
+                          updateDraft({
+                            ...draft,
+                            modelName: custom ? "" : value,
+                            sizeLabel: "",
+                            resolution: undefined,
+                          });
+                        }}
+                        required
+                        className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 font-sans text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <option value="" disabled>
+                          Choose a model
+                        </option>
+                        {models.map((model) => (
+                          <option key={model.name} value={model.name}>
+                            {model.name}
+                          </option>
+                        ))}
+                        <option value="__other">My pair is not listed</option>
+                      </select>
+                      {showCustomModel ? (
+                        <input
+                          aria-label="Model name on the label"
+                          value={draft.modelName}
+                          onChange={(event) =>
+                            updateDraft({
+                              ...draft,
+                              modelName: event.target.value,
+                              sizeLabel: "",
+                              resolution: undefined,
+                            })
+                          }
+                          placeholder="Type the model from the label"
+                          autoComplete="off"
+                          required
+                          className="mt-3 h-12 w-full rounded-md border border-input bg-background px-4 font-sans text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                      ) : null}
+                    </>
+                  ) : (
+                    <input
+                      aria-label="Model name on the label"
+                      value={draft.modelName}
+                      onChange={(event) =>
+                        updateDraft({
+                          ...draft,
+                          modelName: event.target.value,
+                          sizeLabel: "",
+                          resolution: undefined,
+                        })
+                      }
+                      placeholder="e.g. Regular Fit"
+                      autoComplete="off"
+                      required
+                      className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 font-sans text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  )}
                 </label>
 
                 <label className="block font-sans text-sm font-bold">
                   Tagged size
-                  <input
-                    list="reference-sizes"
-                    value={draft.sizeLabel}
-                    onChange={(event) =>
-                      updateDraft({
-                        ...draft,
-                        sizeLabel: event.target.value,
-                        resolution: undefined,
-                      })
-                    }
-                    placeholder="32x32 or W32 L32"
-                    autoComplete="off"
-                    required
-                    className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 font-sans text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  />
-                  <datalist id="reference-sizes">
-                    {sizes.map((size) => (
-                      <option key={size} value={size} />
-                    ))}
-                  </datalist>
+                  {sizes.length ? (
+                    <>
+                      <select
+                        aria-label="Tagged jeans size"
+                        value={showCustomSize ? "__other" : draft.sizeLabel}
+                        onChange={(event) => {
+                          const value = event.target.value;
+                          const custom = value === "__other";
+                          setCustomSizeMode(custom);
+                          updateDraft({
+                            ...draft,
+                            sizeLabel: custom ? "" : value,
+                            resolution: undefined,
+                          });
+                        }}
+                        required
+                        className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 font-sans text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      >
+                        <option value="" disabled>
+                          Choose the tagged size
+                        </option>
+                        {sizes.map((size) => (
+                          <option key={size} value={size}>
+                            {size}
+                          </option>
+                        ))}
+                        <option value="__other">My size is not listed</option>
+                      </select>
+                      {showCustomSize ? (
+                        <input
+                          aria-label="Other tagged jeans size"
+                          value={draft.sizeLabel}
+                          onChange={(event) =>
+                            updateDraft({
+                              ...draft,
+                              sizeLabel: event.target.value,
+                              resolution: undefined,
+                            })
+                          }
+                          placeholder="32x32 or W32 L32"
+                          autoComplete="off"
+                          required
+                          className="mt-3 h-12 w-full rounded-md border border-input bg-background px-4 font-sans text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        />
+                      ) : null}
+                    </>
+                  ) : (
+                    <input
+                      aria-label="Tagged jeans size"
+                      value={draft.sizeLabel}
+                      onChange={(event) =>
+                        updateDraft({
+                          ...draft,
+                          sizeLabel: event.target.value,
+                          resolution: undefined,
+                        })
+                      }
+                      placeholder="32x32 or W32 L32"
+                      autoComplete="off"
+                      required
+                      className="mt-2 h-12 w-full rounded-md border border-input bg-background px-4 font-sans text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    />
+                  )}
                 </label>
               </div>
 

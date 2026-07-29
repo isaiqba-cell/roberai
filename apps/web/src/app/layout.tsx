@@ -10,10 +10,20 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Rober | Find your fit",
+    default: "Rober | Know your size in every brand",
     template: "%s | Rober",
   },
-  description: "A fit-first denim marketplace.",
+  description:
+    "Fit translation for denim, grounded in the pair you already trust.",
+  applicationName: "Rober",
+  category: "shopping",
+  formatDetection: { telephone: false },
+  twitter: {
+    card: "summary_large_image",
+    title: "Rober | Know your size in every brand",
+    description:
+      "Start with jeans that already fit. Rober tells you which size to buy next.",
+  },
 };
 
 export default function RootLayout({

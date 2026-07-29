@@ -12,8 +12,12 @@ async function chooseReference(
 ) {
   await page.getByRole("button", { name: input.brandButton }).click();
   await expect(page).toHaveURL(/\/onboarding\?step=details/);
-  await page.getByLabel("Model").fill(input.model);
-  await page.getByLabel("Tagged size").fill(input.size);
+  await page.getByLabel("Favorite jeans model").selectOption({
+    label: input.model,
+  });
+  await page.getByLabel("Tagged jeans size").selectOption({
+    label: input.size,
+  });
   if (input.fitNote) {
     await page.getByRole("button", { name: input.fitNote }).click();
   }
@@ -33,7 +37,7 @@ test("guest resolves, preserves, saves, and switches reference pairs", async ({
   await chooseReference(page, {
     brandButton: /Levi's.*6 indexed fits/,
     model: "505 Regular Straight",
-    size: "W32 L32",
+    size: "32x32",
     fitNote: "Fits perfectly",
   });
 
@@ -47,8 +51,10 @@ test("guest resolves, preserves, saves, and switches reference pairs", async ({
   ).toBeVisible();
 
   await page.getByRole("button", { name: "Back" }).click();
-  await expect(page.getByLabel("Model")).toHaveValue("505 Regular Straight");
-  await expect(page.getByLabel("Tagged size")).toHaveValue("W32 L32");
+  await expect(page.getByLabel("Favorite jeans model")).toHaveValue(
+    "505 Regular Straight",
+  );
+  await expect(page.getByLabel("Tagged jeans size")).toHaveValue("32x32");
   await page.getByRole("button", { name: "Confirm this pair" }).click();
   await page.getByRole("button", { name: "Find my matches" }).click();
 
@@ -91,8 +97,8 @@ test("unindexed brand completes honestly and queues ingestion", async ({
   await page.goto("/");
   await page.getByLabel("Favorite jeans brand").fill("Uniqlo");
   await page.getByRole("button", { name: "Continue" }).click();
-  await page.getByLabel("Model").fill("Regular Fit Jeans");
-  await page.getByLabel("Tagged size").fill("32x32");
+  await page.getByLabel("Model name on the label").fill("Regular Fit Jeans");
+  await page.getByLabel("Tagged jeans size").fill("32x32");
   await page.getByRole("button", { name: "Confirm this pair" }).click();
 
   await expect(page.getByText("We have not indexed Uniqlo yet")).toBeVisible();
@@ -125,7 +131,7 @@ test("mobile onboarding keeps every step framed at the top", async ({
   await chooseReference(page, {
     brandButton: /Levi's.*6 indexed fits/,
     model: "505 Regular Straight",
-    size: "W32 L32",
+    size: "32x32",
   });
 
   await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0);

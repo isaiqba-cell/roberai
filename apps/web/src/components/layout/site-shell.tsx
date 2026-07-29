@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Heart, Ruler } from "lucide-react";
+import { Heart, Ruler, Tags } from "lucide-react";
 import Link from "next/link";
 
 import { AccountMenu } from "@/components/layout/account-menu";
@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme/theme-toggle";
 
 const navLinks = [
   { href: "/matches", label: "Matches", icon: Ruler },
+  { href: "/brands", label: "Brands", icon: Tags },
   { href: "/saved", label: "Saved", icon: Heart },
 ];
 
@@ -71,10 +72,13 @@ export function SiteShell({ children }: { children: ReactNode }) {
               Fit translation for denim, grounded in the pair you already trust.
             </p>
           </div>
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-2">
             <CatalogStatusBadge />
-            <Link className="hover:text-foreground" href="/playground">
-              Playground
+            <Link className="hover:text-foreground" href="/privacy">
+              Privacy
+            </Link>
+            <Link className="hover:text-foreground" href="/terms">
+              Terms
             </Link>
           </div>
         </div>

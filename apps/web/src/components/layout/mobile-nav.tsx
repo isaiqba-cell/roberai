@@ -1,13 +1,14 @@
 "use client";
 
 import * as Dialog from "@radix-ui/react-dialog";
-import { Heart, Menu, Ruler, X } from "lucide-react";
+import { Heart, Menu, Ruler, Tags, X } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 
 const mobileLinks = [
   { href: "/matches", label: "Matches", icon: Ruler },
+  { href: "/brands", label: "Brands", icon: Tags },
   { href: "/saved", label: "Saved", icon: Heart },
 ];
 
