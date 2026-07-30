@@ -92,6 +92,7 @@ jobs:
         run: |
           set -euo pipefail
           supabase start -x realtime,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+          node scripts/ci/run-with-annotation.mjs "Supabase migration reset" supabase db reset --local --no-seed
           eval "$(supabase status -o env)"
           : "${API_URL:?Supabase status did not return API_URL}"
           : "${ANON_KEY:?Supabase status did not return ANON_KEY}"
