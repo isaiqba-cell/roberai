@@ -13,6 +13,24 @@ function assert(condition: unknown, message: string): asserts condition {
   }
 }
 
+async function waitForSchema(admin: SupabaseClient) {
+  let lastError: { code?: string; message: string } | null = null;
+
+  for (let attempt = 1; attempt <= 30; attempt += 1) {
+    const result = await admin.from("user_anchor_items").select("id").limit(1);
+    if (!result.error) return;
+    lastError = result.error;
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+  }
+
+  const detail = lastError
+    ? `${lastError.code ? `${lastError.code}: ` : ""}${lastError.message}`
+    : "unknown schema error";
+  throw new Error(
+    `RLS verification could not read the migrated schema after 30 seconds (${detail}).`,
+  );
+}
+
 async function createTestUser(
   admin: SupabaseClient,
   anonKey: string,
@@ -57,15 +75,7 @@ async function main() {
     auth: { autoRefreshToken: false, persistSession: false },
   });
 
-  const schemaCheck = await admin
-    .from("user_anchor_items")
-    .select("id")
-    .limit(1);
-  if (schemaCheck.error) {
-    throw new Error(
-      "RLS verification requires the Stage 2 migrations to be applied first.",
-    );
-  }
+  await waitForSchema(admin);
 
   let userA: User | undefined;
   let userB: User | undefined;
