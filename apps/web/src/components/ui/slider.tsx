@@ -38,7 +38,6 @@ export function Slider({
         ) : null}
       </div>
       <SliderPrimitive.Root
-        aria-label={label}
         className="relative flex h-6 w-full touch-none select-none items-center"
         min={min}
         max={max}

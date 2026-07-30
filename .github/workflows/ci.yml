@@ -23,6 +23,8 @@ jobs:
     name: Verify workspaces
     runs-on: ubuntu-latest
     env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_OPTIONS: --max-old-space-size=4096
       NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
       NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-placeholder-anon-key
       SUPABASE_SERVICE_ROLE_KEY: ci-placeholder-service-role-key
@@ -86,17 +88,21 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Start migrated local Supabase
         run: |
+          set -euo pipefail
           supabase start -x realtime,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
           eval "$(supabase status -o env)"
+          : "${API_URL:?Supabase status did not return API_URL}"
+          : "${ANON_KEY:?Supabase status did not return ANON_KEY}"
+          : "${SERVICE_ROLE_KEY:?Supabase status did not return SERVICE_ROLE_KEY}"
           {
             echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
             echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
           } >> "$GITHUB_ENV"
-      - name: Verify RLS and ingestion boundaries
-        run: |
-          npm run test:rls
-          npm run test:ingestion:live
+      - name: Verify RLS policies
+        run: npm run test:rls
+      - name: Verify ingestion boundaries
+        run: npm run test:ingestion:live
       - name: Verify browser auth and guest merge
         run: |
           npm --workspace @rober/web run dev -- --port 3000 > /tmp/rober-web.log 2>&1 &
