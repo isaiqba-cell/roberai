@@ -46,7 +46,8 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
-      - run: npm run web:build
+      - name: Build production web bundle
+        run: node scripts/ci/run-with-annotation.mjs "Production build" npm run web:build
       - run: npm run security:boundaries
 
   browser:
@@ -61,7 +62,8 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm --workspace @rober/web run test:browser
+      - name: Run browser acceptance
+        run: node scripts/ci/run-with-annotation.mjs "Browser acceptance" npm --workspace @rober/web run test:browser
 
   supabase-integration:
     name: RLS and auth integration
@@ -100,9 +102,9 @@ jobs:
             echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
           } >> "$GITHUB_ENV"
       - name: Verify RLS policies
-        run: npm run test:rls
+        run: node scripts/ci/run-with-annotation.mjs "RLS verification" npm run test:rls
       - name: Verify ingestion boundaries
-        run: npm run test:ingestion:live
+        run: node scripts/ci/run-with-annotation.mjs "Ingestion verification" npm run test:ingestion:live
       - name: Verify browser auth and guest merge
         run: |
           npm --workspace @rober/web run dev -- --port 3000 > /tmp/rober-web.log 2>&1 &

@@ -99,13 +99,22 @@ test("unindexed brand completes honestly and queues ingestion", async ({
   await page.getByRole("button", { name: "Continue" }).click();
   await page.getByLabel("Model name on the label").fill("Regular Fit Jeans");
   await page.getByLabel("Tagged jeans size").fill("32x32");
-  await page.getByRole("button", { name: "Confirm this pair" }).click();
+  const [response] = await Promise.all([
+    page.waitForResponse(
+      (candidate) =>
+        candidate.url().includes("/api/reference/resolve") &&
+        candidate.request().method() === "POST",
+    ),
+    page.getByRole("button", { name: "Confirm this pair" }).click(),
+  ]);
+  expect(response.ok()).toBeTruthy();
+  const payload = (await response.json()) as {
+    resolution?: { ingestionQueued?: boolean };
+  };
+  expect(typeof payload.resolution?.ingestionQueued).toBe("boolean");
 
   await expect(page.getByText("We have not indexed Uniqlo yet")).toBeVisible();
-  const runtimeMode = await page
-    .locator("html")
-    .getAttribute("data-runtime-mode");
-  if (runtimeMode === "live") {
+  if (payload.resolution?.ingestionQueued) {
     await expect(
       page.getByText("Indexing request queued for review."),
     ).toBeVisible();

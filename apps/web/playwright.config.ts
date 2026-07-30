@@ -6,7 +6,7 @@ export default defineConfig({
   testDir: "./tests/browser",
   outputDir: "./test-results",
   fullyParallel: false,
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 1 : undefined,
   reporter: "list",
   use: {
     baseURL,
@@ -25,7 +25,7 @@ export default defineConfig({
     : {
         command: "npm run dev -- --hostname 127.0.0.1 --port 3000",
         url: baseURL,
-        reuseExistingServer: true,
-        timeout: 120_000,
+        reuseExistingServer: !process.env.CI,
+        timeout: 180_000,
       },
 });

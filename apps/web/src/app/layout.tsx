@@ -42,7 +42,7 @@ export const metadata: Metadata = {
 export default async function RootLayout({
   children,
   panel,
-}: Readonly<{ children: ReactNode; panel?: ReactNode }>) {
+}: Readonly<{ children: ReactNode; panel: ReactNode }>) {
   // Strict nonce-based CSP requires a fresh server render for each request.
   await connection();
   const nonce = (await headers()).get("x-nonce") ?? undefined;
