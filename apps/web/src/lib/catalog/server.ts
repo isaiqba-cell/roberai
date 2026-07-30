@@ -7,6 +7,7 @@ import {
 } from "@rober/api-client";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { getMatchingCatalog } from "./matching-catalog";
 
 export type CatalogIndexStatus = {
   mode: "live" | "seed";
@@ -36,14 +37,12 @@ export async function getCatalogIndexStatus(): Promise<CatalogIndexStatus> {
     return seedStatus();
   }
 
-  const [brands, chartSources, products, variants] = await Promise.all([
-    supabase.from("brands").select("id", { count: "exact" }).limit(1),
+  const [catalog, chartSources] = await Promise.all([
+    getMatchingCatalog(),
     supabase.from("size_chart_sources").select("source_url").limit(1_000),
-    supabase.from("products").select("id", { count: "exact" }).limit(1),
-    supabase.from("product_variants").select("id", { count: "exact" }).limit(1),
   ]);
 
-  if (brands.error || chartSources.error || products.error || variants.error) {
+  if (chartSources.error) {
     if (process.env.NODE_ENV === "production") {
       throw new Error("The published catalog index could not be read.");
     }
@@ -51,12 +50,12 @@ export async function getCatalogIndexStatus(): Promise<CatalogIndexStatus> {
   }
 
   return {
-    mode: "live",
-    brands: brands.count ?? 0,
+    mode: catalog.mode,
+    brands: catalog.counts.brands,
     chartSources: new Set(
       (chartSources.data ?? []).map(({ source_url }) => source_url),
     ).size,
-    products: products.count ?? 0,
-    variants: variants.count ?? 0,
+    products: catalog.counts.products,
+    variants: catalog.counts.variants,
   };
 }

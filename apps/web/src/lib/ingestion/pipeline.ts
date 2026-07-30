@@ -47,6 +47,7 @@ const officialDomains: Record<string, string[]> = {
   dockers: ["dockers.com"],
   "old-navy": ["oldnavy.gap.com"],
   "american-eagle": ["ae.com"],
+  everlane: ["everlane.com"],
 };
 
 function toJson(value: unknown): Json {

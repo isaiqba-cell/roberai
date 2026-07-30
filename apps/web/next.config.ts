@@ -17,6 +17,15 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_SENTRY_DSN: process.env.SENTRY_DSN ?? "",
     NEXT_PUBLIC_SENTRY_RELEASE: sentryRelease,
   },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "www.everlane.com",
+        pathname: "/cdn/shop/files/**",
+      },
+    ],
+  },
   transpilePackages: [
     "@rober/api-client",
     "@rober/fit-engine",

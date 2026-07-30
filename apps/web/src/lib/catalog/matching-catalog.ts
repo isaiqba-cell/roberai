@@ -1,9 +1,6 @@
 import "server-only";
 
-import {
-  generateJeansCatalogProducts,
-  type ProductRecord,
-} from "@rober/api-client";
+import { generateJeansCatalogProducts } from "@rober/api-client";
 import type {
   CanonicalGarmentSpec,
   GarmentSpec,
@@ -14,20 +11,17 @@ import type { MatchProvenance } from "@/lib/matches/types";
 import { garmentSpecSchema, normalizeGarmentSpec } from "@/lib/reference/types";
 import type { Database, Json } from "@/lib/supabase/database.types";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import {
+  mapScrapedMatchingProducts,
+  type MatchingCatalogProduct,
+} from "./scraped-matching-products";
 
 type BrandRow = Database["public"]["Tables"]["brands"]["Row"];
 type ProductRow = Database["public"]["Tables"]["products"]["Row"];
 type VariantRow = Database["public"]["Tables"]["product_variants"]["Row"];
 type SourceRow = Database["public"]["Tables"]["size_chart_sources"]["Row"];
 
-export type MatchingCatalogProduct = ProductRecord & {
-  provenance: MatchProvenance;
-  retailer: {
-    merchantName: string;
-    domain: string;
-    baseUrl: string;
-  };
-};
+export type { MatchingCatalogProduct } from "./scraped-matching-products";
 
 export type MatchingCatalog = {
   mode: "live" | "seed";
@@ -159,7 +153,7 @@ function mapProduct(
 ): MatchingCatalogProduct | null {
   const mappedVariants = variants.flatMap((variant) => {
     const parsed = garmentSpecSchema.safeParse(variant.garment_spec);
-    if (!parsed.success || !variant.in_stock) return [];
+    if (!parsed.success) return [];
     const garmentSpec = normalizeGarmentSpec(parsed.data);
     return [
       {
@@ -272,7 +266,14 @@ async function loadLiveCatalog(): Promise<MatchingCatalog> {
     return seedCatalog();
   }
 
-  const [brandResult, productResult, sourceResult] = await Promise.all([
+  const [
+    brandResult,
+    productResult,
+    sourceResult,
+    referenceResult,
+    styleResult,
+    retailerLinkResult,
+  ] = await Promise.all([
     supabase
       .from("brands")
       .select("id,name,slug,positioning,size_chart_confidence,status,origin")
@@ -290,9 +291,41 @@ async function loadLiveCatalog(): Promise<MatchingCatalog> {
         "id,brand_id,model_name,category,source_url,source_domain,source_kind,raw_snapshot_path,fetch_method,parse_method,confidence,status,content_hash,fetched_at,last_seen_at,origin,measurement_basis,detected_unit,needs_review,version,supersedes_source_id,takedown_at,takedown_reason,metadata_json,created_at,updated_at",
       )
       .eq("status", "published"),
+    supabase
+      .from("garment_reference_catalog")
+      .select(
+        "id,brand_slug,model_name,size_label,category,canonical_spec,status,origin,size_chart_source_id,created_at",
+      )
+      .eq("status", "published")
+      .eq("origin", "scraped")
+      .limit(5_000),
+    supabase
+      .from("styles")
+      .select(
+        "id,brand_id,slug,style_name,category,confidence,source_url,active,status,origin,size_chart_source_id",
+      )
+      .eq("status", "published")
+      .eq("active", true)
+      .eq("origin", "scraped")
+      .limit(1_000),
+    supabase
+      .from("retailer_links")
+      .select(
+        "id,product_id,style_id,merchant_name,retailer_domain,url_template,source_url,status,origin,utm_defaults,size_chart_source_id,canonical_url,price_cents,currency,confidence,content_hash,fetched_at,metadata_json,created_at,updated_at",
+      )
+      .eq("status", "published")
+      .eq("origin", "scraped")
+      .limit(1_000),
   ]);
 
-  if (brandResult.error || productResult.error || sourceResult.error) {
+  if (
+    brandResult.error ||
+    productResult.error ||
+    sourceResult.error ||
+    referenceResult.error ||
+    styleResult.error ||
+    retailerLinkResult.error
+  ) {
     throw new Error("The published catalog index could not be read.");
   }
 
@@ -329,7 +362,7 @@ async function loadLiveCatalog(): Promise<MatchingCatalog> {
     variantsByProduct.set(variant.product_id, group);
   });
 
-  const products = (productResult.data ?? []).flatMap((product) => {
+  const indexedProducts = (productResult.data ?? []).flatMap((product) => {
     const brand = product.brand_id ? brands.get(product.brand_id) : undefined;
     if (!brand) return [];
     const mapped = mapProduct(
@@ -342,12 +375,29 @@ async function loadLiveCatalog(): Promise<MatchingCatalog> {
     );
     return mapped ? [mapped] : [];
   });
+  const productSourceIds = new Set(
+    (productResult.data ?? []).flatMap((product) =>
+      product.size_chart_source_id ? [product.size_chart_source_id] : [],
+    ),
+  );
+  const scrapedProducts = mapScrapedMatchingProducts({
+    brands: brandResult.data ?? [],
+    references: referenceResult.data ?? [],
+    sources: sourceResult.data ?? [],
+    styles: styleResult.data ?? [],
+    retailerLinks: retailerLinkResult.data ?? [],
+    excludedSourceIds: productSourceIds,
+  });
+  const products = [...indexedProducts, ...scrapedProducts];
 
   return {
     mode: "live",
     counts: {
       products: products.length,
-      variants: variants.length,
+      variants: products.reduce(
+        (count, product) => count + product.variants.length,
+        0,
+      ),
       brands: new Set(products.map((product) => product.brand.id)).size,
     },
     products,

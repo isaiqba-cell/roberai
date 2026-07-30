@@ -51,13 +51,20 @@ test("investor journey reaches a grounded retailer link in under 90 seconds", as
   expect(Date.now() - startedAt).toBeLessThan(90_000);
 });
 
-test("landing exposes the product immediately", async ({ page }) => {
+test("landing exposes the product immediately", async ({ page, request }) => {
+  const response = await request.get("/api/catalog/status");
+  expect(response.ok()).toBe(true);
+  const status = (await response.json()) as { variants: number };
   await page.goto("/");
   await expect(
     page.getByRole("heading", { name: "Know your size in every brand." }),
   ).toBeVisible();
   await expect(page.getByLabel("Favorite jeans brand")).toBeVisible();
-  await expect(page.getByText("5,332", { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(new Intl.NumberFormat("en-US").format(status.variants), {
+      exact: true,
+    }),
+  ).toBeVisible();
   await expect(
     page.getByRole("heading", {
       name: "One known pair in. The right size out.",

@@ -14,6 +14,8 @@ import type { Json } from "@/lib/supabase/database.types";
 
 type AdminClient = ReturnType<typeof createSupabaseAdminClient>;
 
+const SIZE_CHART_PARSER_VERSION = "2026-07-30.2";
+
 export type PublicationTarget = {
   brandName: string;
   brandSlug: string;
@@ -130,6 +132,7 @@ async function publishProductLink({
     fetched_at: snapshot.fetchedAt,
     metadata_json: toJson({
       title: metadata.title,
+      imageUrl: metadata.imageUrl,
       candidateKind: candidate.sourceKind,
       factualCatalogLink: true,
       inventoryClaimed: false,
@@ -187,6 +190,7 @@ export async function publishExtraction({
         detectedUnit: extraction.detectedUnit,
         needsReview: assessment.needsReview,
         metadata: {
+          parserVersion: SIZE_CHART_PARSER_VERSION,
           brandName: target.brandName,
           brandSlug: target.brandSlug,
           pageTitle: extraction.pageTitle,

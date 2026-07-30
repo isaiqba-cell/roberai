@@ -56,6 +56,9 @@ npm run audit:high   # Production dependency gate
 npm run security:boundaries # Server-secret boundary gate
 npm run audit:ingestion:sources # Read-only Serper/fetch/parser source audit
 npm run test:ingestion:corpus   # Verify the five-brand live corpus
+npm run ingest:garments:enqueue # Queue the official model-level demo corpus
+npm run test:ingestion:garments # Verify garment rows, links, images, and RLS
+npm run test:matching:live      # Verify scraped rows through match + detail APIs
 ```
 
 Supabase migrations live in `supabase/migrations`. Authenticate and link the
@@ -95,8 +98,8 @@ Supabase CLI once, then apply every pending migration with
 5. Open a fit detail panel, compare the dimension deltas, and use the grounded
    retailer link with its source provenance visible beside the action.
 6. Save a match, then show that email sign-in merges the guest fit memory.
-7. In `/admin`, show the five-brand scraped chart corpus, review flags, job
-   history, immutable snapshot references, and audit history.
+7. In `/admin`, show the general chart corpus, four model-level garment sources,
+   review flags, immutable snapshot references, and audit history.
 
 ## Desktop Services
 
@@ -115,7 +118,7 @@ Development can run without credentials; a production deployment cannot:
 ## Supabase
 
 The migration chain starts at `supabase/migrations/20260704000000_initial_schema.sql`
-and currently runs through `20260729004000_fix_admin_brand_lookup.sql`.
+and currently runs through `20260730002000_supersede_parser_revisions.sql`.
 It includes:
 
 - pgvector and pgcrypto extensions
@@ -137,6 +140,8 @@ npm run supabase:migrate
 npm run seed:web
 npm run test:stage2:live
 npm run test:ingestion:corpus
+npm run test:ingestion:garments
+npm run test:matching:live
 ```
 
 The Stage 2 gate verifies that email sign-in is enabled, RLS blocks
@@ -159,13 +164,19 @@ npm run seed:jeans
 
 `npm run seed:jeans` writes `supabase/seed/jeans-size-chart-database.json` with normalized jeans size-chart rows and cross-brand recommendations. The current investor dataset has 10 public-chart benchmark inputs, 132 illustrative jean styles, and 5,332 size/inseam variants. The in-app catalog uses a mix of benchmark brand names and fictional display brands such as Marlow Denim, Loom & Line, Range Standard, Harbor Denim, and Alder Curve. Source size charts are used as benchmark inputs only; the generated listings are not live retailer inventory and the demo does not claim retailer partnerships. Product imagery is supplied denim packshot placeholder imagery stored under `apps/mobile/public/images/jeans`.
 
-The hosted web index also contains five official-domain chart sources discovered
-through live Serper jobs: Levi's, Madewell, Dickies, Dockers, and American
-Eagle. They currently contribute 162 bounded factual rows with private raw
+The hosted web index also contains five official-domain general chart sources
+discovered through live Serper jobs: Levi's, Madewell, Dickies, Dockers, and
+American Eagle. They contribute 162 bounded factual rows with private raw
 snapshots. Four identify themselves as body charts and one remains basis
-`unknown`; all are flagged for review and are deliberately excluded from
-garment-to-garment scoring. The seeded construction corpus continues to power
-matches until a scraped source explicitly proves garment measurements.
+`unknown`; all are deliberately excluded from garment-to-garment scoring.
+
+Four official Everlane product pages provide the separate model-level proof:
+104 point-of-measure garment rows across The Original Cheeky Jean, The Way-High
+Jean, The Way-High Skinny Jean, and The Way-High Hourglass Skinny Jean. Their
+published prices, official images, canonical links, source confidence, and
+parser revisions are stored as factual enrichment. These four styles appear in
+live matches alongside the seeded index, while the UI explicitly avoids any
+live-inventory or retailer-partnership claim.
 
 The current investor path is anchored on "I wear Levi's 501, size 32x32" and includes a structured fit-translation graph for Levi's, Wrangler, Lee, Dickies, and Dockers across closest-match, roomier, slimmer, stretchier, and boot-friendly alternatives.
 

@@ -1,11 +1,11 @@
 # Rober Web Operations Runbook
 
-Last reviewed: 2026-07-29
+Last reviewed: 2026-07-30
 
 ## Current Recovery Status
 
 - The production Supabase project is linked and migrations are applied through
-  `20260729005000_explicit_api_table_grants.sql`.
+  `20260730002000_supersede_parser_revisions.sql`.
 - Supabase manages physical daily backups on current projects; PITR availability
   depends on the paid plan and must be confirmed under **Database > Backups**
   before launch. Do not claim PITR until that dashboard shows an active recovery
@@ -76,10 +76,16 @@ shared in chat must be rotated before production launch.
 
 ## Live Source Corpus
 
-The current corpus has five official-domain sources discovered by completed
-Serper-backed jobs: Levi's, Madewell, Dickies, Dockers, and American Eagle.
-Together they publish 162 bounded chart rows and reference five immutable raw
-snapshots in the private `size-chart-snapshots` bucket.
+The current corpus has two deliberately separate layers:
+
+- Five official-domain general chart sources discovered by completed
+  Serper-backed jobs: Levi's, Madewell, Dickies, Dockers, and American Eagle.
+  Together they publish 162 bounded chart rows and reference five immutable raw
+  snapshots. Their basis is `body` or `unknown`, so none may enter matching.
+- Four official Everlane model pages with explicit point-of-measure garment
+  tables. They publish 104 complete garment rows, four factual prices, four
+  official product images, and four canonical outbound links. These records do
+  enter matching with scraped provenance and no live-inventory claim.
 
 Run the read-only internet audit before changing extractor behavior:
 
@@ -93,12 +99,27 @@ protected `/api/cron/ingest` worker, then prove the stored result:
 ```bash
 npm run ingest:corpus:enqueue -- --discover
 npm run test:ingestion:corpus
+npm run ingest:garments:enqueue
+npm run test:ingestion:garments
 ```
 
 The verification must report five Serper-completed brands, at least 50 chart
 rows, five private snapshot references, five public source records, and zero
 non-garment rows in `garment_reference_catalog`. A `body` or `unknown` chart is
 valid provenance evidence but is never a garment-construction match input.
+
+With the production web server running, prove that published garment rows reach
+the user-facing scorer, detail response, image, and retailer link:
+
+```bash
+npm run test:matching:live
+```
+
+The garment verification must report four official model sources, at least 90
+fit-ready rows, four product styles, four factual retailer links, and anonymous
+RLS parity. The matching verification must return a scraped Everlane result in
+`live` mode, preserve its exact recommended size, expose at least five garment
+deltas, and build an outbound URL on `everlane.com`.
 
 ## Deploy And Roll Back
 

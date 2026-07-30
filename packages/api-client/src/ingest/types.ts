@@ -120,6 +120,7 @@ export type ProductPageMetadata = {
   isProduct: boolean;
   title: string | null;
   canonicalUrl: string;
+  imageUrl: string | null;
   priceCents: number | null;
   currency: string;
 };

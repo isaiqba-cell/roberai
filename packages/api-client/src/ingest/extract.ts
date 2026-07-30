@@ -31,7 +31,11 @@ const measurementHeaders: Array<{
     matches: /^(body |natural |low )?waist( circumference)?$/,
   },
   { key: "hipCm", matches: /^(low )?(hip|hips|seat)( circumference)?$/ },
-  { key: "inseamCm", matches: /^(inseam|inside leg|inner leg)( length)?$/ },
+  {
+    key: "inseamCm",
+    matches:
+      /^(?:(extra short|short|ankle|regular|long|tall|extra long) )?(inseam|inside leg|inner leg)( (extra short|short|ankle|regular|long|tall|extra long))?( length)?$/,
+  },
   { key: "thighCm", matches: /^(thigh)( circumference)?$/ },
   { key: "riseCm", matches: /^(front )?rise$/ },
   { key: "legOpeningCm", matches: /^(leg )?opening$/ },
@@ -52,12 +56,15 @@ function normalizeHeader(value: string) {
     .replace(/[():/]/g, " ")
     .replace(/\b(?:cm|centimeters?|inches?|inch|in)\b/g, " ")
     .replace(/["″]/g, " ")
+    .replace(/^body measurements?\s+/, "")
+    .replace(/^body\s+/, "")
+    .replace(/^garment\s+/, "")
     .replace(/\s+/g, " ")
     .trim();
 }
 
 function isSizeHeader(value: string) {
-  return /^(?:(?:us|uk|eu) )?(?:size|jean size|denim size|waist size|alpha size|numeric size|w)|(?:(?:men'?s|women'?s) )?suggested size$/i.test(
+  return /^(?:(?:us|uk|eu) )?(?:size|jean size|denim size|waist size|alpha size|numeric size|point of measure|w)$|^(?:(?:men'?s|women'?s) )?suggested size$/i.test(
     value,
   );
 }
@@ -150,9 +157,16 @@ export function parseMeasurementToCm(
 function inferCut(value: string): SilhouetteCut {
   const normalized = value.toLowerCase();
   if (/skinny|spray[- ]?on/.test(normalized)) return "skinny";
-  if (/slim|taper/.test(normalized)) return "slim";
   if (/baggy|loose|wide leg|wide-leg/.test(normalized)) return "baggy";
   if (/relaxed|athletic/.test(normalized)) return "relaxed";
+  if (
+    /straight(?:-| )leg|straight fit|regular straight|column(?:-| )leg/.test(
+      normalized,
+    )
+  ) {
+    return "straight";
+  }
+  if (/slim|taper/.test(normalized)) return "slim";
   return "straight";
 }
 
@@ -181,6 +195,18 @@ function basisFrom(value: string): MeasurementBasis {
     return "body";
   }
   return "unknown";
+}
+
+function hasGarmentBasisSignal(value: string) {
+  return /garment measurements?|actual garment|product measurements?|measurements? (?:are )?based on size/i.test(
+    value,
+  );
+}
+
+function hasBodyBasisSignal(value: string) {
+  return /body measurements?|measure (?:around|your body)|body size|body waist|measure (?:around|along) (?:your|the) (?:natural )?(?:waist|waistline|hips?)|suggested size/i.test(
+    value,
+  );
 }
 
 function cellText(
@@ -231,20 +257,26 @@ function makeSpec(
   };
 }
 
+function formattedInseamInches(valueCm: number) {
+  const inches = Math.round((valueCm / INCHES_TO_CM) * 4) / 4;
+  return String(Number(inches.toFixed(2)));
+}
+
 function rowFromTable(
   headers: string[],
   cells: string[],
   pageText: string,
   preferredCut: SilhouetteCut | null,
-): TableRow | null {
+): TableRow[] {
   const sizeIndex = headers.findIndex((header) =>
     isSizeHeader(normalizeHeader(header)),
   );
-  if (sizeIndex < 0 || !cells[sizeIndex]) return null;
+  if (sizeIndex < 0 || !cells[sizeIndex]) return [];
 
   const tableUnit = assumedUnitFrom(headers.join(" "));
   const observed: ObservedMeasurements = {};
   const evidence: string[] = [];
+  const inseams: Array<{ valueCm: number; evidence: string }> = [];
 
   headers.forEach((header, index) => {
     const key = measurementKeyForHeader(header);
@@ -258,19 +290,40 @@ function rowFromTable(
         : assumedUnitFrom(`${header} ${value}`),
     );
     if (measurement === null) return;
+    if (
+      key === "inseamCm" &&
+      /\b(extra short|short|ankle|regular|long|tall|extra long)\b/i.test(
+        normalizeHeader(header),
+      )
+    ) {
+      inseams.push({
+        valueCm: measurement,
+        evidence: `${compact(header)}: ${compact(value)}`,
+      });
+      return;
+    }
     observed[key] = measurement;
     evidence.push(`${compact(header)}: ${compact(value)}`);
   });
 
-  if (Object.keys(observed).length === 0) return null;
+  if (Object.keys(observed).length === 0 && inseams.length === 0) return [];
   const rowText = cells.join(" ");
-  return {
-    sizeLabel: compact(cells[sizeIndex]!),
-    observed,
-    evidence,
+  const sizeLabel = compact(cells[sizeIndex]!);
+  const shared = {
     cut: preferredCut ?? inferCut(`${rowText} ${pageText}`),
     stretchPct: inferStretch(`${rowText} ${pageText}`),
   };
+  if (inseams.length === 0) {
+    return [{ sizeLabel, observed, evidence, ...shared }];
+  }
+  return inseams.map((inseam) => ({
+    sizeLabel: sizeLabel.toLowerCase().includes("x")
+      ? sizeLabel
+      : `${sizeLabel}x${formattedInseamInches(inseam.valueCm)}`,
+    observed: { ...observed, inseamCm: inseam.valueCm },
+    evidence: [...evidence, inseam.evidence],
+    ...shared,
+  }));
 }
 
 function extractTables(
@@ -299,11 +352,19 @@ function extractTables(
         normalized.some((header) => measurementKeyForHeader(header))
       );
     });
-    if (headerIndex < 0) return;
-    const headers = rawRows[headerIndex]!;
-    for (const cells of rawRows.slice(headerIndex + 1)) {
-      const row = rowFromTable(headers, cells, pageText, preferredCut);
-      if (row) rows.push(row);
+    const tableText = rawRows.flat().join(" ");
+    if (
+      hasGarmentBasisSignal(pageText) &&
+      hasBodyBasisSignal(pageText) &&
+      !/\bgarment\b/i.test(tableText)
+    ) {
+      return;
+    }
+    if (headerIndex >= 0) {
+      const headers = rawRows[headerIndex]!;
+      for (const cells of rawRows.slice(headerIndex + 1)) {
+        rows.push(...rowFromTable(headers, cells, pageText, preferredCut));
+      }
     }
 
     const sizeRow = rawRows.find(
@@ -482,7 +543,7 @@ function mergeRows(rows: TableRow[]) {
     }
     merged.set(key, {
       ...existing,
-      observed: { ...existing.observed, ...row.observed },
+      observed: { ...row.observed, ...existing.observed },
       evidence: [...new Set([...existing.evidence, ...row.evidence])],
       stretchPct: Math.max(existing.stretchPct, row.stretchPct),
       cut: row.cut === "straight" ? existing.cut : row.cut,
@@ -526,16 +587,30 @@ function deterministicExtraction(
   $("script,style,noscript,svg").remove();
   const pageTitle = compact($("title").first().text()) || null;
   const pageText = compact($("body").text());
+  const productSummary = compact(
+    [
+      pageTitle ?? "",
+      $('meta[name="description"]').attr("content") ?? "",
+      $('meta[property="og:description"]').attr("content") ?? "",
+    ].join(" "),
+  );
   const embeddedText = embeddedTables
     .map((fragment) => compact(load(fragment).text()))
     .join(" ");
   const basis = basisFrom(`${pageText} ${embeddedText}`);
   const prose = extractProseMeasurements(pageText);
-  const preferredCut = explicitCut(modelName);
+  const preferredCut = explicitCut(modelName) ?? explicitCut(productSummary);
+  const visibleRows = extractTables(
+    html,
+    `${pageText} ${embeddedText}`,
+    preferredCut,
+  );
   let tableRows = combineSplitInseams(
-    [html, ...embeddedTables].flatMap((source) =>
-      extractTables(source, `${pageText} ${embeddedText}`, preferredCut),
-    ),
+    visibleRows.length > 0
+      ? visibleRows
+      : embeddedTables.flatMap((source) =>
+          extractTables(source, embeddedText, preferredCut),
+        ),
   );
 
   if (Object.keys(prose.observed).length > 0) {
@@ -637,11 +712,20 @@ export async function extractSizeChart({
   };
 }
 
-function structuredNodes(value: unknown): Array<Record<string, unknown>> {
-  if (Array.isArray(value)) return value.flatMap(structuredNodes);
+function structuredNodes(
+  value: unknown,
+  depth = 0,
+): Array<Record<string, unknown>> {
+  if (depth > 10) return [];
+  if (Array.isArray(value)) {
+    return value.flatMap((item) => structuredNodes(item, depth + 1));
+  }
   if (!value || typeof value !== "object") return [];
   const node = value as Record<string, unknown>;
-  return [node, ...structuredNodes(node["@graph"])];
+  return [
+    node,
+    ...Object.values(node).flatMap((item) => structuredNodes(item, depth + 1)),
+  ];
 }
 
 function isProductNode(node: Record<string, unknown>) {
@@ -662,6 +746,32 @@ function parsePrice(value: unknown) {
   return Number.isFinite(amount) && amount > 0
     ? Math.round(amount * 100)
     : null;
+}
+
+function firstImageUrl(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const image = firstImageUrl(item);
+      if (image) return image;
+    }
+    return null;
+  }
+  if (!value || typeof value !== "object") return null;
+  const image = value as Record<string, unknown>;
+  return firstImageUrl(image.contentUrl ?? image.url);
+}
+
+function absoluteHttpUrl(value: string | null, sourceUrl: string) {
+  if (!value) return null;
+  try {
+    const url = new URL(value, sourceUrl);
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 export function extractProductPageMetadata(
@@ -702,6 +812,12 @@ export function extractProductPageMetadata(
     $('meta[property="product:price:amount"]').attr("content") ??
     $('[itemprop="price"]').attr("content");
   const priceCents = parsePrice(offers?.price ?? metaPrice);
+  const imageUrl = absoluteHttpUrl(
+    firstImageUrl(product?.image) ??
+      $('meta[property="og:image"]').attr("content") ??
+      null,
+    sourceUrl,
+  );
   const currency = compact(
     String(
       offers?.priceCurrency ??
@@ -714,6 +830,7 @@ export function extractProductPageMetadata(
     isProduct: Boolean(product),
     title: title || null,
     canonicalUrl,
+    imageUrl,
     priceCents,
     currency: currency || "USD",
   };

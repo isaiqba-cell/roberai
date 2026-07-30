@@ -45,7 +45,7 @@ test("guest can tune, save, inspect, and return to live matches", async ({
 
   await expect(page.getByText(catalogStatus)).toBeVisible();
   await expect(
-    page.getByText("132 styles · 5,332 sizes · 8 brands"),
+    page.getByText(/\d[\d,]* styles · \d[\d,]* sizes · \d+ brands/),
   ).toBeVisible();
   await page.screenshot({
     path: "/tmp/rober-stage5-matches.png",

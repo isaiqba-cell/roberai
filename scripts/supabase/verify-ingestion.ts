@@ -103,7 +103,7 @@ async function main() {
         measurementBasis: extraction.measurementBasis,
         detectedUnit: extraction.detectedUnit,
         needsReview: assessment.needsReview,
-        metadata: { verificationRun: true },
+        metadata: { verificationRun: true, parserVersion: "fixture-v1" },
       },
       p_rows: rows.map((row) => ({
         sizeLabel: row.sizeLabel,
@@ -151,6 +151,74 @@ async function main() {
       "Published fixture rows are not visible through catalog RLS.",
     );
 
+    const reparsedPublication = await admin.rpc(
+      "publish_size_chart_extraction",
+      {
+        p_source: {
+          brandName: "Stage 4 Verification Denim",
+          brandSlug,
+          modelName: "Fixture 505",
+          category: "jeans",
+          sourceUrl,
+          snapshotPath,
+          fetchMethod: "http",
+          parseMethod: extraction.method,
+          confidence: assessment.confidence,
+          status: assessment.status,
+          contentHash: createHash("sha256").update(html).digest("hex"),
+          fetchedAt: new Date().toISOString(),
+          sourceKind: "official",
+          measurementBasis: extraction.measurementBasis,
+          detectedUnit: extraction.detectedUnit,
+          needsReview: assessment.needsReview,
+          metadata: { verificationRun: true, parserVersion: "fixture-v2" },
+        },
+        p_rows: rows.map((row) => ({
+          sizeLabel: row.sizeLabel,
+          spec: row.spec,
+          evidence: row.evidence,
+        })),
+      },
+    );
+    assert(
+      !reparsedPublication.error &&
+        typeof reparsedPublication.data === "string" &&
+        reparsedPublication.data !== firstSourceId,
+      "A parser revision did not create a new source version.",
+    );
+    const reparsedSourceId = reparsedPublication.data;
+    sourceIds.push(reparsedSourceId);
+    const reparsedSource = await admin
+      .from("size_chart_sources")
+      .select("version,supersedes_source_id,metadata_json")
+      .eq("id", reparsedSourceId)
+      .single();
+    assert(
+      !reparsedSource.error &&
+        reparsedSource.data.version === 2 &&
+        reparsedSource.data.supersedes_source_id === firstSourceId &&
+        reparsedSource.data.metadata_json &&
+        typeof reparsedSource.data.metadata_json === "object" &&
+        !Array.isArray(reparsedSource.data.metadata_json) &&
+        reparsedSource.data.metadata_json.parserVersion === "fixture-v2",
+      "Parser revision provenance is incomplete.",
+    );
+    const supersededSource = await admin
+      .from("size_chart_sources")
+      .select("status,metadata_json")
+      .eq("id", firstSourceId)
+      .single();
+    assert(
+      !supersededSource.error &&
+        supersededSource.data.status === "rejected" &&
+        supersededSource.data.metadata_json &&
+        typeof supersededSource.data.metadata_json === "object" &&
+        !Array.isArray(supersededSource.data.metadata_json) &&
+        supersededSource.data.metadata_json.supersededByParserVersion ===
+          "fixture-v2",
+      "The previous parser version remained public.",
+    );
+
     const changedHtml = html.replace(
       "</body>",
       "<!-- verified source revision --></body>",
@@ -191,7 +259,11 @@ async function main() {
           measurementBasis: extraction.measurementBasis,
           detectedUnit: extraction.detectedUnit,
           needsReview: changedAssessment.needsReview,
-          metadata: { verificationRun: true, changedContent: true },
+          metadata: {
+            verificationRun: true,
+            changedContent: true,
+            parserVersion: "fixture-v2",
+          },
         },
         p_rows: rows.map((row) => ({
           sizeLabel: row.sizeLabel,
@@ -204,24 +276,24 @@ async function main() {
       !changedPublication.error && typeof changedPublication.data === "string",
       "Changed fixture version could not be published.",
     );
-    const secondSourceId = changedPublication.data;
-    sourceIds.push(secondSourceId);
-    const secondSource = await admin
+    const changedSourceId = changedPublication.data;
+    sourceIds.push(changedSourceId);
+    const changedSource = await admin
       .from("size_chart_sources")
       .select("version,supersedes_source_id,needs_review")
-      .eq("id", secondSourceId)
+      .eq("id", changedSourceId)
       .single();
     assert(
-      !secondSource.error &&
-        secondSource.data.version === 2 &&
-        secondSource.data.supersedes_source_id === firstSourceId &&
-        secondSource.data.needs_review,
+      !changedSource.error &&
+        changedSource.data.version === 3 &&
+        changedSource.data.supersedes_source_id === reparsedSourceId &&
+        changedSource.data.needs_review,
       "Changed hash did not create a flagged source version.",
     );
 
     const anonymousTakedown = await anonymous.rpc(
       "takedown_size_chart_source",
-      { p_source_id: secondSourceId, p_reason: "unauthorized probe" },
+      { p_source_id: changedSourceId, p_reason: "unauthorized probe" },
     );
     assert(
       Boolean(anonymousTakedown.error),
@@ -229,7 +301,7 @@ async function main() {
     );
 
     const takedown = await admin.rpc("takedown_size_chart_source", {
-      p_source_id: secondSourceId,
+      p_source_id: changedSourceId,
       p_reason: "Automated Stage 4 verification",
     });
     assert(
@@ -264,7 +336,8 @@ async function main() {
         status: "ok",
         parsedRows: rows.length,
         confidence: assessment.confidence,
-        changedHashVersion: 2,
+        parserRevisionVersioned: true,
+        changedHashVersion: 3,
         changedHashFlagged: true,
         publicationVisible: true,
         takedownHidden: true,

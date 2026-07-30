@@ -352,6 +352,52 @@ describe("Stage 4 deterministic extraction", () => {
     });
   });
 
+  it("reads per-model point-of-measure tables without mixing in body rows", async () => {
+    const extraction = await extractSizeChart({
+      html: `<html><body>
+        <p>The chart below is displaying garment measurements. Toggle to body measurements.</p>
+        <table>
+          <tr><th>Denim Size</th><th>Waist (Smallest point)</th><th>Hip (Fullest point)</th></tr>
+          <tr><td>28</td><td>29&quot;</td><td>39&quot;</td></tr>
+        </table>
+        <table>
+          <tr>
+            <th>Point of Measure</th><th>Garment: Waist</th><th>Garment: Low Hip</th>
+            <th>Garment Front Rise</th><th>Garment: Thigh</th><th>Garment Leg opening</th>
+            <th>Garment: Inseam ANKLE</th><th>Garment: REGULAR Inseam</th><th>Garment: Inseam TALL</th>
+          </tr>
+          <tr>
+            <td>28</td><td>30 1/4&quot;</td><td>38 1/4&quot;</td><td>11 3/4&quot;</td>
+            <td>23&quot;</td><td>13 1/2&quot;</td><td>26 1/2&quot;</td><td>28 1/2&quot;</td><td>30 1/2&quot;</td>
+          </tr>
+          <tr>
+            <td>28</td><td>57.785</td><td>72.39</td><td>26.67</td>
+            <td>44.45</td><td>20.0025</td><td>67.31</td><td>72.39</td><td>77.47</td>
+          </tr>
+        </table>
+      </body></html>`,
+      sourceUrl: "https://official.example/model-garment-chart",
+      brandName: "Point of Measure Denim",
+      modelName: "Original Straight",
+    });
+
+    expect(extraction.measurementBasis).toBe("garment");
+    expect(extraction.rows.map((row) => row.sizeLabel)).toEqual([
+      "28x26.5",
+      "28x28.5",
+      "28x30.5",
+    ]);
+    expect(extraction.rows[1]).toMatchObject({
+      spec: {
+        waistCm: 76.8,
+        inseamCm: 72.4,
+        thighCm: 58.4,
+        riseCm: 29.8,
+        legOpeningCm: 34.3,
+      },
+    });
+  });
+
   it("uses a schema-validated mocked LLM only when tables yield no rows", async () => {
     const llmExtractor = jest.fn<
       ReturnType<LlmExtractor>,
@@ -397,6 +443,7 @@ describe("Stage 4 deterministic extraction", () => {
         <script type="application/ld+json">{
           "@type": "Product",
           "name": "Daren Regular Straight Jean",
+          "image": ["https://cdn.example/daren-front.jpg"],
           "offers": {"price": "92,00", "priceCurrency": "USD"}
         }</script>
       </head><body></body></html>`,
@@ -407,7 +454,35 @@ describe("Stage 4 deterministic extraction", () => {
       isProduct: true,
       title: "Daren Regular Straight Jean",
       canonicalUrl: "https://loomandline.example/products/daren-straight",
+      imageUrl: "https://cdn.example/daren-front.jpg",
       priceCents: 9_200,
+      currency: "USD",
+    });
+  });
+
+  it("finds product variants nested inside a ProductGroup", () => {
+    const metadata = extractProductPageMetadata(
+      `<html><head>
+        <link rel="canonical" href="/products/original-straight" />
+        <script type="application/ld+json">{
+          "@type": "ProductGroup",
+          "name": "Original Straight Jean",
+          "hasVariant": [{
+            "@type": "Product",
+            "name": "Original Straight Jean in Indigo",
+            "offers": {"price": "118.00", "priceCurrency": "USD"}
+          }]
+        }</script>
+      </head><body></body></html>`,
+      "https://denim.example/products/original-straight?color=indigo",
+    );
+
+    expect(metadata).toEqual({
+      isProduct: true,
+      title: "Original Straight Jean in Indigo",
+      canonicalUrl: "https://denim.example/products/original-straight",
+      imageUrl: null,
+      priceCents: 11_800,
       currency: "USD",
     });
   });
