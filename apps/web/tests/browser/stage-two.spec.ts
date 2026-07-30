@@ -55,13 +55,11 @@ test("catalog status is served through the server boundary", async ({
   const response = await request.get("/api/catalog/status");
   expect(response.ok()).toBe(true);
   const status = (await response.json()) as Record<string, unknown>;
-  expect(status).toMatchObject({
-    brands: 8,
-    chartSources: 10,
-    products: 132,
-    variants: 5332,
-  });
   expect(["live", "seed"]).toContain(status.mode);
+  expect(Number(status.brands)).toBeGreaterThanOrEqual(8);
+  expect(Number(status.chartSources)).toBeGreaterThanOrEqual(10);
+  expect(Number(status.products)).toBeGreaterThanOrEqual(132);
+  expect(Number(status.variants)).toBeGreaterThanOrEqual(5_332);
 
   await page.goto("/");
   await expect(

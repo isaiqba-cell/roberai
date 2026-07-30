@@ -110,18 +110,39 @@ async function candidatesForReference(
   payload: IngestReferencePayload,
   dependencies: IngestionDependencies,
 ) {
-  const candidates = payload.candidates?.length
-    ? payload.candidates
-    : await discoverSizeChartCandidates({
-        target: {
-          brandName: payload.brandName,
-          brandSlug: payload.brandSlug,
-          modelName: payload.modelName,
-          category: payload.category,
-          officialDomains: officialDomains[payload.brandSlug] ?? [],
-        },
-        search: dependencies.search,
-      });
+  let candidates: SourceCandidate[];
+  if (payload.candidates?.length) {
+    candidates = payload.candidates;
+  } else if (payload.sourceUrl) {
+    const domain = normalizedDomain(payload.sourceUrl);
+    const knownDomains = officialDomains[payload.brandSlug] ?? [];
+    const isOfficial = knownDomains.some(
+      (official) => domain === official || domain.endsWith(`.${official}`),
+    );
+    candidates = [
+      {
+        title: `${payload.brandName} ${payload.modelName} supplied source`,
+        link: payload.sourceUrl,
+        canonicalUrl: payload.sourceUrl,
+        domain,
+        rankScore: 100,
+        sourceKind: isOfficial ? "official" : "unknown",
+        reasons: ["admin supplied source"],
+        query: "admin supplied source",
+      },
+    ];
+  } else {
+    candidates = await discoverSizeChartCandidates({
+      target: {
+        brandName: payload.brandName,
+        brandSlug: payload.brandSlug,
+        modelName: payload.modelName,
+        category: payload.category,
+        officialDomains: officialDomains[payload.brandSlug] ?? [],
+      },
+      search: dependencies.search,
+    });
+  }
   const { error } = await dependencies.admin
     .from("jobs")
     .update({
@@ -205,7 +226,10 @@ export async function processIngestionJob(
   let previousHash: string | undefined;
   let previousSourceId: string | undefined;
 
-  if (parsed.type === "ingest_reference") {
+  if (
+    parsed.type === "ingest_reference" ||
+    parsed.type === "ingest_size_chart"
+  ) {
     target = {
       brandName: parsed.payload.brandName,
       brandSlug: parsed.payload.brandSlug,

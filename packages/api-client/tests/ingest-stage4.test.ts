@@ -84,6 +84,86 @@ describe("Stage 4 polite fetching", () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
+  it("treats a 4xx robots response as unavailable and continues", async () => {
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("Forbidden", {
+          status: 403,
+          headers: { "content-type": "text/plain" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response("<html><body>Size chart</body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      ) as unknown as typeof fetch;
+    const fetcher = createPoliteFetcher({
+      fetchImpl,
+      minimumDelayMs: 0,
+      jitterMs: 0,
+    });
+
+    await expect(
+      fetcher.fetchHtml("https://brand.example/size-guide"),
+    ).resolves.toMatchObject({ status: 200 });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not continue when robots.txt is unreachable", async () => {
+    const fetchImpl = jest.fn(async () =>
+      Promise.resolve(
+        new Response("Unavailable", {
+          status: 503,
+          headers: { "content-type": "text/plain" },
+        }),
+      ),
+    ) as unknown as typeof fetch;
+    const fetcher = createPoliteFetcher({
+      fetchImpl,
+      maximumAttempts: 1,
+      minimumDelayMs: 0,
+      jitterMs: 0,
+    });
+
+    await expect(
+      fetcher.fetchHtml("https://brand.example/size-guide"),
+    ).rejects.toMatchObject<Partial<IngestionFetchError>>({
+      code: "HTTP_ERROR",
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
+
+  it("cancels an HTML stream that exceeds the configured byte limit", async () => {
+    const fetchImpl = jest
+      .fn()
+      .mockResolvedValueOnce(
+        new Response("User-agent: *\nAllow: /", {
+          status: 200,
+          headers: { "content-type": "text/plain" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response("<html><body>too large</body></html>", {
+          status: 200,
+          headers: { "content-type": "text/html" },
+        }),
+      ) as unknown as typeof fetch;
+    const fetcher = createPoliteFetcher({
+      fetchImpl,
+      maximumBytes: 8,
+      minimumDelayMs: 0,
+      jitterMs: 0,
+    });
+
+    await expect(
+      fetcher.fetchHtml("https://brand.example/size-guide"),
+    ).rejects.toMatchObject<Partial<IngestionFetchError>>({
+      code: "RESPONSE_TOO_LARGE",
+    });
+  });
+
   it("keeps at least five seconds between same-domain requests", async () => {
     let now = 0;
     const sleeps: number[] = [];
@@ -203,6 +283,73 @@ describe("Stage 4 deterministic extraction", () => {
     expect(size32Rows.every((row) => row.spec.legOpeningCm === 40.6)).toBe(
       true,
     );
+  });
+
+  it("reads a dual-unit chart that labels its first column US Size", async () => {
+    const extraction = await extractSizeChart({
+      html: `
+        <html><body>
+          <p>Use these body measurements to find your denim size.</p>
+          <table>
+            <thead><tr><th>US Size</th><th>Waist</th><th>Hip</th></tr></thead>
+            <tbody><tr>
+              <td>28</td>
+              <td><span class="inches">28&quot;<span class="visually-hidden">Inches</span></span><span class="cm">71</span></td>
+              <td><span class="inches">38&quot;<span class="visually-hidden">Inches</span></span><span class="cm">96.5</span></td>
+            </tr></tbody>
+          </table>
+        </body></html>`,
+      sourceUrl: "https://official.example/dual-unit-chart",
+      brandName: "Dual Unit Denim",
+    });
+
+    expect(extraction.measurementBasis).toBe("body");
+    expect(extraction.rows[0]).toMatchObject({
+      sizeLabel: "28",
+      spec: { waistCm: 71.1 },
+      observed: { hipCm: 96.5 },
+    });
+  });
+
+  it("reads a transposed suggested-size chart", async () => {
+    const extraction = await extractSizeChart({
+      html: `
+        <html><body>
+          <p>Measure along the natural waistline. All measurements are in inches.</p>
+          <table><tbody>
+            <tr><th>Men's Suggested Size</th><td>32</td><td>34</td></tr>
+            <tr><th>Waist</th><td>30</td><td>32-33</td></tr>
+            <tr><th>Seat</th><td>36</td><td>38</td></tr>
+          </tbody></table>
+        </body></html>`,
+      sourceUrl: "https://official.example/transposed-chart",
+      brandName: "Transposed Workwear",
+    });
+
+    expect(extraction.measurementBasis).toBe("body");
+    expect(extraction.rows).toHaveLength(2);
+    expect(extraction.rows[1]).toMatchObject({
+      sizeLabel: "34",
+      spec: { waistCm: 82.6 },
+      observed: { hipCm: 96.5 },
+    });
+  });
+
+  it("reads tabular HTML embedded in application state", async () => {
+    const embedded = JSON.stringify({
+      chart: `<p>Actual garment measurements</p><table><tr><th>Size</th><th>Waist (cm)</th><th>Inseam (cm)</th></tr><tr><td>32x32</td><td>82</td><td>81</td></tr></table>`,
+    });
+    const extraction = await extractSizeChart({
+      html: `<html><body><script type="application/json">${embedded}</script></body></html>`,
+      sourceUrl: "https://official.example/embedded-chart",
+      brandName: "Embedded Denim",
+    });
+
+    expect(extraction.measurementBasis).toBe("garment");
+    expect(extraction.rows[0]).toMatchObject({
+      sizeLabel: "32x32",
+      spec: { waistCm: 82, inseamCm: 81 },
+    });
   });
 
   it("uses a schema-validated mocked LLM only when tables yield no rows", async () => {

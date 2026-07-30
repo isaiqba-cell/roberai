@@ -23,6 +23,7 @@ export const ingestReferencePayloadSchema = z
     sizeLabel: z.string().trim().min(1).max(40).optional(),
     category: z.enum(["jeans", "chinos", "pants"]).default("jeans"),
     requestedFrom: z.string().trim().max(100).optional(),
+    sourceUrl: z.url().startsWith("https://").optional(),
     candidates: z.array(candidateSchema).max(30).optional(),
   })
   .passthrough();
@@ -49,8 +50,12 @@ export function parseIngestionJob(
   payload: unknown,
 ):
   | { type: "ingest_reference"; payload: IngestReferencePayload }
+  | { type: "ingest_size_chart"; payload: IngestReferencePayload }
   | { type: "refresh_size_chart"; payload: RefreshSizeChartPayload } {
   if (type === "ingest_reference") {
+    return { type, payload: ingestReferencePayloadSchema.parse(payload) };
+  }
+  if (type === "ingest_size_chart") {
     return { type, payload: ingestReferencePayloadSchema.parse(payload) };
   }
   if (type === "refresh_size_chart") {

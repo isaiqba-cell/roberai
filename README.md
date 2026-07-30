@@ -15,7 +15,7 @@ npm install
 npm run web:dev
 ```
 
-Open `http://127.0.0.1:3000`. Development degrades to an honest seed-data mode
+Open `http://localhost:3000`. Development degrades to an honest seed-data mode
 when credentials are absent. Copy `apps/web/.env.example` to
 `apps/web/.env.local` to use live Supabase and ingestion services; never commit
 that file.
@@ -54,6 +54,8 @@ npm run seed         # Generate demo catalog artifact
 npm run seed:jeans   # Generate jeans size-chart database artifact
 npm run audit:high   # Production dependency gate
 npm run security:boundaries # Server-secret boundary gate
+npm run audit:ingestion:sources # Read-only Serper/fetch/parser source audit
+npm run test:ingestion:corpus   # Verify the five-brand live corpus
 ```
 
 Supabase migrations live in `supabase/migrations`. Authenticate and link the
@@ -85,16 +87,16 @@ Supabase CLI once, then apply every pending migration with
 
 ## Five-Minute Demo Script
 
-1. Open `/` and start from the Rober welcome screen.
-2. Choose "I have a favorite pair of jeans" and enter a brand, size, and fit note.
-3. Review the estimated waist, hip, and inseam profile, then build recommendations.
-4. Open Home and point out the favorite-jeans baseline, indexed brands, and ranked jeans across price points.
-5. Open `/compare`, search "straight denim jeans under $150", and show the highlighted best-fit card, recommended size, confidence, slider controls, and alternatives.
-6. Open the PDP, show distinct gallery images, dimension reasoning, size chips with per-size fit scores, and add to bag.
-7. Complete checkout with the mock Stripe test-mode fallback.
-8. Open Orders and submit "Did it fit?" feedback.
-9. Open Stylist and ask for "curvy jeans under $100"; recommendations are grounded in catalog and fit-score lookups.
-10. Open `/investor-demo` and call out that all impact metrics are synthetic demo data.
+1. Open `/`; the favorite-pair input is already in the hero.
+2. Choose Levi's, `505 Regular Straight`, and `32x32`, then confirm the pair.
+3. Show the resolved construction sentence and open the ranked matches.
+4. Move the silhouette control, set a price cap, and point out size-to-buy plus
+   the concrete dimension reason on each card.
+5. Open a fit detail panel, compare the dimension deltas, and use the grounded
+   retailer link with its source provenance visible beside the action.
+6. Save a match, then show that email sign-in merges the guest fit memory.
+7. In `/admin`, show the five-brand scraped chart corpus, review flags, job
+   history, immutable snapshot references, and audit history.
 
 ## Desktop Services
 
@@ -112,7 +114,9 @@ Development can run without credentials; a production deployment cannot:
 
 ## Supabase
 
-The initial migration is in `supabase/migrations/20260704000000_initial_schema.sql` and includes:
+The migration chain starts at `supabase/migrations/20260704000000_initial_schema.sql`
+and currently runs through `20260729004000_fix_admin_brand_lookup.sql`.
+It includes:
 
 - pgvector and pgcrypto extensions
 - profile, body/fit/style, catalog, commerce, chat, search, recommendation, notification, import, and analytics tables
@@ -132,6 +136,7 @@ project once with `npx supabase link --project-ref <project-ref>`, then run:
 npm run supabase:migrate
 npm run seed:web
 npm run test:stage2:live
+npm run test:ingestion:corpus
 ```
 
 The Stage 2 gate verifies that email sign-in is enabled, RLS blocks
@@ -153,6 +158,14 @@ npm run seed:jeans
 ```
 
 `npm run seed:jeans` writes `supabase/seed/jeans-size-chart-database.json` with normalized jeans size-chart rows and cross-brand recommendations. The current investor dataset has 10 public-chart benchmark inputs, 132 illustrative jean styles, and 5,332 size/inseam variants. The in-app catalog uses a mix of benchmark brand names and fictional display brands such as Marlow Denim, Loom & Line, Range Standard, Harbor Denim, and Alder Curve. Source size charts are used as benchmark inputs only; the generated listings are not live retailer inventory and the demo does not claim retailer partnerships. Product imagery is supplied denim packshot placeholder imagery stored under `apps/mobile/public/images/jeans`.
+
+The hosted web index also contains five official-domain chart sources discovered
+through live Serper jobs: Levi's, Madewell, Dickies, Dockers, and American
+Eagle. They currently contribute 162 bounded factual rows with private raw
+snapshots. Four identify themselves as body charts and one remains basis
+`unknown`; all are flagged for review and are deliberately excluded from
+garment-to-garment scoring. The seeded construction corpus continues to power
+matches until a scraped source explicitly proves garment measurements.
 
 The current investor path is anchored on "I wear Levi's 501, size 32x32" and includes a structured fit-translation graph for Levi's, Wrangler, Lee, Dickies, and Dockers across closest-match, roomier, slimmer, stretchier, and boot-friendly alternatives.
 

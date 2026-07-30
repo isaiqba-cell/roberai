@@ -338,14 +338,20 @@ function ReviewWorkspace({
   }
 
   return (
-    <section className="border border-border bg-background" aria-labelledby="source-title">
+    <section
+      className="border border-border bg-background"
+      aria-labelledby="source-title"
+    >
       <header className="border-b border-border px-5 py-5 lg:px-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs font-bold uppercase text-primary">
               {source.origin} · {source.sourceKind}
             </p>
-            <h2 id="source-title" className="mt-1 font-serif text-3xl font-semibold">
+            <h2
+              id="source-title"
+              className="mt-1 font-serif text-3xl font-semibold"
+            >
               {source.brandName} {source.modelName}
             </h2>
             <a
@@ -384,7 +390,10 @@ function ReviewWorkspace({
         </div>
         {source.flags.length ? (
           <div className="mt-4 flex gap-3 border-l-2 border-fit-medium bg-fit-medium-soft px-3 py-2 text-sm text-fit-medium">
-            <CircleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+            <CircleAlert
+              aria-hidden="true"
+              className="mt-0.5 size-4 shrink-0"
+            />
             <p>{source.flags.join(" · ")}</p>
           </div>
         ) : null}
@@ -397,7 +406,9 @@ function ReviewWorkspace({
               <p className="text-xs font-bold uppercase text-muted-foreground">
                 Archived evidence
               </p>
-              <h3 className="mt-1 font-serif text-xl font-semibold">Raw snapshot</h3>
+              <h3 className="mt-1 font-serif text-xl font-semibold">
+                Raw snapshot
+              </h3>
             </div>
             <FileSearch aria-hidden="true" className="size-5 text-primary" />
           </div>
@@ -456,12 +467,18 @@ function ReviewWorkspace({
             />
           </label>
           {message ? (
-            <p role="status" className="mt-3 text-sm font-semibold text-destructive">
+            <p
+              role="status"
+              className="mt-3 text-sm font-semibold text-destructive"
+            >
               {message}
             </p>
           ) : null}
           <div className="mt-5 flex flex-wrap gap-3">
-            <Button onClick={() => submit("approve")} disabled={Boolean(mutation)}>
+            <Button
+              onClick={() => submit("approve")}
+              disabled={Boolean(mutation)}
+            >
               {mutation?.id === "approve" ? (
                 <LoaderCircle className="animate-spin motion-reduce:animate-none" />
               ) : (
@@ -559,11 +576,17 @@ function JobsView({
   return (
     <div className="grid gap-8 lg:grid-cols-[23rem_minmax(0,1fr)]">
       <section className="border border-border bg-background px-5 py-5">
-        <p className="text-xs font-bold uppercase text-primary">Manual ingestion</p>
-        <h2 className="mt-1 font-serif text-2xl font-semibold">Index a source</h2>
+        <p className="text-xs font-bold uppercase text-primary">
+          Manual ingestion
+        </p>
+        <h2 className="mt-1 font-serif text-2xl font-semibold">
+          Index a source
+        </h2>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Add an official chart target. The worker still respects robots, fetch
-          policy, confidence checks, and source versioning.
+          policy, confidence checks, and source versioning. Body-size charts are
+          stored as reference evidence and never treated as garment
+          construction.
         </p>
         <form onSubmit={enqueue} className="mt-6 space-y-4">
           {[
@@ -612,7 +635,10 @@ function JobsView({
             Queue source
           </Button>
           {message ? (
-            <p role="status" className="text-sm font-semibold text-muted-foreground">
+            <p
+              role="status"
+              className="text-sm font-semibold text-muted-foreground"
+            >
               {message}
             </p>
           ) : null}
@@ -622,8 +648,13 @@ function JobsView({
       <section className="min-w-0" aria-labelledby="jobs-title">
         <div className="mb-4 flex items-end justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase text-primary">Worker queue</p>
-            <h2 id="jobs-title" className="mt-1 font-serif text-2xl font-semibold">
+            <p className="text-xs font-bold uppercase text-primary">
+              Worker queue
+            </p>
+            <h2
+              id="jobs-title"
+              className="mt-1 font-serif text-2xl font-semibold"
+            >
               Recent ingestion jobs
             </h2>
           </div>
@@ -709,7 +740,9 @@ function HealthView({ data }: { data: AdminDashboardData }) {
       <section className="border border-border bg-background px-5 py-5 lg:px-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase text-primary">Index health</p>
+            <p className="text-xs font-bold uppercase text-primary">
+              Index health
+            </p>
             <h2 className="mt-1 font-serif text-2xl font-semibold">
               Measurement coverage
             </h2>
@@ -717,9 +750,18 @@ function HealthView({ data }: { data: AdminDashboardData }) {
           <Database aria-hidden="true" className="size-5 text-primary" />
         </div>
         <div className="mt-7 space-y-6">
-          <CoverageBar label="Rise dimensions" value={data.health.riseCoverage} />
-          <CoverageBar label="Thigh dimensions" value={data.health.thighCoverage} />
-          <CoverageBar label="Product imagery" value={data.health.imageCoverage} />
+          <CoverageBar
+            label="Rise dimensions"
+            value={data.health.riseCoverage}
+          />
+          <CoverageBar
+            label="Thigh dimensions"
+            value={data.health.thighCoverage}
+          />
+          <CoverageBar
+            label="Product imagery"
+            value={data.health.imageCoverage}
+          />
         </div>
         <dl className="mt-8 grid grid-cols-2 gap-x-4 gap-y-6 border-t border-border pt-6 sm:grid-cols-3">
           <Metric label="Sources" value={data.health.sources} />
@@ -731,14 +773,21 @@ function HealthView({ data }: { data: AdminDashboardData }) {
       <section className="border border-border bg-background px-5 py-5 lg:px-6">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase text-primary">Last 30 days</p>
-            <h2 className="mt-1 font-serif text-2xl font-semibold">Core funnel</h2>
+            <p className="text-xs font-bold uppercase text-primary">
+              Last 30 days
+            </p>
+            <h2 className="mt-1 font-serif text-2xl font-semibold">
+              Core funnel
+            </h2>
           </div>
           <Activity aria-hidden="true" className="size-5 text-primary" />
         </div>
         <div className="mt-7 divide-y divide-border">
           {funnel.map(([label, value], index) => (
-            <div key={label} className="flex items-center gap-4 py-3 first:pt-0">
+            <div
+              key={label}
+              className="flex items-center gap-4 py-3 first:pt-0"
+            >
               <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-border text-xs font-bold text-muted-foreground">
                 {index + 1}
               </span>
@@ -753,7 +802,9 @@ function HealthView({ data }: { data: AdminDashboardData }) {
 
       <section className="border border-border bg-background lg:col-span-2">
         <div className="border-b border-border px-5 py-5 lg:px-6">
-          <p className="text-xs font-bold uppercase text-primary">Audit trail</p>
+          <p className="text-xs font-bold uppercase text-primary">
+            Audit trail
+          </p>
           <h2 className="mt-1 font-serif text-2xl font-semibold">
             Recent operator changes
           </h2>
@@ -787,7 +838,10 @@ function HealthView({ data }: { data: AdminDashboardData }) {
               ))}
               {data.audits.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-5 py-10 text-center text-muted-foreground">
+                  <td
+                    colSpan={4}
+                    className="px-5 py-10 text-center text-muted-foreground"
+                  >
                     The audit trail begins with the first admin mutation.
                   </td>
                 </tr>
@@ -823,17 +877,22 @@ export function AdminConsole({
     <div className="mx-auto max-w-shell px-5 py-10 lg:px-8 lg:py-14">
       <header className="flex flex-wrap items-end justify-between gap-6 border-b border-border pb-7">
         <div>
-          <p className="text-xs font-bold uppercase text-primary">Rober operations</p>
+          <p className="text-xs font-bold uppercase text-primary">
+            Rober operations
+          </p>
           <h1 className="mt-2 font-serif text-4xl font-semibold sm:text-5xl">
             Denim index control room
           </h1>
           <p className="mt-3 max-w-2xl text-base leading-7 text-muted-foreground">
-            Review provenance, operate ingestion, and watch the fit index without
-            exposing raw customer measurements.
+            Review provenance, operate ingestion, and watch the fit index
+            without exposing raw customer measurements.
           </p>
         </div>
         <div className="ml-auto max-w-[18rem] text-right text-sm text-muted-foreground">
-          <p className="truncate font-semibold text-foreground" title={operatorEmail}>
+          <p
+            className="truncate font-semibold text-foreground"
+            title={operatorEmail}
+          >
             {operatorEmail}
           </p>
           <p className="mt-1">Refreshed {formatTime(data.generatedAt)}</p>
@@ -843,11 +902,18 @@ export function AdminConsole({
       <dl className="grid grid-cols-2 gap-x-4 gap-y-7 border-b border-border py-7 sm:grid-cols-4">
         <Metric label="Brands" value={data.health.brands} />
         <Metric label="Styles" value={data.health.products} />
-        <Metric label="Size options" value={data.health.variants.toLocaleString()} />
+        <Metric
+          label="Size options"
+          value={data.health.variants.toLocaleString()}
+        />
         <Metric label="Needs review" value={data.health.reviewQueue} />
       </dl>
 
-      <div className="my-7 flex gap-2 overflow-x-auto" role="tablist" aria-label="Admin views">
+      <div
+        className="my-7 flex gap-2 overflow-x-auto"
+        role="tablist"
+        aria-label="Admin views"
+      >
         {(
           [
             ["review", "Review queue", FileSearch],

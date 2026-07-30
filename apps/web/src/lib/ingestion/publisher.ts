@@ -163,7 +163,7 @@ export async function publishExtraction({
 }) {
   const rows = extraction.rows.filter(rowPassesSanity);
   if (rows.length === 0) {
-    throw new Error("No extracted rows passed garment measurement bounds.");
+    throw new Error("No extracted rows passed measurement bounds.");
   }
   const snapshotPath = await storeSnapshot(admin, snapshot);
   const { data: sourceId, error } = await admin.rpc(

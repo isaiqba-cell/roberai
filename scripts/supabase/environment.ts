@@ -24,16 +24,16 @@ function readLocalEnvironment() {
   return values;
 }
 
-function readEnvironmentValue(name: string) {
+export function loadEnvironmentValue(name: string) {
   const local = readLocalEnvironment();
   return process.env[name] || local.get(name) || "";
 }
 
 export function loadSupabaseCredentials(): SupabaseCredentials {
   const credentials = {
-    url: readEnvironmentValue("NEXT_PUBLIC_SUPABASE_URL"),
-    anonKey: readEnvironmentValue("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
-    serviceRoleKey: readEnvironmentValue("SUPABASE_SERVICE_ROLE_KEY"),
+    url: loadEnvironmentValue("NEXT_PUBLIC_SUPABASE_URL"),
+    anonKey: loadEnvironmentValue("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    serviceRoleKey: loadEnvironmentValue("SUPABASE_SERVICE_ROLE_KEY"),
   };
   const missing = Object.entries(credentials)
     .filter(([, value]) => !value)

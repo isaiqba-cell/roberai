@@ -38,10 +38,7 @@ export async function getCatalogIndexStatus(): Promise<CatalogIndexStatus> {
 
   const [brands, chartSources, products, variants] = await Promise.all([
     supabase.from("brands").select("id", { count: "exact" }).limit(1),
-    supabase
-      .from("size_chart_sources")
-      .select("id", { count: "exact" })
-      .limit(1),
+    supabase.from("size_chart_sources").select("source_url").limit(1_000),
     supabase.from("products").select("id", { count: "exact" }).limit(1),
     supabase.from("product_variants").select("id", { count: "exact" }).limit(1),
   ]);
@@ -56,7 +53,9 @@ export async function getCatalogIndexStatus(): Promise<CatalogIndexStatus> {
   return {
     mode: "live",
     brands: brands.count ?? 0,
-    chartSources: chartSources.count ?? 0,
+    chartSources: new Set(
+      (chartSources.data ?? []).map(({ source_url }) => source_url),
+    ).size,
     products: products.count ?? 0,
     variants: variants.count ?? 0,
   };

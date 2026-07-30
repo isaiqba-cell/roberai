@@ -4,5 +4,9 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["supabase/**/*.ts", "seed/seed-supabase-web.ts"]
+  "include": [
+    "ingestion/**/*.ts",
+    "supabase/**/*.ts",
+    "seed/seed-supabase-web.ts"
+  ]
 }

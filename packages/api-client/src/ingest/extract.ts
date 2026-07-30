@@ -57,7 +57,7 @@ function normalizeHeader(value: string) {
 }
 
 function isSizeHeader(value: string) {
-  return /^(size|jean size|denim size|waist size|alpha size|numeric size|w)$/i.test(
+  return /^(?:(?:us|uk|eu) )?(?:size|jean size|denim size|waist size|alpha size|numeric size|w)|(?:(?:men'?s|women'?s) )?suggested size$/i.test(
     value,
   );
 }
@@ -174,13 +174,28 @@ function basisFrom(value: string): MeasurementBasis {
     return "garment";
   }
   if (
-    /body measurements?|measure (?:around|your body)|body size|body waist/i.test(
+    /body measurements?|measure (?:around|your body)|body size|body waist|measure (?:around|along) (?:your|the) (?:natural )?(?:waist|waistline|hips?)|suggested size/i.test(
       value,
     )
   ) {
     return "body";
   }
   return "unknown";
+}
+
+function cellText(
+  $: ReturnType<typeof load>,
+  cell: Parameters<ReturnType<typeof load>>[0],
+) {
+  const node = $(cell);
+  const inches = node.find(".inches").first();
+  if (inches.length > 0) {
+    inches.find(".visually-hidden,[aria-hidden='true']").remove();
+    return compact(inches.text());
+  }
+  const clone = node.clone();
+  clone.find(".visually-hidden,[aria-hidden='true']").remove();
+  return compact(clone.text());
 }
 
 function unitFrom(value: string): MeasurementUnit {
@@ -273,7 +288,7 @@ function extractTables(
       .each((__, row) => {
         const cells = $(row)
           .find("th,td")
-          .map((___, cell) => compact($(cell).text()))
+          .map((___, cell) => cellText($, cell))
           .get();
         if (cells.length >= 2) rawRows.push(cells);
       });
@@ -290,9 +305,87 @@ function extractTables(
       const row = rowFromTable(headers, cells, pageText, preferredCut);
       if (row) rows.push(row);
     }
+
+    const sizeRow = rawRows.find(
+      (cells) =>
+        cells.length >= 2 && isSizeHeader(normalizeHeader(cells[0] ?? "")),
+    );
+    if (!sizeRow) return;
+    const measurementRows = rawRows.filter(
+      (cells) => cells.length >= 2 && measurementKeyForHeader(cells[0] ?? ""),
+    );
+    if (measurementRows.length === 0) return;
+    const tableUnit = assumedUnitFrom(rawRows.flat().join(" "));
+
+    for (let column = 1; column < sizeRow.length; column += 1) {
+      const sizeLabel = sizeRow[column];
+      if (!sizeLabel) continue;
+      const observed: ObservedMeasurements = {};
+      const evidence: string[] = [];
+      for (const measurementRow of measurementRows) {
+        const header = measurementRow[0] ?? "";
+        const value = measurementRow[column];
+        const key = measurementKeyForHeader(header);
+        if (!key || !value) continue;
+        const valueUnit = assumedUnitFrom(`${header} ${value}`);
+        const measurement = parseMeasurementToCm(
+          value,
+          key,
+          valueUnit === "unknown" ? tableUnit : valueUnit,
+        );
+        if (measurement === null) continue;
+        observed[key] = measurement;
+        evidence.push(`${compact(header)}: ${compact(value)}`);
+      }
+      if (Object.keys(observed).length === 0) continue;
+      rows.push({
+        sizeLabel: compact(sizeLabel),
+        observed,
+        evidence,
+        cut: preferredCut ?? inferCut(`${sizeLabel} ${pageText}`),
+        stretchPct: inferStretch(pageText),
+      });
+    }
   });
 
   return rows;
+}
+
+function embeddedTabularHtml(html: string) {
+  const $ = load(html);
+  const fragments: string[] = [];
+
+  function visit(value: unknown, depth = 0) {
+    if (depth > 12 || fragments.length >= 20) return;
+    if (typeof value === "string") {
+      if (
+        /<(?:table|thead|tbody|tr)\b/i.test(value) &&
+        /waist|hip|seat|inseam|inside leg|thigh/i.test(value)
+      ) {
+        fragments.push(value);
+      }
+      return;
+    }
+    if (Array.isArray(value)) {
+      value.forEach((item) => visit(item, depth + 1));
+      return;
+    }
+    if (!value || typeof value !== "object") return;
+    Object.values(value as Record<string, unknown>).forEach((item) =>
+      visit(item, depth + 1),
+    );
+  }
+
+  $(
+    'script[type="application/json"],script[type="application/ld+json"],script[type="fastboot/shoebox"]',
+  ).each((_, script) => {
+    try {
+      visit(JSON.parse($(script).text()));
+    } catch {
+      // Embedded application state is optional and frequently malformed.
+    }
+  });
+  return [...new Set(fragments)];
 }
 
 function extractProseMeasurements(pageText: string) {
@@ -429,14 +522,20 @@ function deterministicExtraction(
   modelName?: string,
 ): ChartExtraction {
   const $ = load(html);
+  const embeddedTables = embeddedTabularHtml(html);
   $("script,style,noscript,svg").remove();
   const pageTitle = compact($("title").first().text()) || null;
   const pageText = compact($("body").text());
-  const basis = basisFrom(pageText);
+  const embeddedText = embeddedTables
+    .map((fragment) => compact(load(fragment).text()))
+    .join(" ");
+  const basis = basisFrom(`${pageText} ${embeddedText}`);
   const prose = extractProseMeasurements(pageText);
   const preferredCut = explicitCut(modelName);
   let tableRows = combineSplitInseams(
-    extractTables(html, pageText, preferredCut),
+    [html, ...embeddedTables].flatMap((source) =>
+      extractTables(source, `${pageText} ${embeddedText}`, preferredCut),
+    ),
   );
 
   if (Object.keys(prose.observed).length > 0) {

@@ -121,8 +121,8 @@ export class PoliteFetcher {
     this.userAgent = options.userAgent ?? DEFAULT_USER_AGENT;
     this.minimumDelayMs = options.minimumDelayMs ?? 5_000;
     this.jitterMs = options.jitterMs ?? 1_250;
-    this.timeoutMs = options.timeoutMs ?? 12_000;
-    this.maximumBytes = options.maximumBytes ?? 2_000_000;
+    this.timeoutMs = options.timeoutMs ?? 20_000;
+    this.maximumBytes = options.maximumBytes ?? 5_000_000;
     this.maximumAttempts = options.maximumAttempts ?? 3;
     this.sleep = options.sleep ?? defaultSleep;
     this.now = options.now ?? Date.now;
@@ -209,7 +209,7 @@ export class PoliteFetcher {
       accept: "text/plain,*/*;q=0.1",
       ...(signal ? { signal } : {}),
     }).then(async (response) => {
-      if (!response.ok && ![404, 410].includes(response.status)) {
+      if (!response.ok && (response.status < 400 || response.status >= 500)) {
         throw new IngestionFetchError(
           `Unable to verify robots policy (${response.status}).`,
           "HTTP_ERROR",

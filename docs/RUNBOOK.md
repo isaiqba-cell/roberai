@@ -5,7 +5,7 @@ Last reviewed: 2026-07-29
 ## Current Recovery Status
 
 - The production Supabase project is linked and migrations are applied through
-  `20260728041000_security_maintenance.sql`.
+  `20260729004000_fix_admin_brand_lookup.sql`.
 - Supabase manages physical daily backups on current projects; PITR availability
   depends on the paid plan and must be confirmed under **Database > Backups**
   before launch. Do not claim PITR until that dashboard shows an active recovery
@@ -73,6 +73,32 @@ Backup environment secrets:
 Never place server-only values in `NEXT_PUBLIC_*`, source files, issue text,
 screenshots, or analytics. The service-role and Serper credentials previously
 shared in chat must be rotated before production launch.
+
+## Live Source Corpus
+
+The current corpus has five official-domain sources discovered by completed
+Serper-backed jobs: Levi's, Madewell, Dickies, Dockers, and American Eagle.
+Together they publish 162 bounded chart rows and reference five immutable raw
+snapshots in the private `size-chart-snapshots` bucket.
+
+Run the read-only internet audit before changing extractor behavior:
+
+```bash
+npm run audit:ingestion:sources
+```
+
+Queue the canonical corpus through Serper discovery, drain it through the
+protected `/api/cron/ingest` worker, then prove the stored result:
+
+```bash
+npm run ingest:corpus:enqueue -- --discover
+npm run test:ingestion:corpus
+```
+
+The verification must report five Serper-completed brands, at least 50 chart
+rows, five private snapshot references, five public source records, and zero
+non-garment rows in `garment_reference_catalog`. A `body` or `unknown` chart is
+valid provenance evidence but is never a garment-construction match input.
 
 ## Deploy And Roll Back
 

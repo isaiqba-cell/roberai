@@ -16,7 +16,7 @@ async function main() {
   const admin = createClient(credentials.url, credentials.serviceRoleKey, {
     auth: { autoRefreshToken: false, persistSession: false },
   });
-  const browser = await chromium.launch({ channel: "chrome", headless: true });
+  const browser = await chromium.launch({ headless: true });
   let testUser: User | undefined;
 
   try {

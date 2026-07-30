@@ -60,3 +60,59 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm --workspace @rober/web run test:browser
+
+  supabase-integration:
+    name: RLS and auth integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      SERPER_API_KEY: ci-placeholder-serper-key
+      OPENAI_API_KEY: ci-placeholder-openai-key
+      SENTRY_DSN: https://public@example.ingest.sentry.io/1
+      NEXT_PUBLIC_POSTHOG_KEY: ci-placeholder-posthog-key
+      CRON_SECRET: ci-placeholder-cron-secret
+      ADMIN_EMAILS: ci@example.com
+      AUTH_BROWSER_BASE_URL: http://localhost:3000
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.110.0
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Start migrated local Supabase
+        run: |
+          supabase start -x realtime,imgproxy,studio,edge-runtime,logflare,vector,supavisor,postgres-meta
+          eval "$(supabase status -o env)"
+          {
+            echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL"
+            echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_ROLE_KEY"
+          } >> "$GITHUB_ENV"
+      - name: Verify RLS and ingestion boundaries
+        run: |
+          npm run test:rls
+          npm run test:ingestion:live
+      - name: Verify browser auth and guest merge
+        run: |
+          npm --workspace @rober/web run dev -- --port 3000 > /tmp/rober-web.log 2>&1 &
+          web_pid=$!
+          trap 'kill "$web_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://localhost:3000/auth > /dev/null; then
+              break
+            fi
+            if [ "$attempt" -eq 60 ]; then
+              cat /tmp/rober-web.log
+              exit 1
+            fi
+            sleep 1
+          done
+          npm run test:auth:live
+      - name: Stop local Supabase
+        if: always()
+        run: supabase stop --no-backup
