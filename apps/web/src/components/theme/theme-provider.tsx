@@ -5,6 +5,7 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 export function ThemeProvider({
   children,
+  nonce,
 }: ComponentProps<typeof NextThemesProvider>) {
   return (
     <NextThemesProvider
@@ -12,6 +13,7 @@ export function ThemeProvider({
       defaultTheme="light"
       enableSystem={false}
       disableTransitionOnChange
+      {...(nonce ? { nonce } : {})}
     >
       {children}
     </NextThemesProvider>

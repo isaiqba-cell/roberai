@@ -1,0 +1,98 @@
+name: Restore drill
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: Type restore-scratch-only
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    if: ${{ inputs.confirm == 'restore-scratch-only' }}
+    runs-on: ubuntu-latest
+    environment: backup-restore-drill
+    timeout-minutes: 30
+    env:
+      SCRATCH_DATABASE_URL: ${{ secrets.SCRATCH_DATABASE_URL }}
+      BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+      BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ vars.BACKUP_AWS_REGION || 'us-east-1' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Guard the restore target
+        run: |
+          set -euo pipefail
+          if [ -z "${SCRATCH_DATABASE_URL:-}" ]; then
+            echo "SCRATCH_DATABASE_URL is required." >&2
+            exit 1
+          fi
+          case "$SCRATCH_DATABASE_URL" in
+            *scratch*|*restore*) ;;
+            *)
+              echo "Refusing a target URL that is not visibly a scratch/restore database." >&2
+              exit 1
+              ;;
+          esac
+
+      - name: Download and verify the newest archive
+        id: download
+        run: |
+          set -euo pipefail
+          latest="$(aws s3 ls "s3://${BACKUP_S3_BUCKET}/rober/" \
+            --endpoint-url "$BACKUP_S3_ENDPOINT" | awk '{print $2}' | tr -d '/' | sort | tail -1)"
+          test -n "$latest"
+          mkdir -p restore
+          aws s3 cp "s3://${BACKUP_S3_BUCKET}/rober/${latest}" restore \
+            --recursive \
+            --endpoint-url "$BACKUP_S3_ENDPOINT" \
+            --no-progress
+          (cd restore && sha256sum --check sha256-*.txt)
+          pg_restore --list restore/rober-postgres-*.dump >/dev/null
+          echo "version=$latest" >> "$GITHUB_OUTPUT"
+
+      - name: Restore into scratch and verify critical records
+        run: |
+          set -euo pipefail
+          pg_restore \
+            --dbname "$SCRATCH_DATABASE_URL" \
+            --clean \
+            --if-exists \
+            --no-owner \
+            --no-privileges \
+            restore/rober-postgres-*.dump
+
+          psql "$SCRATCH_DATABASE_URL" --no-psqlrc --tuples-only <<'SQL' | tee restore-proof.txt
+          select 'migration_count=' || count(*) from supabase_migrations.schema_migrations;
+          select 'brand_count=' || count(*) from public.brands;
+          select 'product_count=' || count(*) from public.products;
+          select 'source_count=' || count(*) from public.size_chart_sources;
+          SQL
+
+          tar -tzf restore/rober-size-chart-snapshots-*.tar.gz | head -n 20 >> restore-proof.txt
+
+      - name: Store immutable restore proof
+        run: |
+          stamp="$(date -u +'%Y-%m-%dT%H-%M-%SZ')"
+          aws s3 cp restore-proof.txt \
+            "s3://${BACKUP_S3_BUCKET}/restore-proofs/${stamp}.txt" \
+            --endpoint-url "$BACKUP_S3_ENDPOINT" \
+            --sse AES256
+          {
+            echo "### Restore drill passed"
+            echo "- Backup version: \`${{ steps.download.outputs.version }}\`"
+            echo "- Target guard confirmed a scratch/restore database"
+            echo "- Checksums, archive listing, restore, and critical row checks passed"
+          } >> "$GITHUB_STEP_SUMMARY"

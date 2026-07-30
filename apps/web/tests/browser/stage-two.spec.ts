@@ -12,19 +12,25 @@ test("guest auth surface is keyboard-ready and accessible", async ({
   ).toBeVisible();
 
   const email = page.getByRole("textbox", { name: "Email address" });
-  await email.focus();
-  await expect(email).toBeFocused();
-  await page.keyboard.press("Tab");
-  await expect(
-    page.getByRole("button", { name: "Email me a sign-in link" }),
-  ).toBeFocused();
-
-  const googleButton = page.getByRole("button", {
-    name: "Continue with Google",
-  });
-  if ((await googleButton.count()) > 0) {
+  if (await email.isDisabled()) {
+    await expect(
+      page.getByText(/Account sync is not configured in this environment/),
+    ).toBeVisible();
+  } else {
+    await email.focus();
+    await expect(email).toBeFocused();
     await page.keyboard.press("Tab");
-    await expect(googleButton).toBeFocused();
+    await expect(
+      page.getByRole("button", { name: "Email me a sign-in link" }),
+    ).toBeFocused();
+
+    const googleButton = page.getByRole("button", {
+      name: "Continue with Google",
+    });
+    if ((await googleButton.count()) > 0) {
+      await page.keyboard.press("Tab");
+      await expect(googleButton).toBeFocused();
+    }
   }
 
   const results = await new AxeBuilder({ page })

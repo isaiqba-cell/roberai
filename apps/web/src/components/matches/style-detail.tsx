@@ -21,6 +21,7 @@ import type { GarmentSpec } from "@rober/fit-engine";
 import { ConfidenceBadge } from "@/components/ui/confidence-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { readGuestAnchors } from "@/lib/guest-anchors";
 import type {
   MatchApiError,
@@ -205,7 +206,18 @@ function DetailBody({
           saved: nextSaved,
         }),
       }).then((response) => {
-        if (response.ok) return;
+        if (response.ok) {
+          trackAnalyticsEvent({
+            event: "save_toggled",
+            properties: {
+              productId: data.product.id,
+              saved: nextSaved,
+              surface: "style_detail",
+              authenticated: true,
+            },
+          });
+          return;
+        }
         setSaved(!nextSaved);
         toast({
           title: "Saved list unchanged",
@@ -228,6 +240,15 @@ function DetailBody({
     });
     const isSaved = next.some((item) => item.productId === data.product.id);
     setSaved(isSaved);
+    trackAnalyticsEvent({
+      event: "save_toggled",
+      properties: {
+        productId: data.product.id,
+        saved: isSaved,
+        surface: "style_detail",
+        authenticated: false,
+      },
+    });
     toast({
       title: isSaved ? "Saved with fit memory" : "Removed from saved",
       description: isSaved

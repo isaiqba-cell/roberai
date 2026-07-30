@@ -40,7 +40,23 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run audit:high
+      - run: npm run security:boundaries
       - run: npm run lint
       - run: npm run typecheck
       - run: npm run test
       - run: npm run web:build
+      - run: npm run security:boundaries
+
+  browser:
+    name: Browser acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm --workspace @rober/web run test:browser

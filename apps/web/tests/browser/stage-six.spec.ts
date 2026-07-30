@@ -11,6 +11,10 @@ try {
   // CI injects environment variables directly.
 }
 
+const browserOrigin = new URL(
+  process.env.WEB_BASE_URL ?? "http://127.0.0.1:3000",
+).origin;
+
 test.describe("admin boundary", () => {
   test("hides the operations route from anonymous visitors", async ({
     request,
@@ -151,7 +155,7 @@ test("an authenticated operator can inspect the live index", async ({
     await context.addCookies(
       sessionCookies.map((cookie) => ({
         ...cookie,
-        url: "http://127.0.0.1:3000",
+        url: browserOrigin,
       })),
     );
 
@@ -223,7 +227,9 @@ test("an authenticated operator can inspect the live index", async ({
     await expect(
       page.getByRole("heading", { name: "Measurement coverage" }),
     ).toBeVisible();
-    await expect(page.getByText("source · approve", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("source · approve", { exact: true }),
+    ).toBeVisible();
 
     const results = await new AxeBuilder({ page })
       .withTags(["wcag2a", "wcag2aa", "wcag21aa"])

@@ -1,8 +1,10 @@
 import { matchGarments } from "@rober/fit-engine";
 import { computeGarmentMatches } from "@rober/matching";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 
 import { getMatchingCatalogProduct } from "@/lib/catalog/matching-catalog";
+import { apiError } from "@/lib/http/api-error";
 import {
   styleDetailRequestSchema,
   type MatchCardData,
@@ -18,6 +20,8 @@ const dimensions = [
   { key: "riseCm", label: "Rise", scoreKey: "rise" },
   { key: "legOpeningCm", label: "Leg opening", scoreKey: "legOpening" },
 ] as const;
+
+const productIdSchema = z.string().trim().min(1).max(100);
 
 function buildOutboundUrl(
   baseUrl: string,
@@ -39,29 +43,35 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
-  const [{ id }, body] = await Promise.all([
+  const [{ id: rawId }, body] = await Promise.all([
     context.params,
     request.json().catch(() => null),
   ]);
+  const productId = productIdSchema.safeParse(rawId);
+  if (!productId.success) {
+    return apiError("not_found", "Style not found.", 404);
+  }
   const parsed = styleDetailRequestSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "A reference pair is required for fit detail." },
-      { status: 400 },
+    return apiError(
+      "bad_request",
+      "A reference pair is required for fit detail.",
+      400,
     );
   }
 
-  const { product } = await getMatchingCatalogProduct(id);
+  const { product } = await getMatchingCatalogProduct(productId.data);
   if (!product) {
-    return NextResponse.json({ error: "Style not found." }, { status: 404 });
+    return apiError("not_found", "Style not found.", 404);
   }
 
   const anchor = normalizeGarmentSpec(parsed.data.anchor);
   const summary = computeGarmentMatches(anchor, [product])[0];
   if (!summary) {
-    return NextResponse.json(
-      { error: "This style does not have fit-ready measurements." },
-      { status: 422 },
+    return apiError(
+      "unprocessable",
+      "This style does not have fit-ready measurements.",
+      422,
     );
   }
 

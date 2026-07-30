@@ -17,8 +17,8 @@ export function Reveal({ children, className, delay = 0 }: RevealProps) {
   return (
     <motion.div
       className={cn(className)}
-      initial={{ opacity: 0, y: reduceMotion ? 0 : 10 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ y: reduceMotion ? 0 : 10 }}
+      animate={{ y: 0 }}
       transition={{ duration: 0.2, delay, ease: "easeOut" }}
     >
       {children}
@@ -65,9 +65,8 @@ export function RevealItem({
     <motion.div
       className={cn(className)}
       variants={{
-        hidden: { opacity: 0, y: reduceMotion ? 0 : 10 },
+        hidden: { y: reduceMotion ? 0 : 10 },
         visible: {
-          opacity: 1,
           y: 0,
           transition: { duration: 0.2, ease: "easeOut" },
         },

@@ -9,6 +9,7 @@ import { useAuth } from "@/components/auth/auth-provider";
 import { ConfidenceBadge } from "@/components/ui/confidence-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { useToast } from "@/components/ui/toast";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import {
   readGuestSavedItems,
   writeGuestSavedItems,
@@ -68,6 +69,15 @@ export function SavedGallery() {
     setItems(next);
     if (!user) {
       writeGuestSavedItems(window.localStorage, next);
+      trackAnalyticsEvent({
+        event: "save_toggled",
+        properties: {
+          productId: item.productId,
+          saved: false,
+          surface: "saved",
+          authenticated: false,
+        },
+      });
       return;
     }
 
@@ -86,7 +96,17 @@ export function SavedGallery() {
         title: "Style stayed saved",
         description: "The account update did not finish. Try again.",
       });
+      return;
     }
+    trackAnalyticsEvent({
+      event: "save_toggled",
+      properties: {
+        productId: item.productId,
+        saved: false,
+        surface: "saved",
+        authenticated: true,
+      },
+    });
   }
 
   if (loading) {

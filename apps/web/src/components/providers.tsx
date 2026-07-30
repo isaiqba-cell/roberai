@@ -6,9 +6,15 @@ import { AuthProvider } from "@/components/auth/auth-provider";
 import { ThemeProvider } from "@/components/theme/theme-provider";
 import { ToastProvider } from "@/components/ui/toast";
 
-export function Providers({ children }: { children: ReactNode }) {
+export function Providers({
+  children,
+  nonce,
+}: {
+  children: ReactNode;
+  nonce?: string;
+}) {
   return (
-    <ThemeProvider>
+    <ThemeProvider {...(nonce ? { nonce } : {})}>
       <ToastProvider>
         <AuthProvider>{children}</AuthProvider>
       </ToastProvider>

@@ -19,6 +19,7 @@ import { ConfidenceBadge } from "@/components/ui/confidence-badge";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/components/ui/toast";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import type {
   MatchCardData,
   MatchApiError,
@@ -354,6 +355,16 @@ export function MatchesExperience({
           );
         }
         setData(payload);
+        trackAnalyticsEvent({
+          event: "matches_viewed",
+          properties: {
+            catalogMode: payload.mode,
+            resultCount: payload.matches.length,
+            sort,
+            silhouetteBucket: payload.targetCut,
+            priceCapApplied: priceCapCents !== null,
+          },
+        });
       })
       .catch((requestError: unknown) => {
         if (
@@ -395,7 +406,18 @@ export function MatchesExperience({
           saved: !wasSaved,
         }),
       }).then((response) => {
-        if (response.ok) return;
+        if (response.ok) {
+          trackAnalyticsEvent({
+            event: "save_toggled",
+            properties: {
+              productId: card.id,
+              saved: !wasSaved,
+              surface: "matches",
+              authenticated: true,
+            },
+          });
+          return;
+        }
         setSavedIds(savedIds);
         toast({
           title: "Saved list unchanged",
@@ -407,6 +429,15 @@ export function MatchesExperience({
     const next = toggleGuestSavedItem(window.localStorage, savedMatch(card));
     const nextIds = new Set(next.map((item) => item.productId));
     setSavedIds(nextIds);
+    trackAnalyticsEvent({
+      event: "save_toggled",
+      properties: {
+        productId: card.id,
+        saved: !wasSaved,
+        surface: "matches",
+        authenticated: false,
+      },
+    });
     toast({
       title: wasSaved ? "Removed from saved" : "Saved with fit memory",
       description: wasSaved
@@ -416,6 +447,13 @@ export function MatchesExperience({
   }
 
   function requestSilhouette(value: number) {
+    trackAnalyticsEvent({
+      event: "slider_used",
+      properties: {
+        direction: value < 50 ? "skinnier" : value > 50 ? "baggier" : "same",
+        silhouetteBucket: silhouetteCutFromSlider(value),
+      },
+    });
     setLoading(true);
     setError(null);
     setSilhouette(value);

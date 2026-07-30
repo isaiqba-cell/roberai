@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { Check, Plus, Ruler } from "lucide-react";
 
@@ -8,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
-import { MatchesExperience } from "@/components/matches/matches-experience";
 import {
   readGuestAnchors,
   writeGuestAnchors,
@@ -16,6 +16,27 @@ import {
 } from "@/lib/guest-anchors";
 import { garmentSpecSchema, normalizeGarmentSpec } from "@/lib/reference/types";
 import type { Json } from "@/lib/supabase/database.types";
+
+const MatchesExperience = dynamic(
+  () =>
+    import("@/components/matches/matches-experience").then(
+      (module) => module.MatchesExperience,
+    ),
+  {
+    ssr: false,
+    loading: DeferredMatchesSkeleton,
+  },
+);
+
+function DeferredMatchesSkeleton() {
+  return (
+    <div className="mt-10 space-y-8" role="status">
+      <Skeleton className="h-24 w-full" />
+      <Skeleton className="h-[31rem] w-full" />
+      <span className="sr-only">Loading the fit-matching workspace</span>
+    </div>
+  );
+}
 
 export type AccountAnchor = {
   id: string;

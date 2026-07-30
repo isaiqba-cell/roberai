@@ -15,6 +15,7 @@
     "web:dev": "npm --workspace @rober/web run dev",
     "web:build": "npm --workspace @rober/web run build",
     "audit:high": "node scripts/security/audit-web-production.mjs",
+    "security:boundaries": "node scripts/security/check-web-secret-boundaries.mjs",
     "export:web": "npm --workspace @rober/mobile run export:web",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "npm run typecheck:workspaces && npm run typecheck:scripts",

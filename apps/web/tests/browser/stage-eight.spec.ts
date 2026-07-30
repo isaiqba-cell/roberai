@@ -1,6 +1,56 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
+const catalogStatus = /^(Live jeans index|Preview index)$/;
+
+test("investor journey reaches a grounded retailer link in under 90 seconds", async ({
+  page,
+}) => {
+  test.setTimeout(100_000);
+  const startedAt = Date.now();
+
+  await page.goto("/");
+  await page.getByRole("button", { name: /Levi's.*6 indexed fits/ }).click();
+  await page.getByLabel("Favorite jeans model").selectOption({
+    label: "505 Regular Straight",
+  });
+  await page.getByLabel("Tagged jeans size").selectOption({ label: "32x32" });
+  await page.getByRole("button", { name: "Fits perfectly" }).click();
+  await page.getByRole("button", { name: "Confirm this pair" }).click();
+  await expect(
+    page.getByRole("heading", {
+      name: "This is what we will match against.",
+    }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Find my matches" }).click();
+
+  await expect(page).toHaveURL(/\/matches\?anchor=/);
+  await expect(page.getByText(catalogStatus)).toBeVisible();
+  const slider = page.getByRole("slider", { name: "Silhouette" });
+  const startingDirection = await slider.getAttribute("aria-valuenow");
+  await slider.press("PageUp");
+  await expect(slider).not.toHaveAttribute(
+    "aria-valuenow",
+    startingDirection ?? "",
+  );
+
+  await page.getByRole("link", { name: "See why it fits" }).first().click();
+  await expect(page.getByText("Measurement by measurement")).toBeVisible({
+    timeout: 20_000,
+  });
+  const outbound = page.getByRole("link", { name: /Shop size .* at/ });
+  const outboundHref = await outbound.getAttribute("href");
+  expect(outboundHref).toMatch(/utm_source=rober/);
+  expect(outboundHref).toMatch(/rober_size=/);
+
+  const popupPromise = page.waitForEvent("popup");
+  await outbound.click({ noWaitAfter: true });
+  const popup = await popupPromise;
+  await popup.close();
+
+  expect(Date.now() - startedAt).toBeLessThan(90_000);
+});
+
 test("landing exposes the product immediately", async ({ page }) => {
   await page.goto("/");
   await expect(
@@ -14,14 +64,19 @@ test("landing exposes the product immediately", async ({ page }) => {
     }),
   ).toBeVisible();
   await expect(page.getByText("Illustrative model only")).toBeVisible();
-  await expect(page.getByRole("link", { name: /Old Navy.*fits/ })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /Old Navy.*fits/ }),
+  ).toBeVisible();
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
     .analyze();
   expect(results.violations).toEqual([]);
 
-  await page.screenshot({ path: "/tmp/rober-stage8-landing.png", fullPage: true });
+  await page.screenshot({
+    path: "/tmp/rober-stage8-landing.png",
+    fullPage: true,
+  });
 });
 
 test("public brand pages expose the indexed fit surface", async ({
@@ -36,7 +91,9 @@ test("public brand pages expose the indexed fit surface", async ({
   await expect(
     page.getByRole("heading", { name: "Levi's jeans in the index" }),
   ).toBeVisible();
-  await expect(page.getByRole("link", { name: /501 Original Fit Jean/ })).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: /501 Original Fit Jean/ }),
+  ).toBeVisible();
 
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
@@ -51,7 +108,10 @@ test("public brand pages expose the indexed fit surface", async ({
   expect(robots.ok()).toBe(true);
   expect(await robots.text()).toContain("Disallow: /admin");
 
-  await page.screenshot({ path: "/tmp/rober-stage8-brand.png", fullPage: true });
+  await page.screenshot({
+    path: "/tmp/rober-stage8-brand.png",
+    fullPage: true,
+  });
 });
 
 test("unknown brands show an honest indexing state", async ({ page }) => {
@@ -95,5 +155,8 @@ test("landing and brand index remain framed on a phone", async ({ page }) => {
     )
     .toBe(true);
 
-  await page.screenshot({ path: "/tmp/rober-stage8-mobile.png", fullPage: true });
+  await page.screenshot({
+    path: "/tmp/rober-stage8-mobile.png",
+    fullPage: true,
+  });
 });

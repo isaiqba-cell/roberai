@@ -1,19 +1,36 @@
 # Rober
 
-Rober is an investor-demo MVP for "One Stop, Perfect Fit": a mobile-first, cross-brand jeans shopping app that normalizes size charts against a shopper's body profile, fit preferences, and known-good denim.
+Rober is a cross-brand jeans fit translator. A shopper starts with one pair that
+already fits; Rober resolves its garment measurements and ranks the size to buy
+across an indexed catalog of brands and price points.
 
-This repo is structured as a production-minded Expo monorepo with a pure TypeScript fit engine, seeded fictional jeans catalog, Supabase schema and edge-function stubs, mockable AI/search/checkout providers, and a polished iPhone-style mobile/web demo path.
+The monorepo contains a desktop-first Next.js investor MVP, the original Expo
+mobile demo, a shared TypeScript fit engine, a provenance-aware ingestion
+pipeline, and a live Supabase backend.
 
-## Quick Start
+## Desktop Web Quick Start
 
 ```bash
 npm install
+npm run web:dev
+```
+
+Open `http://127.0.0.1:3000`. Development degrades to an honest seed-data mode
+when credentials are absent. Copy `apps/web/.env.example` to
+`apps/web/.env.local` to use live Supabase and ingestion services; never commit
+that file.
+
+Production intentionally fails fast when required configuration is missing.
+Operational setup, backup secrets, deployment, restore, rotation, and incident
+steps live in `docs/RUNBOOK.md`.
+
+## Mobile Quick Start
+
+```bash
 npm run web
 ```
 
-Open the Expo URL in a browser or device. The app runs in demo mode without credentials.
-
-For native development:
+Open the Expo URL in a browser or device. For native development:
 
 ```bash
 npm run ios
@@ -27,19 +44,34 @@ npm run dev          # Expo dev server
 npm run ios          # iOS simulator
 npm run android      # Android emulator
 npm run web          # Expo web
+npm run web:dev      # Next.js desktop web
+npm run web:build    # Next.js production build
 npm run export:web   # Static web export
 npm run lint         # Workspace lint/type guard
 npm run typecheck    # Strict TypeScript
 npm run test         # Unit tests
 npm run seed         # Generate demo catalog artifact
 npm run seed:jeans   # Generate jeans size-chart database artifact
+npm run audit:high   # Production dependency gate
+npm run security:boundaries # Server-secret boundary gate
 ```
 
 Supabase migrations live in `supabase/migrations`. Authenticate and link the
 Supabase CLI once, then apply every pending migration with
 `npm run supabase:migrate`.
 
-## Demo Routes
+## Desktop Web Routes
+
+- Product landing and embedded anchor start: `/`
+- Reference-pair onboarding: `/onboarding`
+- Live translated matches: `/matches`
+- Product fit detail: `/style/[product-id]`
+- Saved fit memory: `/saved`
+- Public brand index: `/brands`
+- Account/auth: `/account`, `/auth`
+- Audited operations console: `/admin` (returns 404 to non-admins)
+
+## Mobile Demo Routes
 
 - Main app: `/`
 - Compare / Best Fit Finder: `/compare`
@@ -64,16 +96,19 @@ Supabase CLI once, then apply every pending migration with
 9. Open Stylist and ask for "curvy jeans under $100"; recommendations are grounded in catalog and fit-score lookups.
 10. Open `/investor-demo` and call out that all impact metrics are synthetic demo data.
 
-## External Services
+## Desktop Services
 
-All external services are optional for the demo:
+Development can run without credentials; a production deployment cannot:
 
-- Supabase: schema and client are wired; demo data is local when keys are absent.
-- OpenAI: AI stylist and search parser use deterministic mock providers when `OPENAI_API_KEY` is absent.
-- Voyage AI: embeddings are represented as nullable vectors in schema; tag/search fallback is used locally.
-- Stripe: checkout uses the same interface as PaymentSheet, with a clean mock success path when test keys are absent.
-- Shopify: provider interfaces and mock provider are included; live credentials are not required.
-- PostHog/Sentry: wrappers avoid sending raw body measurements and no-op without keys.
+- Supabase stores accounts, anchors, catalog provenance, jobs, saves, analytics,
+  admin audits, and atomic rate limits. RLS is enforced and live-tested.
+- Serper discovers candidate size charts server-side. Deterministic parsing runs
+  first; OpenAI is a server-only extraction fallback.
+- Sentry is wired across browser/server with release tags, privacy
+  scrubbing, source-map upload support, and an admin-only verification route.
+- PostHog receives the five core funnel events through a strict server relay.
+  Raw body and garment measurements are rejected by the shared event schema.
+- First-party analytics remain available when a PostHog key is not configured.
 
 ## Supabase
 
@@ -99,10 +134,11 @@ npm run seed:web
 npm run test:stage2:live
 ```
 
-The Stage 2 gate verifies that email and Google sign-in are enabled, RLS blocks
+The Stage 2 gate verifies that email sign-in is enabled, RLS blocks
 cross-account access while exposing only published catalog records, and a real
 browser can complete magic-link sign-in, merge guest anchors exactly once,
-update a profile, and sign out. Google must be configured as a Web OAuth client
+update a profile, and sign out. Google remains a launch configuration item: it
+must be configured as a Web OAuth client
 in Supabase Auth. Its authorized redirect URI is the project's
 `https://<project-ref>.supabase.co/auth/v1/callback`; OAuth secrets belong in
 the provider dashboards and must never be committed.
@@ -164,9 +200,10 @@ The fit engine is framework-agnostic TypeScript in `packages/fit-engine`. It sco
 
 Unit tests cover exact matches, too-small/too-large garments, stretch tolerance, missing measurements, fit preference adjustment, best-size selection, explanation generation, parser fallback, and recommendation weighting.
 
-## What Is Mocked
+## What Remains Demo-Only
 
-- Auth: UI and guest flow are implemented; Supabase Auth is credential-gated.
+- Desktop auth: live Supabase email auth and guest-state merge are implemented;
+  Google OAuth still needs provider-console credentials.
 - AI: deterministic parser/stylist fallback is implemented; OpenAI structured outputs/tool calls can replace the provider.
 - Embeddings: schema supports pgvector; local demo uses tags and fit/style scores.
 - Checkout: mock Stripe fallback succeeds; real test-mode PaymentSheet needs keys.
@@ -177,6 +214,8 @@ Unit tests cover exact matches, too-small/too-large garments, stretch tolerance,
 
 ## Architecture
 
+- `apps/web`: Next.js App Router product, public growth pages, APIs, auth, and
+  audited operations console.
 - `apps/mobile`: Expo Router app, design system, feature screens, stores, services, and local demo providers.
 - `packages/fit-engine`: pure TypeScript scoring, parser, recommendation, and size-chart helpers.
 - `packages/api-client`: catalog, checkout, ingestion, provider interfaces, and tests.
@@ -185,13 +224,13 @@ Unit tests cover exact matches, too-small/too-large garments, stretch tolerance,
 
 ## Roadmap
 
-- Wire Supabase Auth and persisted user profile rows.
-- Move fit-score computation into shared edge-function code with cache invalidation.
-- Add OpenAI structured-output normalization and stylist tool calls behind the existing provider interface.
-- Add Stripe test PaymentSheet and signed webhooks.
-- Add authenticated admin role checks and service-role catalog writes.
-- Add production push notification delivery and feature flags.
-- Replace supplied placeholder product imagery with owned or fully licensed catalog imagery before production.
+- Configure Google OAuth, Sentry, PostHog, and Vercel production credentials.
+- Configure the protected off-site backup environments and complete the first
+  recorded restore drill.
+- Add licensed live-retailer inventory/price feeds; current product prices are
+  labeled benchmark values, not live offers.
+- Replace supplied placeholder product imagery with owned or fully licensed
+  catalog imagery before a commercial launch.
 
 ## Synthetic Metrics
 

@@ -184,7 +184,7 @@ export default async function BrandPage({
         </div>
 
         <RevealGroup className="grid gap-x-5 gap-y-10 pt-8 sm:grid-cols-2 lg:grid-cols-3">
-          {data.products.slice(0, 18).map((product) => (
+          {data.products.slice(0, 18).map((product, index) => (
             <RevealItem key={product.id}>
               <Link
                 href={`/style/${product.id}`}
@@ -195,6 +195,7 @@ export default async function BrandPage({
                     src={product.imageUrl}
                     alt={product.title}
                     fill
+                    loading={index === 0 ? "eager" : "lazy"}
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 390px"
                     className="object-contain px-8 py-7 transition-transform duration-200 group-hover:scale-[1.02] motion-reduce:transition-none"
                   />

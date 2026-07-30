@@ -23,6 +23,8 @@ const guestAnchor = {
   notes: {},
 };
 
+const catalogStatus = /^(Live jeans index|Preview index)$/;
+
 async function seedGuestReference(page: Page) {
   await page.goto("/");
   await page.evaluate((anchor) => {
@@ -41,10 +43,14 @@ test("guest can tune, save, inspect, and return to live matches", async ({
   await seedGuestReference(page);
   await page.goto("/matches");
 
-  await expect(page.getByText("Live jeans index")).toBeVisible();
+  await expect(page.getByText(catalogStatus)).toBeVisible();
   await expect(
     page.getByText("132 styles · 5,332 sizes · 8 brands"),
   ).toBeVisible();
+  await page.screenshot({
+    path: "/tmp/rober-stage5-matches.png",
+    fullPage: true,
+  });
   const initialHeading = await page
     .getByRole("heading", { name: /pairs fit this direction/ })
     .textContent();
@@ -80,6 +86,7 @@ test("guest can tune, save, inspect, and return to live matches", async ({
   await page.getByRole("link", { name: /View .* Wide Leg Jean/ }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByText("Measurement by measurement")).toBeVisible();
+  await page.screenshot({ path: "/tmp/rober-stage5-detail.png" });
   const outbound = page.getByRole("link", { name: /Shop size .* at/ });
   await expect(outbound).toHaveAttribute("target", "_blank");
   await expect(outbound).toHaveAttribute("rel", "noopener nofollow sponsored");
@@ -102,7 +109,7 @@ test("guest can tune, save, inspect, and return to live matches", async ({
 test("matches and detail pass accessibility scan", async ({ page }) => {
   await seedGuestReference(page);
   await page.goto("/matches");
-  await expect(page.getByText("Live jeans index")).toBeVisible();
+  await expect(page.getByText(catalogStatus)).toBeVisible();
 
   const matchesResults = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21aa"])
@@ -123,7 +130,7 @@ test("mobile matches and panel never overflow the viewport", async ({
   await page.setViewportSize({ width: 390, height: 844 });
   await seedGuestReference(page);
   await page.goto("/matches");
-  await expect(page.getByText("Live jeans index")).toBeVisible();
+  await expect(page.getByText(catalogStatus)).toBeVisible();
   await expect(
     page.getByRole("link", { name: "See why it fits" }),
   ).toBeVisible();

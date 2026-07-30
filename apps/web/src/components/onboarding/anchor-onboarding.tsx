@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/components/ui/toast";
+import { trackAnalyticsEvent } from "@/lib/analytics/client";
 import { createGuestAnchor, upsertGuestAnchor } from "@/lib/guest-anchors";
 import {
   clearAnchorDraft,
@@ -144,6 +145,7 @@ export function AnchorOnboarding({
         indexedBrand: brand.indexed,
         modelName: "",
         sizeLabel: "",
+        source: "onboarding",
       });
       router.push("/onboarding?step=details");
     },
@@ -166,9 +168,7 @@ export function AnchorOnboarding({
   const showCustomSize =
     customSizeMode ||
     Boolean(
-      draft?.sizeLabel &&
-        sizes.length > 0 &&
-        !sizes.includes(draft.sizeLabel),
+      draft?.sizeLabel && sizes.length > 0 && !sizes.includes(draft.sizeLabel),
     );
 
   async function resolvePair(event: FormEvent<HTMLFormElement>) {
@@ -276,6 +276,17 @@ export function AnchorOnboarding({
         description: `${anchor.brandName} ${anchor.styleName} is now your active fit anchor.`,
         tone: "success",
       });
+      trackAnalyticsEvent({
+        event: "anchor_created",
+        properties: {
+          source: draft.source,
+          resolution:
+            draft.resolution.resolutionSource === "self_reported"
+              ? "estimated"
+              : "indexed",
+          authenticated: Boolean(user),
+        },
+      });
       router.push(`/matches?anchor=${anchor.clientAnchorId}`, { scroll: true });
     } catch (caught) {
       setError(
@@ -377,9 +388,7 @@ export function AnchorOnboarding({
                     <>
                       <select
                         aria-label="Favorite jeans model"
-                        value={
-                          showCustomModel ? "__other" : draft.modelName
-                        }
+                        value={showCustomModel ? "__other" : draft.modelName}
                         onChange={(event) => {
                           const value = event.target.value;
                           const custom = value === "__other";

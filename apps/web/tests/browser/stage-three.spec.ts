@@ -102,9 +102,18 @@ test("unindexed brand completes honestly and queues ingestion", async ({
   await page.getByRole("button", { name: "Confirm this pair" }).click();
 
   await expect(page.getByText("We have not indexed Uniqlo yet")).toBeVisible();
-  await expect(
-    page.getByText("Indexing request queued for review."),
-  ).toBeVisible();
+  const runtimeMode = await page
+    .locator("html")
+    .getAttribute("data-runtime-mode");
+  if (runtimeMode === "live") {
+    await expect(
+      page.getByText("Indexing request queued for review."),
+    ).toBeVisible();
+  } else {
+    await expect(
+      page.getByText("Indexing request queued for review."),
+    ).toHaveCount(0);
+  }
   await expect(page.getByLabel("Waist")).toBeVisible();
 });
 

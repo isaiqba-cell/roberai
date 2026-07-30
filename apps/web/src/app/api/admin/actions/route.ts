@@ -3,10 +3,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { getAdminAccess } from "@/lib/admin/access";
 import { adminActionSchema } from "@/lib/admin/actions";
 import { clearMatchingCatalogCache } from "@/lib/catalog/matching-catalog";
+import { apiError } from "@/lib/http/api-error";
 import type { Json } from "@/lib/supabase/database.types";
 
 function hiddenResponse() {
-  return NextResponse.json({ error: "Not found." }, { status: 404 });
+  return apiError("not_found", "Not found.", 404);
 }
 
 export async function POST(request: NextRequest) {
@@ -17,17 +18,15 @@ export async function POST(request: NextRequest) {
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "This operation could not be read." },
-      { status: 400 },
-    );
+    return apiError("bad_request", "This operation could not be read.", 400);
   }
 
   const parsed = adminActionSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Check the highlighted operation details." },
-      { status: 400 },
+    return apiError(
+      "bad_request",
+      "Check the highlighted operation details.",
+      400,
     );
   }
 
@@ -61,9 +60,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (result.error) {
-    return NextResponse.json(
-      { error: "The operation did not complete. It has not changed live data." },
-      { status: 500 },
+    return apiError(
+      "internal_error",
+      "The operation did not complete. It has not changed live data.",
+      500,
     );
   }
 

@@ -1,0 +1,108 @@
+name: Nightly off-site backup
+
+on:
+  schedule:
+    - cron: "17 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: rober-production-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    environment: backup-production
+    timeout-minutes: 30
+    env:
+      SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+      SUPABASE_STORAGE_S3_ENDPOINT: ${{ secrets.SUPABASE_STORAGE_S3_ENDPOINT }}
+      SUPABASE_STORAGE_S3_ACCESS_KEY: ${{ secrets.SUPABASE_STORAGE_S3_ACCESS_KEY }}
+      SUPABASE_STORAGE_S3_SECRET_KEY: ${{ secrets.SUPABASE_STORAGE_S3_SECRET_KEY }}
+      BACKUP_S3_ENDPOINT: ${{ secrets.BACKUP_S3_ENDPOINT }}
+      BACKUP_S3_BUCKET: ${{ secrets.BACKUP_S3_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.BACKUP_AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.BACKUP_AWS_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: ${{ vars.BACKUP_AWS_REGION || 'us-east-1' }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes postgresql-client
+
+      - name: Validate backup configuration
+        run: |
+          set -euo pipefail
+          required=(
+            SUPABASE_DB_URL
+            SUPABASE_STORAGE_S3_ENDPOINT
+            SUPABASE_STORAGE_S3_ACCESS_KEY
+            SUPABASE_STORAGE_S3_SECRET_KEY
+            BACKUP_S3_ENDPOINT
+            BACKUP_S3_BUCKET
+            AWS_ACCESS_KEY_ID
+            AWS_SECRET_ACCESS_KEY
+          )
+          for name in "${required[@]}"; do
+            if [ -z "${!name:-}" ]; then
+              echo "Missing required backup setting: $name" >&2
+              exit 1
+            fi
+          done
+
+      - name: Create database and immutable snapshot archives
+        id: archive
+        run: |
+          set -euo pipefail
+          stamp="$(date -u +'%Y-%m-%dT%H-%M-%SZ')"
+          mkdir -p backup/snapshots
+          db_file="backup/rober-postgres-${stamp}.dump"
+          snapshots_file="backup/rober-size-chart-snapshots-${stamp}.tar.gz"
+
+          pg_dump \
+            --dbname "$SUPABASE_DB_URL" \
+            --format custom \
+            --compress 9 \
+            --no-owner \
+            --no-privileges \
+            --file "$db_file"
+          pg_restore --list "$db_file" >/dev/null
+
+          AWS_ACCESS_KEY_ID="$SUPABASE_STORAGE_S3_ACCESS_KEY" \
+          AWS_SECRET_ACCESS_KEY="$SUPABASE_STORAGE_S3_SECRET_KEY" \
+            aws s3 sync \
+              s3://size-chart-snapshots \
+              backup/snapshots \
+              --endpoint-url "$SUPABASE_STORAGE_S3_ENDPOINT" \
+              --no-progress
+          tar -czf "$snapshots_file" -C backup snapshots
+
+          sha256sum "$db_file" "$snapshots_file" > "backup/sha256-${stamp}.txt"
+          printf '%s\n' "$stamp" > backup/LATEST
+          echo "stamp=$stamp" >> "$GITHUB_OUTPUT"
+
+      - name: Upload to separate storage
+        run: |
+          set -euo pipefail
+          prefix="s3://${BACKUP_S3_BUCKET}/rober/${{ steps.archive.outputs.stamp }}"
+          aws s3 cp backup "$prefix" \
+            --recursive \
+            --endpoint-url "$BACKUP_S3_ENDPOINT" \
+            --sse AES256 \
+            --no-progress
+
+      - name: Record backup summary
+        run: |
+          {
+            echo "### Rober backup complete"
+            echo "- UTC version: \`${{ steps.archive.outputs.stamp }}\`"
+            echo "- Database archive validated with \`pg_restore --list\`"
+            echo "- Raw snapshot objects copied to separate storage"
+            echo "- SHA-256 manifest uploaded with the archives"
+            echo "- The destination bucket must enforce a 30-day lifecycle"
+          } >> "$GITHUB_STEP_SUMMARY"

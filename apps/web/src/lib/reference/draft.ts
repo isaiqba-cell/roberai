@@ -10,11 +10,13 @@ const anchorDraftSchema = z.object({
   indexedBrand: z.boolean(),
   modelName: z.string().trim().max(160).default(""),
   sizeLabel: z.string().trim().max(40).default(""),
+  source: z.enum(["onboarding", "brand_page"]).default("onboarding"),
   fitNote: z.enum(["perfect", "tight_thigh", "bit_long"]).optional(),
   resolution: referenceResolutionSchema.optional(),
 });
 
 export type AnchorDraft = z.infer<typeof anchorDraftSchema>;
+type AnchorDraftInput = z.input<typeof anchorDraftSchema>;
 
 type ReadableStorage = Pick<Storage, "getItem">;
 type WritableStorage = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -30,7 +32,10 @@ export function readAnchorDraft(storage: ReadableStorage): AnchorDraft | null {
   }
 }
 
-export function writeAnchorDraft(storage: WritableStorage, draft: AnchorDraft) {
+export function writeAnchorDraft(
+  storage: WritableStorage,
+  draft: AnchorDraftInput,
+) {
   const parsed = anchorDraftSchema.parse(draft);
   storage.setItem(ANCHOR_DRAFT_STORAGE_KEY, JSON.stringify(parsed));
   return parsed;

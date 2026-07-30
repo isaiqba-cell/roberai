@@ -8,6 +8,7 @@ import {
 import { NextResponse } from "next/server";
 
 import { getMatchingCatalog } from "@/lib/catalog/matching-catalog";
+import { apiError } from "@/lib/http/api-error";
 import {
   matchesRequestSchema,
   type MatchCardData,
@@ -22,10 +23,7 @@ export async function POST(request: Request) {
     await request.json().catch(() => null),
   );
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "The fit request was incomplete." },
-      { status: 400 },
-    );
+    return apiError("bad_request", "The fit request was incomplete.", 400);
   }
 
   try {
@@ -101,9 +99,10 @@ export async function POST(request: Request) {
       headers: { "Cache-Control": "private, no-store" },
     });
   } catch {
-    return NextResponse.json(
-      { error: "The live jeans index is temporarily unavailable." },
-      { status: 503 },
+    return apiError(
+      "dependency_unavailable",
+      "The live jeans index is temporarily unavailable.",
+      503,
     );
   }
 }

@@ -663,6 +663,23 @@ export type Database = {
         Args: { p_source_id: string; p_reason: string };
         Returns: Json;
       };
+      consume_api_rate_limit: {
+        Args: {
+          p_key_hash: string;
+          p_route: string;
+          p_limit: number;
+          p_window_seconds: number;
+        };
+        Returns: {
+          allowed: boolean;
+          remaining: number;
+          retry_after: number;
+        }[];
+      };
+      prune_expired_api_rate_limits: {
+        Args: Record<PropertyKey, never>;
+        Returns: number;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

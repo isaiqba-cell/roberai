@@ -142,6 +142,7 @@ export default async function HomePage() {
                     src={src}
                     alt={alt}
                     fill
+                    loading="eager"
                     sizes="(max-width: 1024px) 40vw, 260px"
                     className="object-contain px-5 py-7"
                   />
@@ -203,6 +204,7 @@ export default async function HomePage() {
                     src={step.image}
                     alt={step.imageAlt}
                     fill
+                    loading="eager"
                     sizes="(max-width: 768px) 100vw, 380px"
                     className="object-contain px-8 py-6"
                   />

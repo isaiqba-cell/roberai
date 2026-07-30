@@ -10,12 +10,12 @@ import {
   useRef,
   useState,
 } from "react";
-import type { User } from "@supabase/supabase-js";
+import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 import { useToast } from "@/components/ui/toast";
 import { clearGuestAnchors, readGuestAnchors } from "@/lib/guest-anchors";
-import { getBrowserSupabaseClient } from "@/lib/supabase/browser";
-import type { Json } from "@/lib/supabase/database.types";
+import { publicSupabaseConfig } from "@/lib/supabase/config";
+import type { Database, Json } from "@/lib/supabase/database.types";
 
 type AuthContextValue = {
   configured: boolean;
@@ -27,11 +27,34 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const supabase = useMemo(() => getBrowserSupabaseClient(), []);
+  const configured = Boolean(publicSupabaseConfig);
+  const [supabase, setSupabase] = useState<
+    SupabaseClient<Database> | null | undefined
+  >(configured ? undefined : null);
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(Boolean(supabase));
+  const [loading, setLoading] = useState(configured);
   const mergedUserRef = useRef<string | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (!configured) {
+      return;
+    }
+
+    let active = true;
+    void import("@/lib/supabase/browser")
+      .then(({ getBrowserSupabaseClient }) => {
+        if (active) setSupabase(getBrowserSupabaseClient());
+      })
+      .catch(() => {
+        if (!active) return;
+        setSupabase(null);
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [configured]);
 
   const mergeGuestState = useCallback(
     async (userId: string) => {
@@ -69,6 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   useEffect(() => {
+    if (supabase === undefined) {
+      return;
+    }
     if (!supabase) {
       return;
     }

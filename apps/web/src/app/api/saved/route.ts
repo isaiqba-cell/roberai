@@ -3,6 +3,7 @@ import { matchReason } from "@rober/matching";
 import { NextResponse } from "next/server";
 
 import { getMatchingCatalog } from "@/lib/catalog/matching-catalog";
+import { apiError } from "@/lib/http/api-error";
 import { normalizeGarmentSpec, garmentSpecSchema } from "@/lib/reference/types";
 import { savedMutationSchema, type SavedMatch } from "@/lib/saved-items";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
@@ -16,7 +17,7 @@ async function authenticatedContext() {
 export async function GET() {
   const { supabase, user } = await authenticatedContext();
   if (!supabase || !user) {
-    return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+    return apiError("unauthorized", "Sign in required.", 401);
   }
 
   const [savedResult, anchorResult, catalog] = await Promise.all([
@@ -35,9 +36,10 @@ export async function GET() {
   ]);
 
   if (savedResult.error) {
-    return NextResponse.json(
-      { error: "Saved styles could not be loaded." },
-      { status: 503 },
+    return apiError(
+      "dependency_unavailable",
+      "Saved styles could not be loaded.",
+      503,
     );
   }
 
@@ -88,15 +90,12 @@ export async function POST(request: Request) {
     await request.json().catch(() => null),
   );
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid saved style." },
-      { status: 400 },
-    );
+    return apiError("bad_request", "Invalid saved style.", 400);
   }
 
   const { supabase, user } = await authenticatedContext();
   if (!supabase || !user) {
-    return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+    return apiError("unauthorized", "Sign in required.", 401);
   }
 
   const { error } = parsed.data.saved
@@ -115,9 +114,10 @@ export async function POST(request: Request) {
         .eq("product_id", parsed.data.productId);
 
   if (error) {
-    return NextResponse.json(
-      { error: "Saved style could not be updated." },
-      { status: 503 },
+    return apiError(
+      "dependency_unavailable",
+      "Saved style could not be updated.",
+      503,
     );
   }
 

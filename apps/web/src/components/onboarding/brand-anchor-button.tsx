@@ -7,11 +7,7 @@ import { Button } from "@/components/ui/button";
 import { writeAnchorDraft } from "@/lib/reference/draft";
 import type { ReferenceBrandOption } from "@/lib/reference/types";
 
-export function BrandAnchorButton({
-  brand,
-}: {
-  brand: ReferenceBrandOption;
-}) {
+export function BrandAnchorButton({ brand }: { brand: ReferenceBrandOption }) {
   const router = useRouter();
 
   return (
@@ -24,6 +20,7 @@ export function BrandAnchorButton({
           indexedBrand: brand.indexed,
           modelName: "",
           sizeLabel: "",
+          source: "brand_page",
         });
         router.push("/onboarding?step=details");
       }}

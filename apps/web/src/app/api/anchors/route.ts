@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { guestAnchorSchema } from "@/lib/guest-anchors";
+import { apiError } from "@/lib/http/api-error";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import type { Json } from "@/lib/supabase/database.types";
 
@@ -26,9 +27,10 @@ export async function GET() {
     .order("active", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) {
-    return NextResponse.json(
-      { error: "Your reference pairs could not be loaded." },
-      { status: 500 },
+    return apiError(
+      "internal_error",
+      "Your reference pairs could not be loaded.",
+      500,
     );
   }
 
@@ -38,43 +40,35 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   const supabase = await createServerSupabaseClient();
   if (!supabase) {
-    return NextResponse.json(
-      { error: "Sign in is unavailable." },
-      { status: 401 },
-    );
+    return apiError("unauthorized", "Sign in is unavailable.", 401);
   }
 
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Sign in required." }, { status: 401 });
+    return apiError("unauthorized", "Sign in required.", 401);
   }
 
   let payload: unknown;
   try {
     payload = await request.json();
   } catch {
-    return NextResponse.json(
-      { error: "Invalid reference pair." },
-      { status: 400 },
-    );
+    return apiError("bad_request", "Invalid reference pair.", 400);
   }
   const parsed = guestAnchorSchema.safeParse(payload);
   if (!parsed.success) {
-    return NextResponse.json(
-      { error: "Invalid reference pair." },
-      { status: 400 },
-    );
+    return apiError("bad_request", "Invalid reference pair.", 400);
   }
 
   const { data, error } = await supabase.rpc("merge_guest_anchors", {
     p_anchors: [parsed.data] as unknown as Json,
   });
   if (error) {
-    return NextResponse.json(
-      { error: "Your reference pair could not be saved." },
-      { status: 500 },
+    return apiError(
+      "internal_error",
+      "Your reference pair could not be saved.",
+      500,
     );
   }
 

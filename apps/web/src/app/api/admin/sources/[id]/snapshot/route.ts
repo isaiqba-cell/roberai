@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { getAdminAccess } from "@/lib/admin/access";
+import { apiError } from "@/lib/http/api-error";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const sourceIdSchema = z.uuid();
@@ -27,13 +28,13 @@ export async function GET(
 ) {
   const access = await getAdminAccess();
   if (!access) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return apiError("not_found", "Not found.", 404);
   }
 
   const { id } = await context.params;
   const parsedId = sourceIdSchema.safeParse(id);
   if (!parsedId.success) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return apiError("not_found", "Not found.", 404);
   }
 
   const { data: source, error } = await access.supabase
@@ -42,7 +43,7 @@ export async function GET(
     .eq("id", parsedId.data)
     .maybeSingle();
   if (error || !source) {
-    return NextResponse.json({ error: "Not found." }, { status: 404 });
+    return apiError("not_found", "Not found.", 404);
   }
   if (!source.raw_snapshot_path) {
     return NextResponse.json({ excerpt: null, available: false });
@@ -53,9 +54,10 @@ export async function GET(
     .from("size-chart-snapshots")
     .download(source.raw_snapshot_path);
   if (snapshot.error || !snapshot.data) {
-    return NextResponse.json(
-      { error: "The archived snapshot is temporarily unavailable." },
-      { status: 503 },
+    return apiError(
+      "dependency_unavailable",
+      "The archived snapshot is temporarily unavailable.",
+      503,
     );
   }
 
