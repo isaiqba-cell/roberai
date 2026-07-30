@@ -5,7 +5,7 @@ Last reviewed: 2026-07-29
 ## Current Recovery Status
 
 - The production Supabase project is linked and migrations are applied through
-  `20260729004000_fix_admin_brand_lookup.sql`.
+  `20260729005000_explicit_api_table_grants.sql`.
 - Supabase manages physical daily backups on current projects; PITR availability
   depends on the paid plan and must be confirmed under **Database > Backups**
   before launch. Do not claim PITR until that dashboard shows an active recovery

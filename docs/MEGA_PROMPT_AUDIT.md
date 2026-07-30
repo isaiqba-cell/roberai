@@ -42,7 +42,7 @@ measurements may influence the core scorer.
 | Auth, RLS, limits, headers, secret hygiene             | Met for email auth; Google provider configuration pending                 |
 | Nightly backups and one real restore drill             | Workflows exist; external credentials and successful drill pending        |
 | Sentry and PostHog events visible                      | Instrumentation exists; provider credentials/live visibility pending      |
-| CI lint, types, unit, RLS, golden parsers, browser E2E | Workflow now contains all gates; next GitHub run must be observed green   |
+| CI lint, types, unit, RLS, golden parsers, browser E2E | Met in GitHub Actions run 26 for commit `55fa5e6`                         |
 | Runbook and README current                             | Met for current repository state                                          |
 | No fabricated live-data claims                         | Met: benchmark listings are labeled; scraped basis/provenance is explicit |
 
